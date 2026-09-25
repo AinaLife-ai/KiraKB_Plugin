@@ -241,11 +241,17 @@ class KiraKBPlugin(BasePlugin):
         # Standalone WebUI (optional, off by default)
         if self.enable_webui and self.webui_port > 0 and self.kb_manager:
             from .web_server import WebUIServer
+            default_embedding_uuid = None
+            try:
+                default_embedding_uuid = self.ctx.kira_config.get_config("models.default_embedding")
+            except Exception:
+                default_embedding_uuid = None
             self._webui_server = WebUIServer(
                 kb_manager=self.kb_manager,
                 host=self.webui_host,
                 port=self.webui_port,
                 token=self.webui_token,
+                default_embedding_uuid=default_embedding_uuid,
             )
             await self._webui_server.start()
 

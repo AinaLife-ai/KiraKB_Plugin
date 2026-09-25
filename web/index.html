@@ -646,7 +646,17 @@ async function loadEmbeddingModels() {
       opts.push(`<option value="${escapeHtml(m.uuid)}">${escapeHtml(m.label)}</option>`);
     }
     select.innerHTML = opts.join('');
-    if (data && data.default_uuid) select.value = data.default_uuid;
+    if (data && data.default_uuid) {
+      // If the configured default isn't among the registered embedding models,
+      // add it explicitly so the dropdown can still show what will be used.
+      if (!models.some(m => m.uuid === data.default_uuid)) {
+        const opt = document.createElement('option');
+        opt.value = data.default_uuid;
+        opt.textContent = data.default_uuid + '（KiraAI 默认）';
+        select.appendChild(opt);
+      }
+      select.value = data.default_uuid;
+    }
     // Pre-fill the name (and clear a stale dimension) for the preselected model
     // so the dialog is usable without touching the dropdown first.
     syncModelName();

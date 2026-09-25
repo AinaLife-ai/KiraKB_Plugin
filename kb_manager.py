@@ -306,7 +306,17 @@ class KnowledgeBase:
                     client_resolver=self.client_resolver,
                     status=status,
                 )
-                await version.initialize()
+                try:
+                    await version.initialize()
+                except Exception as init_err:
+                    # e.g. a truncated/corrupt index.faiss. Keep the version
+                    # registered as "incomplete" so it stays VISIBLE and
+                    # DELETABLE in the WebUI instead of silently disappearing.
+                    version.status = "incomplete"
+                    logger.warning(
+                        f"Version {version_id} failed to initialise ({init_err}) — "
+                        f"marked incomplete; delete it from the WebUI."
+                    )
                 self._versions[version_id] = version
             except Exception as e:
                 logger.warning(f"Failed to load version {version_id}: {e}")
@@ -338,6 +348,10 @@ class KnowledgeBase:
     async def set_active_version(self, version_id: str) -> bool:
         if version_id not in self._versions:
             return False
+        # Enforce the invariant here too, not only in the API layer, so no
+        # caller can activate a half-built version by accident.
+        if self._versions[version_id].status != "ready":
+            return False
         self._active_version = self._versions[version_id]
         self._current_version_id = version_id
         self._save_current_version(version_id)
@@ -348,6 +362,11 @@ class KnowledgeBase:
                              model_uuid: Optional[str] = None) -> str:
         version_id = f"{model_name.replace('/', '_')}_{int(time.time())}"
         version_path = self.versions_dir / version_id
+        # Two versions created within the same second would otherwise collide on
+        # the directory name, making the second one fail with FileExistsError.
+        if version_path.exists():
+            version_id = f"{version_id}_{uuid.uuid4().hex[:6]}"
+            version_path = self.versions_dir / version_id
         version_path.mkdir(parents=True)
 
         version = KnowledgeBaseVersion(
