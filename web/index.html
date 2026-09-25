@@ -647,6 +647,11 @@ async function loadEmbeddingModels() {
     }
     select.innerHTML = opts.join('');
     if (data && data.default_uuid) select.value = data.default_uuid;
+    // Pre-fill the name (and clear a stale dimension) for the preselected model
+    // so the dialog is usable without touching the dropdown first.
+    syncModelName();
+    document.getElementById('versionDimension').value = '';
+    document.getElementById('versionModelName').dataset.auto = '1';
     if (!models.length) {
       setProbeStatus(
         data && data.default_available
@@ -666,17 +671,27 @@ function syncModelName() {
   const sel = document.getElementById('versionModelSelect');
   const nameInput = document.getElementById('versionModelName');
   if (!sel.value) return;
+  // Don't clobber a name the user typed by hand.
+  if (nameInput.value.trim() && nameInput.dataset.auto !== '1') return;
   const label = sel.options[sel.selectedIndex]
     ? sel.options[sel.selectedIndex].textContent
     : '';
   const short = label.includes(' / ') ? label.split(' / ').pop().trim() : label.trim();
-  if (short) nameInput.value = short;
+  if (short) {
+    nameInput.value = short;
+    nameInput.dataset.auto = '1';
+  }
 }
 
 document.getElementById('versionModelSelect').onchange = () => {
   syncModelName();
   setProbeStatus('');
 };
+
+// Once the user types a name by hand, stop auto-filling it from the dropdown.
+document.getElementById('versionModelName').addEventListener('input', () => {
+  document.getElementById('versionModelName').dataset.auto = '';
+});
 
 document.getElementById('probeDimensionBtn').onclick = async () => {
   const btn = document.getElementById('probeDimensionBtn');
