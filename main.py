@@ -350,6 +350,10 @@ class KiraKBPlugin(BasePlugin):
 
         active_ver = await kb.get_active_version()
         if not active_ver:
+            if any(v.status != "ready" for v in kb._versions.values()):
+                return (f"知识库 '{kb_id}' 当前没有可用的激活版本："
+                        "已存在的版本都是不完整的建库残留，"
+                        "请在 WebUI 的版本管理中删除它们后重新创建版本。")
             return f"知识库 '{kb_id}' 没有激活的版本，请先在 WebUI 中创建版本或激活已有版本"
 
         if active_ver.status != "ready":

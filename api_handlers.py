@@ -303,7 +303,13 @@ async def search(mgr, kb_id: str, body: dict):
         return {"error": "query required"}, 400
     active_ver = await kb.get_active_version()
     if not active_ver:
-        return {"error": "No active version"}, 400
+        # Common right after upgrading from <= v1.1.3 when the only version was
+        # a failed-build leftover: nothing is auto-activated any more. Say so
+        # clearly instead of the cryptic "No active version".
+        if any(v.status != "ready" for v in kb._versions.values()):
+            return {"error": "当前没有可用的激活版本：已存在的版本都是不完整的建库残留，"
+                             "请在版本管理中删除它们后重新创建版本。"}, 400
+        return {"error": "该知识库还没有激活版本，请先创建并激活一个版本。"}, 400
     if active_ver.status != "ready":
         return {"error": "当前激活版本不完整（可能是一次失败的建库残留），请删除并重建该版本。"}, 400
     try:
