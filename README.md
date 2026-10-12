@@ -37,7 +37,7 @@
 
 ### 前置条件
 - 已安装Python 3.10+
-- 已部署并成功运行 KiraAI（v2.33.1+）
+- 已部署并成功运行 KiraAI（v2.33.1+，兼容 3.0 全系列含 v3.0.0-rc.1；兼容判断走特征识别，不绑版本号）
 - KiraAI 主系统中已配置至少一个**嵌入模型**（作为 `default_embedding`）
 - （可选）如需 OCR 功能，需配置**视觉模型**（作为 `default_vlm`）
 
@@ -310,6 +310,14 @@ but
 ---
 
 ## 📝 更新日志
+
+<details>
+<summary>v1.1.5（点击展开）</summary>
+
+- **3.0 兼容：面板「嵌入模型」下拉不再显示 UUID 乱码**——3.0 起 `ModelInfo.model_id` 为内部稳定 ID（uuid 形态），可读名挪到 `model_name`；label 改为 `model_name` 优先、2.x 无该属性自动回退旧行为。引用值（`provider:model_id`）在 3.0 语义正确，不受影响。
+- 运行环境行补 3.0 全系列兼容说明。
+
+</details>
 
 <details>
 <summary>v1.1.4（点击展开）</summary>
