@@ -312,6 +312,14 @@ but
 ## 📝 更新日志
 
 <details>
+<summary>v1.1.5（点击展开）</summary>
+
+- **3.0 兼容：面板「嵌入模型」下拉不再显示 UUID 乱码**——3.0 起 `ModelInfo.model_id` 为内部稳定 ID（uuid 形态），可读名挪到 `model_name`；label 改为 `model_name` 优先、2.x 无该属性自动回退旧行为。引用值（`provider:model_id`）在 3.0 语义正确，不受影响。
+- 运行环境行补 3.0 全系列兼容说明。
+
+</details>
+
+<details>
 <summary>v1.1.4（点击展开）</summary>
 
 - **修复「创建版本」失败时日志无任何错误信息**：日志只显示 `Task xxx failed:`（冒号后空白）。根因是**向量维度与索引维度不一致**时 FAISS 抛出无参数的 `AssertionError`，其 `str()` 恰为空串；且 WebUI 日志链路只透传 `record.message`、不含 traceback，导致完全无从排查。现已在写入 FAISS 前做维度校验并给出可读提示，`str()` 为空时自动回退为异常类型名（如 `AssertionError（无错误消息）`）。
