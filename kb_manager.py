@@ -59,6 +59,7 @@ class KnowledgeBaseVersion:
         self._client_resolver = client_resolver
         self._initialized = False
         self._hashes = self._load_hashes()
+        self._mapping_cache: Optional[Dict[str, List[str]]] = None
 
     # ------------------------------------------------------------------
     # Per-document content fingerprints (exact version freshness)
@@ -247,17 +248,22 @@ class KnowledgeBaseVersion:
         return chunk_ids
 
     def load_mapping(self) -> Dict[str, List[str]]:
+        if self._mapping_cache is not None:
+            return dict(self._mapping_cache)
         mapping_path = self.path / "doc_chunk_map.json"
         if not mapping_path.exists():
+            self._mapping_cache = {}
             return {}
         try:
             with open(mapping_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            return data if isinstance(data, dict) else {}
+            self._mapping_cache = data if isinstance(data, dict) else {}
         except Exception:
-            return {}
+            self._mapping_cache = {}
+        return dict(self._mapping_cache)
 
     def save_mapping(self, mapping: Dict[str, List[str]]) -> None:
+        self._mapping_cache = dict(mapping)
         mapping_path = self.path / "doc_chunk_map.json"
         with open(mapping_path, "w", encoding="utf-8") as f:
             json.dump(mapping, f, ensure_ascii=False)
