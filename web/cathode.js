@@ -26,7 +26,7 @@
     ["catalog", "主厅 / CATALOGUE"], ["versions", "版本 / VERSIONS"],
     ["search", "检索 / SEARCH"], ["access", "权限 / ACCESS"],
     ["recall", "召回 / RECALL"], ["settings", "设置 / SETTINGS"],
-    ["tasks", "任务 / TASKS"], ["wiki", "虚构档案 / WIKI"], ["ticker", "字幕框 / SUBTITLE"]
+    ["tasks", "任务 / TASKS"], ["wiki", "临极档案 / WIKI"], ["ticker", "字幕框 / SUBTITLE"]
   ];
   const VIEW_META = {
     catalog: ["01", "CATALOGUE"], versions: ["02", "VERSIONS"],
