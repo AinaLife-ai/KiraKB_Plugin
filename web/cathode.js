@@ -211,6 +211,7 @@
       else window.KBTextFX.stopLoop();
     }
     syncUiControls();
+    startBrandModes();
     if (state.ui.quote_enabled) startQuoteTimer(); else stopQuoteTimer();
   }
   function queueUiSave() {
@@ -294,6 +295,32 @@
     if (!window.KBTextFX) return;
     window.KBTextFX.play($("#railKb"), "mix");
     window.KBTextFX.play($("#railTitle"), "mix");
+  }
+  const BRAND_MODES = ["brand-breathe", "brand-sheen", "brand-orbit", "brand-flicker", "brand-sweep"];
+  let brandTimer = null;
+  function cycleBrandMode() {
+    const row = $("#railBrandRow");
+    if (!row) return;
+    row.classList.remove(...BRAND_MODES);
+    if (state.ui.performance || reduced) return;
+    row.classList.add(BRAND_MODES[Math.floor(Math.random() * BRAND_MODES.length)]);
+  }
+  function scheduleBrandMode() {
+    clearTimeout(brandTimer);
+    const row = $("#railBrandRow");
+    if (!row || state.ui.performance || reduced) {
+      row?.classList.remove(...BRAND_MODES);
+      return;
+    }
+    if (!BRAND_MODES.some(c => row.classList.contains(c))) cycleBrandMode();
+    brandTimer = setTimeout(() => {
+      cycleBrandMode();
+      scheduleBrandMode();
+    }, 4200 + Math.random() * 4200);
+  }
+  function startBrandModes() {
+    cycleBrandMode();
+    scheduleBrandMode();
   }
   function runBoot() {
     const boot = $("#boot");
@@ -795,6 +822,7 @@
       if (view === "settings") { loadSettings().then(renderSettings); syncUiControls(); }
       replayText();
       replayBrand();
+      cycleBrandMode();
     }, 170);
     setTimeout(() => screen.classList.remove("is-cutting"), 380);
   }
@@ -943,6 +971,7 @@
       renderAll();
     } catch (e) { toast("加载失败：" + e.message, "err"); }
     initTextFx();
+    startBrandModes();
     if (state.ui.quote_enabled) { broadcastQuote(true); startQuoteTimer(); }
     setInterval(() => { if (!document.hidden) { loadTasks().then(renderTasks).catch(() => {}); } }, 5000);
   }

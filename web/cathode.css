@@ -1281,3 +1281,72 @@ body { font-family: var(--serif); font-feature-settings: "kern" 1, "liga" 1; }
   .rail-title { font-size: 21px; }
   .hero-lede, .page-title p { font-size: 14px; }
 }
+
+/* ==========================================================================
+   KB brand: breathing lamp + rotating light + sheen + flicker + sweep
+   ========================================================================== */
+.rail-title-row { position: relative; isolation: isolate; }
+.rail-kb-lamp {
+  width: 5px; height: 5px; flex: 0 0 5px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 8px var(--accent);
+  animation: brand-lamp 2.4s ease-in-out infinite;
+}
+@keyframes brand-lamp {
+  0%, 100% { opacity: .55; transform: scale(.86); box-shadow: 0 0 5px var(--accent); }
+  50% { opacity: 1; transform: scale(1.18); box-shadow: 0 0 15px var(--accent); }
+}
+.rail-kb { position: relative; display: inline-block; padding: 0 3px 1px; }
+.rail-kb::before {
+  content: ""; position: absolute; inset: -8px -11px; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 58%, rgba(var(--accent-rgb), .9) 72%, transparent 84%);
+  -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: 0; pointer-events: none; z-index: 1;
+}
+.rail-kb::after {
+  content: "KB"; position: absolute; inset: 0; padding: 0 3px;
+  color: transparent; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.9) 48%, transparent 64%);
+  background-size: 240% 100%; -webkit-background-clip: text; background-clip: text;
+  opacity: 0; pointer-events: none; z-index: 2; font: inherit; font-style: inherit;
+}
+.brand-orbit .rail-kb::before { opacity: 1; animation: brand-orbit 3.8s linear infinite; }
+@keyframes brand-orbit { to { transform: rotate(360deg); } }
+.brand-sheen .rail-kb::after { opacity: 1; animation: brand-sheen 2.8s linear infinite; }
+@keyframes brand-sheen {
+  0% { background-position: 180% 0; }
+  100% { background-position: -120% 0; }
+}
+.brand-breathe .rail-kb { animation: brand-breathe 2.7s ease-in-out infinite; }
+@keyframes brand-breathe {
+  0%, 100% { text-shadow: 0 0 8px rgba(var(--accent-rgb), .18); filter: brightness(1); }
+  50% { text-shadow: 0 0 26px rgba(var(--accent-rgb), .7), 0 0 42px rgba(var(--accent-rgb), .3); filter: brightness(1.24); }
+}
+.brand-breathe .rail-title { animation: brand-title-breathe 3.4s ease-in-out infinite; }
+@keyframes brand-title-breathe {
+  0%, 100% { text-shadow: 0 0 0 transparent; }
+  50% { text-shadow: 0 0 18px rgba(var(--accent-rgb), .25); }
+}
+.brand-flicker .rail-kb, .brand-flicker .rail-title { animation: brand-flicker 3.2s steps(1, end) infinite; }
+@keyframes brand-flicker {
+  0%, 9%, 11%, 34%, 36%, 72%, 100% { opacity: 1; filter: none; }
+  10% { opacity: .28; filter: brightness(1.6); }
+  35% { opacity: .55; }
+  73% { opacity: .38; }
+}
+.brand-sweep #railBrandRow::after {
+  content: ""; position: absolute; left: -12%; right: -12%; top: 50%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0; pointer-events: none; animation: brand-sweep 2.6s linear infinite;
+}
+@keyframes brand-sweep {
+  0%, 48% { transform: translateX(-110%); opacity: 0; }
+  58% { opacity: .85; }
+  92% { transform: translateX(110%); opacity: 0; }
+  100% { transform: translateX(110%); opacity: 0; }
+}
+body.perf .rail-kb-lamp, body.perf .rail-kb::before, body.perf .rail-kb::after,
+body.perf .rail-kb, body.perf .rail-title, body.perf #railBrandRow::after { animation: none !important; opacity: 0 !important; }
+body.perf .rail-kb-lamp { opacity: .5 !important; }
+@media (prefers-reduced-motion: reduce) {
+  .rail-kb-lamp, .rail-kb::before, .rail-kb::after, .rail-kb, .rail-title, #railBrandRow::after { animation: none !important; }
+}

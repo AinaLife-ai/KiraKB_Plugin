@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#08060d">
 <title>KiraKB // CATHODE ARCHIVE</title>
-<link rel="stylesheet" href="cathode.css?v=23">
+<link rel="stylesheet" href="cathode.css?v=25">
 </head>
 <body class="boot-hold" data-theme="violet" data-crt="high">
 <svg class="svg-defs" aria-hidden="true" focusable="false">
@@ -55,7 +55,7 @@
       <aside class="rail">
         <div class="rail-top">
           <div class="rail-eyebrow">INDEX / 档案终端</div>
-          <div class="rail-title-row"><span class="rail-kb" id="railKb" data-fx="decode">KB</span><span class="rail-title" id="railTitle" data-fx="glitch">知识库</span></div>
+          <div class="rail-title-row" id="railBrandRow"><span class="rail-kb" id="railKb" data-fx="decode">KB</span><span class="rail-kb-lamp" aria-hidden="true"></span><span class="rail-title" id="railTitle" data-fx="glitch">知识库</span></div>
           <div class="rail-sub">KNOWLEDGE BASE // <span id="railKbCount">0</span> ARCHIVES</div>
         </div>
         <nav class="channel-nav" aria-label="主导航">
@@ -242,7 +242,7 @@
               <div class="view-art" data-art="tasks"></div>
               <div class="view-inner">
                 <div class="chapter-row"><span class="chapter-no">07</span><span class="chapter-rule"></span><span class="chapter-label">TASKS / 任务</span><span class="chapter-stamp">BACKGROUND</span></div>
-                <div class="page-title"><div><div class="eyebrow">THE ARCHIVE WORKS IN THE DARK</div><h1 data-fx="scan">后台正在整理，<em>请不要断电</em></h1><p>版本构建、同步与索引维护的进度。</p></div><button class="btn ghost" id="refreshTasksBtn" type="button"><svg><use href="#i-refresh"></use></svg>刷新</button></div>
+                <div class="page-title"><div><div class="eyebrow">THE ARCHIVE WORKS IN THE DARK</div><h1 data-fx="scan">后台正在整理<em>请不要断电</em></h1><p>版本构建、同步与索引维护的进度。</p></div><button class="btn ghost" id="refreshTasksBtn" type="button"><svg><use href="#i-refresh"></use></svg>刷新</button></div>
                 <div class="panel"><div id="taskList"></div></div>
               </div>
             </section>
@@ -263,7 +263,7 @@
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="modalRoot"></div>
-<script src="textfx.js?v=14"></script>
-<script src="cathode.js?v=11"></script>
+<script src="textfx.js?v=16"></script>
+<script src="cathode.js?v=14"></script>
 </body>
 </html>

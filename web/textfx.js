@@ -66,7 +66,7 @@
   function finish(el, effect) {
     el.classList.remove("fx-burst-radio", "fx-burst-pulse", "fx-burst-scan", "fx-decoding");
     if (!conf.idle) return;
-    if (el.matches && el.matches(".hero-copy h1, .page-title h1, h1[data-fx], #railKb, #railTitle")) {
+    if (el.matches && el.matches(".hero-copy h1, .page-title h1, h1[data-fx]")) {
       // Large Chinese headlines read poorly with RGB ghosting; keep a scan
       // line as the persistent state and reserve radio/pulse for smaller text.
       el.classList.add("fx-idle-scan");
