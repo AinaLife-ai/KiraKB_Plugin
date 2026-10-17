@@ -437,10 +437,24 @@ async def update_document(mgr, kb_id: str, doc_id: str, body: dict):
         return {"error": "Document not found"}, 404
 
     active_ver = await kb.get_active_version()
+    message = "文档已更新并重新向量化"
     if active_ver:
         await active_ver.delete_document(doc_id)
         await kb._vectorize_document(active_ver, doc_id, new_content)
-    return {"ok": True, "message": "文档已更新并重新向量化"}, 200
+        if getattr(mgr, "auto_sync_versions", False):
+            sync_result = await kb.sync_document_to_other_versions(
+                doc_id, active_ver.version_id
+            )
+            for failure in sync_result["failed"]:
+                logger.warning(
+                    f"[kiraKB] auto sync {failure['version_id']} failed: "
+                    f"{failure['error']}"
+                )
+            if sync_result["synced"]:
+                message = f"文档已更新并同步 {len(sync_result['synced'])} 个其它版本"
+            if sync_result["failed"]:
+                message += f"；{len(sync_result['failed'])} 个版本同步失败"
+    return {"ok": True, "message": message}, 200
 
 
 async def delete_document(mgr, kb_id: str, doc_id: str):

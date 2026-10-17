@@ -211,6 +211,26 @@ async def main_async():
     data, status = api.get_recall_global(mgr)
     check("全局召回只读接口", status == 200 and data["enabled"] is True, str(data))
 
+    print("\nU9 前端编辑自动同步其它版本")
+    await api.update_kb_permissions(mgr, "demo", {
+        "add": "open", "edit": "open", "delete": "open", "allow_users": []
+    })
+    mgr.auto_sync_versions = False
+    data, status = await api.update_document(mgr, "demo", doc_c, {"content": "新增条目 v2。"})
+    check("前端编辑成功", status == 200, str(data))
+    fresh_v1 = kb.version_staleness(v1)
+    check("关闭时其它版本待同步",
+          any(d["doc_id"] == doc_c for d in fresh_v1["stale"]), str(fresh_v1["stale"]))
+    mgr.auto_sync_versions = True
+    data, status = await api.update_document(mgr, "demo", doc_c, {"content": "新增条目 v3。"})
+    check("开启后编辑成功", status == 200, str(data))
+    fresh_v1 = kb.version_staleness(v1)
+    fresh_v2 = kb.version_staleness(v2)
+    check("开启后其它版本已同步",
+          all(d["doc_id"] != doc_c for d in fresh_v1["stale"]), str(fresh_v1["stale"]))
+    check("激活版本仍最新",
+          all(d["doc_id"] != doc_c for d in fresh_v2["stale"]), str(fresh_v2["stale"]))
+
     await mgr.close_all()
     await reloaded.close_all()
 
