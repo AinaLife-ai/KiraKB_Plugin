@@ -637,7 +637,7 @@ class KiraKBPlugin(BasePlugin):
 
         ui = payload.get("ui") or {}
         if isinstance(ui, dict):
-            themes = ("violet", "pink", "blue", "amber", "green", "red", "gray")
+            themes = ("violet", "pink", "blue", "amber", "sg", "green", "red", "gray")
             if "theme" in ui:
                 self.ui_theme = str(ui.get("theme") or "violet")
                 if self.ui_theme not in themes:

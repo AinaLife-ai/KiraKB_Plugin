@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#08060d">
-<title>KiraKB // CATHODE ARCHIVE</title>
+<title>KiraKB // 临极档案 · LINJI ARCHIVE</title>
 <link rel="stylesheet" href="cathode.css?v=25">
 </head>
 <body class="boot-hold" data-theme="violet" data-crt="high">
@@ -34,9 +34,9 @@
 <div id="boot" class="boot" aria-hidden="true">
   <div class="boot-static"></div>
   <div class="boot-frame">
-    <div class="boot-kicker">PROJECT // CATHODE ARCHIVE</div>
+    <div class="boot-kicker">PROJECT // 临极档案 · LINJI ARCHIVE</div>
     <div class="boot-logo">KIRA<span>KB</span></div>
-    <div class="boot-sub">KNOWLEDGE RETRIEVAL TERMINAL · MODEL 07</div>
+    <div class="boot-sub">LINJI ARCHIVE · KNOWLEDGE RETRIEVAL · MODEL 07</div>
     <div class="boot-bar"><i></i></div>
     <div class="boot-status"><span id="bootStatus">ACQUIRING SIGNAL</span><b id="bootPct">00</b></div>
   </div>
@@ -47,7 +47,7 @@
 <div class="page">
   <div class="cabinet">
     <div class="cabinet-head">
-      <div class="brand-lockup"><span class="brand-mark">KB</span><span class="brand-name">KIRAKB <i>/</i> CATHODE</span></div>
+      <div class="brand-lockup"><span class="brand-mark">KB</span><span class="brand-name">KIRAKB <i>/</i> LINJI</span></div>
       <div class="cabinet-serial">SN 07–551 · 1024D · SIGNAL LOCKED</div>
       <div class="cabinet-leds" aria-hidden="true"><i></i><i></i><i></i><span>PWR</span></div>
     </div>
@@ -56,6 +56,7 @@
         <div class="rail-top">
           <div class="rail-eyebrow">INDEX / 档案终端</div>
           <div class="rail-title-row" id="railBrandRow"><span class="rail-kb" id="railKb" data-fx="decode">KB</span><span class="rail-kb-lamp" aria-hidden="true"></span><span class="rail-title" id="railTitle" data-fx="glitch">知识库</span></div>
+          <div class="rail-alias" id="railAlias" data-fx="scan">临极档案 <i>/ LINJI ARCHIVE</i></div>
           <div class="rail-sub">KNOWLEDGE BASE // <span id="railKbCount">0</span> ARCHIVES</div>
         </div>
         <nav class="channel-nav" aria-label="主导航">
@@ -210,7 +211,7 @@
                 <div class="page-title"><div><div class="eyebrow">A MACHINE YOU CAN CALL YOURS</div><h1 data-fx="pulse">调到你喜欢的<em>那一道噪点</em></h1><p>主题、显像管、字幕与所有检索参数；大部分即时生效。</p></div><button class="btn primary" id="saveSettingsBtn" type="button"><svg><use href="#i-check"></use></svg>应用设置</button></div>
                 <div class="settings-grid">
                   <div class="panel span-2"><div class="panel-head"><div><span class="mini-label">MACHINE SKIN / 机台皮肤</span><h2>显像管与字幕</h2></div><span class="badge">LIVE</span></div><div class="skin-grid">
-                    <div class="field"><label for="setUiTheme">配色主题</label><select id="setUiTheme"><option value="violet">紫色 · VIOLET</option><option value="pink">粉色 · PINK</option><option value="blue">蓝色 · BLUE</option><option value="amber">黄色 · AMBER</option><option value="green">绿色 · GREEN</option><option value="red">红色 · RED</option><option value="gray">灰色 · GRAY</option></select></div>
+                    <div class="field"><label for="setUiTheme">配色主题</label><select id="setUiTheme"><option value="violet">紫色 · VIOLET</option><option value="pink">粉色 · PINK</option><option value="blue">蓝色 · BLUE</option><option value="amber">黄色 · AMBER</option><option value="sg">命运石之门 · AMBER/TEAL</option><option value="green">绿色 · GREEN</option><option value="red">红色 · RED</option><option value="gray">灰色 · GRAY</option></select></div>
                     <div class="field"><label for="setUiCrt">CRT 强度</label><select id="setUiCrt"><option value="high">高</option><option value="medium">中</option><option value="low">低</option><option value="off">关闭</option></select></div>
                     <div class="field"><label for="setUiTextFx">文字特效</label><select id="setUiTextFx"><option value="mix">混合</option><option value="radio">电波干扰</option><option value="pulse">脉冲</option><option value="type">打字机</option><option value="decode">解码</option><option value="scan">扫描</option><option value="glitch">故障</option></select></div>
                     <div class="field switch-field"><label>性能模式</label><label class="switch"><input id="setUiPerf" type="checkbox"><span></span><b>减少噪点/转场</b></label></div>
@@ -242,7 +243,7 @@
               <div class="view-art" data-art="tasks"></div>
               <div class="view-inner">
                 <div class="chapter-row"><span class="chapter-no">07</span><span class="chapter-rule"></span><span class="chapter-label">TASKS / 任务</span><span class="chapter-stamp">BACKGROUND</span></div>
-                <div class="page-title"><div><div class="eyebrow">THE ARCHIVE WORKS IN THE DARK</div><h1 data-fx="scan">后台正在整理<em>请不要断电</em></h1><p>版本构建、同步与索引维护的进度。</p></div><button class="btn ghost" id="refreshTasksBtn" type="button"><svg><use href="#i-refresh"></use></svg>刷新</button></div>
+                <div class="page-title"><div><div class="eyebrow">THE ARCHIVE WORKS IN THE DARK</div><h1 data-fx="scan">后台正在整理<br><em>请不要断电</em></h1><p>版本构建、同步与索引维护的进度。</p></div><button class="btn ghost" id="refreshTasksBtn" type="button"><svg><use href="#i-refresh"></use></svg>刷新</button></div>
                 <div class="panel"><div id="taskList"></div></div>
               </div>
             </section>
@@ -258,7 +259,7 @@
       </main>
       <aside class="side-console" aria-hidden="true"><div class="console-label">CH</div><div class="console-number" id="consoleNumber">01</div><div class="console-knob"><i></i></div><div class="console-slits"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="console-label bottom">VOL</div><div class="console-knob small"><i></i></div></aside>
     </div>
-    <div class="cabinet-foot"><span>ORIGINAL ARCHIVE TERMINAL // KIRAKB</span><span class="foot-warn">NO SIGNAL LOST</span><span>BUILD 1.4.0</span></div>
+    <div class="cabinet-foot"><span>ORIGINAL ARCHIVE TERMINAL // LINJI</span><span class="foot-warn">NO SIGNAL LOST</span><span>BUILD 1.4.0</span></div>
   </div>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>

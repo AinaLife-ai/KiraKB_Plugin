@@ -1,4 +1,4 @@
-/* Text effects for CATHODE ARCHIVE — typewriter, decode, radio, pulse, scan.
+/* Text effects for LINJI ARCHIVE — typewriter, decode, radio, pulse, scan.
    No canvas, no continuous layout reads. Effects are one-shot + cheap idle CSS. */
 (() => {
   "use strict";
@@ -154,7 +154,7 @@
   }
 
   function init() {
-    document.querySelectorAll(".hero-copy h1, .page-title h1, #railKb, #railTitle").forEach(el => {
+    document.querySelectorAll(".hero-copy h1, .page-title h1, #railKb, #railTitle, #railAlias").forEach(el => {
       if (!el.dataset.fx) el.dataset.fx = "mix";
     });
     document.querySelectorAll(".panel-head h2, .version-model, .version-card h3").forEach(el => el.classList.add("fx-heading"));
@@ -177,10 +177,15 @@
     if (!conf.enabled || !conf.loop || document.hidden) return;
     const root = document.querySelector(".view.is-active");
     if (!root) return;
-    const pool = [...root.querySelectorAll(
-      ".hero-copy h1, .page-title h1, .panel-head h2, .version-model, " +
+    const titles = [...root.querySelectorAll(
+      ".hero-copy h1, .page-title h1, .panel-head h2, .version-model"
+    )];
+    const extras = [...root.querySelectorAll(
       ".entry-main b, .inspect-body h3, .stat-card b, .chapter-label, .eyebrow, #heroQuote"
-    ), document.querySelector("#railKb"), document.querySelector("#railTitle")]
+    )];
+    const brand = [document.querySelector("#railKb"), document.querySelector("#railTitle"), document.querySelector("#railAlias")];
+    const pool = (Math.random() < .72 && titles.length ? titles : titles.concat(extras))
+      .concat(brand)
       .filter(el => el && el.offsetParent !== null && !el.classList.contains("fx-decoding"));
     if (!pool.length) return;
     const el = pool[rand(pool.length)];

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   KiraKB // CATHODE ARCHIVE — original UI sample
+   KiraKB // LINJI ARCHIVE — original UI sample
    Palette system, CRT shell, channel transitions, archive typography.
    ========================================================================== */
 
@@ -1350,3 +1350,59 @@ body.perf .rail-kb-lamp { opacity: .5 !important; }
 @media (prefers-reduced-motion: reduce) {
   .rail-kb-lamp, .rail-kb::before, .rail-kb::after, .rail-kb, .rail-title, #railBrandRow::after { animation: none !important; }
 }
+
+/* 临极档案 alias */
+.rail-alias {
+  margin-top: 4px; font-family: var(--mono); font-size: 8px; letter-spacing: .13em;
+  color: var(--accent); opacity: .9;
+}
+.rail-alias i { font-style: normal; color: var(--dim); }
+@media (max-width: 900px) { .rail-alias { font-size: 7px; margin-top: 2px; } }
+
+/* Steins;Gate-inspired palette: amber CRT + teal worldline */
+body[data-theme="sg"] {
+  --bg:#070706; --bg-2:#0d0c08; --panel:#0e0d09; --panel-2:#17140d; --panel-3:#211b10;
+  --ink:#f4e7c7; --paper:#f4e7c7; --ink-2:#e3cfa5; --muted:#d2b884; --dim:#a88d5c;
+  --line:rgba(224,163,64,.22); --line-2:rgba(224,163,64,.44); --line-soft:rgba(224,163,64,.18);
+  --accent:#e0a340; --accent-rgb:224,163,64; --accent-2:#4cc9b0; --accent-2-rgb:76,201,176;
+  --warn:#f0c36b; --ok:#8fd0aa; --danger:#e06b55; --quote:#f8e8bf;
+  --card-grad:linear-gradient(180deg,rgba(224,163,64,.055),rgba(0,0,0,.30));
+  --hover:rgba(224,163,64,.075);
+  --rail-bg:rgba(8,7,5,.96); --top-bg:rgba(8,7,5,.92);
+  --sheet-bg:linear-gradient(180deg,#17140d,#070706);
+  --toast-bg:#0e0d09; --backdrop:rgba(2,2,1,.82);
+  --track:rgba(224,163,64,.17); --progress-bg:rgba(224,163,64,.12);
+  --shadow:0 30px 90px rgba(0,0,0,.62);
+  --glow:radial-gradient(circle,rgba(224,163,64,.12),rgba(76,201,176,.06) 45%,transparent 70%);
+  --accent-soft:rgba(224,163,64,.08);
+  --accent-line:rgba(224,163,64,.34); --accent-line-strong:rgba(224,163,64,.58);
+  --art-1:#3a2a12; --art-2:#070706; --art-3:#6a4b1b;
+}
+.swatch[data-theme-set="sg"] { --sw:#e0a340; }
+.swatch.random {
+  background: conic-gradient(from 20deg, #b58cff, #ff8fcf, #66c7ff, #ffb547, #e0a340, #8bd46f, #ff6b78, #b58cff);
+  border-color: rgba(255,255,255,.35);
+}
+.swatch.random:hover { outline: 1px solid var(--paper); outline-offset: 2px; }
+
+/* visible persistent title breathing (random replay still runs separately) */
+.fx-title.fx-idle-scan { animation: title-idle-breathe 6.4s ease-in-out infinite; }
+@keyframes title-idle-breathe {
+  0%, 100% { filter: brightness(1); text-shadow: 0 0 0 transparent; }
+  50% { filter: brightness(1.09); text-shadow: 0 0 20px rgba(var(--accent-rgb), .22); }
+}
+.fx-heading { animation: fx-heading-in .55s var(--ease-out) both, title-idle-breathe 7.2s ease-in-out infinite 1s; }
+body.perf .fx-title.fx-idle-scan, body.perf .fx-heading { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .fx-title.fx-idle-scan, .fx-heading { animation: none !important; }
+}
+
+/* SG teal secondary accents */
+body[data-theme="sg"] .rail-kb-lamp,
+body[data-theme="sg"] .hud-dot,
+body[data-theme="sg"] .entry-status.is-recall i {
+  background: var(--accent-2); box-shadow: 0 0 9px var(--accent-2);
+}
+body[data-theme="sg"] .stat-card.accent b { color: var(--accent-2); }
+body[data-theme="sg"] .signal-meter i:nth-child(4),
+body[data-theme="sg"] .signal-meter i:nth-child(5) { background: var(--accent-2); box-shadow: 0 0 7px var(--accent-2); }

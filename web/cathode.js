@@ -1,4 +1,4 @@
-/* KiraKB // CATHODE ARCHIVE — integrated WebUI application */
+/* KiraKB // LINJI ARCHIVE — integrated WebUI application */
 (() => {
   "use strict";
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -6,7 +6,7 @@
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const THEMES = ["violet", "pink", "blue", "amber", "green", "red", "gray"];
+  const THEMES = ["violet", "pink", "blue", "amber", "sg", "green", "red", "gray"];
   const PREFIXES = ["记录", "残页", "旁注", "回收", "未归档", "观测", "编号", "残响"];
   const MOTTOS = [
     "知识不会拯救任何人，它只是让痛苦有了名字。",
@@ -172,9 +172,14 @@
   function renderThemeStrip() {
     const strip = $("#themeStrip");
     if (!strip) return;
-    strip.innerHTML = THEMES.map(t => `<button class="swatch ${t === state.ui.theme ? "is-active" : ""}" type="button" data-theme-set="${t}" title="${t}" aria-label="${t}"></button>`).join("");
+    strip.innerHTML = THEMES.map(t => `<button class="swatch ${t === state.ui.theme ? "is-active" : ""}" type="button" data-theme-set="${t}" title="${t}" aria-label="${t}"></button>`).join("")
+      + `<button class="swatch random" type="button" data-theme-set="random" title="随机配色" aria-label="随机配色"></button>`;
   }
   function setTheme(theme, save = true) {
+    if (theme === "random") {
+      const pool = THEMES.filter(t => t !== state.ui.theme);
+      theme = pool[Math.floor(Math.random() * pool.length)];
+    }
     if (!THEMES.includes(theme)) theme = "violet";
     state.ui.theme = theme;
     document.documentElement.setAttribute("data-theme", "dark");
@@ -295,6 +300,7 @@
     if (!window.KBTextFX) return;
     window.KBTextFX.play($("#railKb"), "mix");
     window.KBTextFX.play($("#railTitle"), "mix");
+    window.KBTextFX.play($("#railAlias"), "mix");
   }
   const BRAND_MODES = ["brand-breathe", "brand-sheen", "brand-orbit", "brand-flicker", "brand-sweep"];
   let brandTimer = null;

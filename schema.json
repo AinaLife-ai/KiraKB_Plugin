@@ -107,7 +107,7 @@
                 "name": "配色主题",
                 "type": "string",
                 "default": "violet",
-                "options": ["violet", "pink", "blue", "amber", "green", "red", "gray"],
+                "options": ["violet", "pink", "blue", "amber", "sg", "green", "red", "gray"],
                 "hint": "前端显像管配色。默认紫；粉色为新增主题。"
             },
             "crt": {
