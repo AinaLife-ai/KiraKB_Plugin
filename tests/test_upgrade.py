@@ -1,6 +1,7 @@
 """Regression tests for the v1.2 upgrade fixes (names, staleness, restore, hybrid)."""
 
 import asyncio
+import hashlib
 import shutil
 import sys
 from pathlib import Path
@@ -88,7 +89,7 @@ async def main_async():
     kb.write_doc_meta(doc_b, meta_b)
     fresh = kb.version_staleness(v1)
     check("缺 meta 哈希时被误报过期", any(d["doc_id"] == doc_b for d in fresh["stale"]), str(fresh["stale"]))
-    filled = kb._backfill_content_hashes()
+    filled = kb._repair_content_hashes()
     check("回填至少 1 条", filled >= 1, str(filled))
     fresh = kb.version_staleness(v1)
     check("回填后 doc_b 恢复干净", all(d["doc_id"] != doc_b for d in fresh["stale"]), str(fresh["stale"]))
@@ -108,6 +109,24 @@ async def main_async():
           bool(kb2.read_doc_meta(doc_b).get("content_hash")), str(kb2.read_doc_meta(doc_b)))
     # Keep the original in-memory KB's cache consistent with the reloaded one.
     kb.write_doc_meta(doc_b, kb2.read_doc_meta(doc_b))
+
+    print("\nU2d CRLF 元数据规范化")
+    check("CRLF/LF 同一哈希",
+          km_mod.content_hash("第一行\r\n第二行") == km_mod.content_hash("第一行\n第二行"))
+    doc_crlf = await kb.add_raw_document("第一行\r\n第二行", "CRLF条目")
+    content = await kb.get_raw_document(doc_crlf)
+    await kb._vectorize_document(kb._versions[v1], doc_crlf, content)
+    legacy = "sha1:" + hashlib.sha1("第一行\r\n第二行".encode("utf-8")).hexdigest()
+    meta = kb.read_doc_meta(doc_crlf)
+    meta["content_hash"] = legacy
+    kb.write_doc_meta(doc_crlf, meta)
+    fresh = kb.version_staleness(v1)
+    check("旧 CRLF 哈希会误报", any(d["doc_id"] == doc_crlf for d in fresh["stale"]), str(fresh["stale"]))
+    repaired = kb._repair_content_hashes()
+    check("修复 CRLF 哈希", repaired >= 1, str(repaired))
+    fresh = kb.version_staleness(v1)
+    check("修复后 CRLF 条目不误报",
+          all(d["doc_id"] != doc_crlf for d in fresh["stale"]), str(fresh["stale"]))
 
     print("\nU3  增量同步")
     result = await kb.sync_version(v1)

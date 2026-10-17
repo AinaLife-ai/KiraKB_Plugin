@@ -90,7 +90,7 @@ KiraKB/
     ├── run_tests.py        # 既有回归套件（42 项）
     ├── test_permissions.py # 权限矩阵与工具层校验（28 项）
     ├── test_recall.py      # 被动召回与注入形态（36 项）
-    ├── test_upgrade.py     # 显示名、版本新鲜度、哈希回填、恢复、口径统一（32 项）
+    ├── test_upgrade.py     # 显示名、版本新鲜度、哈希修复、恢复、口径统一（36 项）
     ├── test_history.py     # 修订历史、原始版本保留、裁剪、回退（32 项）
     ├── test_lexical.py     # 标题 OR 内容、短词、时间开关、索引更新（22 项）
     ├── test_settings.py    # 热设置、存储/WebUI 热切换、配置覆盖（43 项）
@@ -112,7 +112,7 @@ python3 tests/test_settings.py
 python3 tests/test_dependencies.py
 ```
 
-全部通过后分别输出 `42/42`、`28/28`、`36/36`、`32/32`、`32/32`、`22/22`、`43/43`、`16/16`。测试使用桩 `core` 包，不需要 KiraAI 本体。
+全部通过后分别输出 `42/42`、`28/28`、`36/36`、`36/36`、`32/32`、`22/22`、`43/43`、`16/16`。测试使用桩 `core` 包，不需要 KiraAI 本体。
 
 ---
 
@@ -453,6 +453,12 @@ data/knowledge_base/
 
 <details>
 <summary>点击展开更新日志</summary>
+
+### 1.3.2
+
+- 修复 Windows CRLF 上传的条目在 1.3.1 后仍显示“待同步”：1.3.1 只补缺失哈希，而旧 CRLF 哈希非空，和按 LF 构建的版本哈希仍不一致。
+- `content_hash` 统一按 LF 规范化；启动时重新核对并修复所有不一致的元数据哈希，不只补空值。
+- 不修改 `updated_at`；真实编辑过的条目仍会正常显示待同步。
 
 ### 1.3.1
 
