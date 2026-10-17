@@ -285,9 +285,15 @@
     window.KBTextFX.init();
     applyUi();
     window.KBTextFX.replayView(state.view);
+    replayBrand();
   }
   function replayText() {
     if (window.KBTextFX) window.KBTextFX.replayView(state.view || "catalog");
+  }
+  function replayBrand() {
+    if (!window.KBTextFX) return;
+    window.KBTextFX.play($("#railKb"), "mix");
+    window.KBTextFX.play($("#railTitle"), "mix");
   }
   function runBoot() {
     const boot = $("#boot");
@@ -311,7 +317,7 @@
       clearInterval(boot.timer);
       boot.classList.add("is-off"); document.body.classList.remove("boot-hold");
       setTimeout(() => { boot.style.display = "none"; }, 600);
-      replayText(); startQuoteTimer();
+      replayText(); replayBrand(); startQuoteTimer();
     }
   }
 
@@ -788,6 +794,7 @@
       $("#viewStack").scrollTop = 0;
       if (view === "settings") { loadSettings().then(renderSettings); syncUiControls(); }
       replayText();
+      replayBrand();
     }, 170);
     setTimeout(() => screen.classList.remove("is-cutting"), 380);
   }

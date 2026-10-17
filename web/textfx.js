@@ -66,7 +66,7 @@
   function finish(el, effect) {
     el.classList.remove("fx-burst-radio", "fx-burst-pulse", "fx-burst-scan", "fx-decoding");
     if (!conf.idle) return;
-    if (el.matches && el.matches(".hero-copy h1, .page-title h1, h1[data-fx]")) {
+    if (el.matches && el.matches(".hero-copy h1, .page-title h1, h1[data-fx], #railKb, #railTitle")) {
       // Large Chinese headlines read poorly with RGB ghosting; keep a scan
       // line as the persistent state and reserve radio/pulse for smaller text.
       el.classList.add("fx-idle-scan");
@@ -145,15 +145,16 @@
       if (!el.dataset.fx) el.dataset.fx = "mix";
       later(el, () => play(el, el.dataset.fx), i * 60);
     });
-    root.querySelectorAll(".panel-head h2, .version-model, .version-card h3").forEach(el => {
+    root.querySelectorAll(".panel-head h2, .version-model, .version-card h3").forEach((el, i) => {
       el.classList.remove("fx-heading");
       void el.offsetWidth;
       el.classList.add("fx-heading");
+      later(el, () => play(el, ["scan", "pulse", "radio"][i % 3]), 40 + i * 35);
     });
   }
 
   function init() {
-    document.querySelectorAll(".hero-copy h1, .page-title h1").forEach(el => {
+    document.querySelectorAll(".hero-copy h1, .page-title h1, #railKb, #railTitle").forEach(el => {
       if (!el.dataset.fx) el.dataset.fx = "mix";
     });
     document.querySelectorAll(".panel-head h2, .version-model, .version-card h3").forEach(el => el.classList.add("fx-heading"));
@@ -179,12 +180,15 @@
     const pool = [...root.querySelectorAll(
       ".hero-copy h1, .page-title h1, .panel-head h2, .version-model, " +
       ".entry-main b, .inspect-body h3, .stat-card b, .chapter-label, .eyebrow, #heroQuote"
-    )].filter(el => el.offsetParent !== null && !el.classList.contains("fx-decoding"));
+    ), document.querySelector("#railKb"), document.querySelector("#railTitle")]
+      .filter(el => el && el.offsetParent !== null && !el.classList.contains("fx-decoding"));
     if (!pool.length) return;
     const el = pool[rand(pool.length)];
     const effect = el.matches(".stat-card b") ? "pulse"
       : el.matches(".chapter-label, .eyebrow") ? "scan"
-      : VARIANTS[rand(VARIANTS.length)];
+      : el.matches("#railKb") ? "decode"
+      : el.matches("#railTitle") ? "scan"
+      : ["radio", "pulse", "scan"][rand(3)];
     if (el.id === "heroQuote") {
       const panel = el.closest(".hero-quote");
       if (panel) {

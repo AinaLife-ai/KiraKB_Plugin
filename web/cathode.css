@@ -1241,3 +1241,43 @@ body[data-theme="pink"] {
 .entry-status { color: var(--ok) !important; font-size: 8.5px; }
 .entry-status i { box-shadow: 0 0 5px currentColor; }
 .entry-main b { color: var(--ink) !important; }
+
+/* artistic type + KB brand */
+:root {
+  --display: "Bodoni 72", "Didot", "Playfair Display", "Iowan Old Style",
+             "Palatino Linotype", "Noto Serif SC", "Source Han Serif SC",
+             "Songti SC", "STSong", "SimSun", Georgia, serif;
+  --serif: "Iowan Old Style", "Palatino Linotype", "Noto Serif SC",
+           "Source Han Serif SC", "Songti SC", "STSong", "SimSun", Georgia, serif;
+}
+body { font-family: var(--serif); font-feature-settings: "kern" 1, "liga" 1; }
+.hero-copy h1, .page-title h1 {
+  font-family: var(--display); font-weight: 500; letter-spacing: -.028em;
+  font-feature-settings: "kern" 1, "liga" 1, "dlig" 1;
+}
+.hero-copy h1 em, .page-title h1 em { font-weight: 400; letter-spacing: -.012em; }
+.rail-title-row { display: flex; align-items: baseline; gap: 8px; margin-top: 8px; }
+.rail-kb {
+  font-family: var(--display); font-size: 27px; line-height: 1;
+  color: var(--accent); letter-spacing: -.06em; font-style: italic;
+  text-shadow: 0 0 18px rgba(var(--accent-rgb), .25);
+}
+.rail-title {
+  font-family: var(--display); font-size: 28px; line-height: 1.05;
+  letter-spacing: -.02em;
+}
+.rail-title-row .fx-ch { line-height: 1.05; }
+.hero-lede, .page-title p { font-family: var(--serif); font-size: 15.5px; line-height: 1.85; }
+.inspect-content { font-size: 14px; line-height: 1.9; }
+.entry-main b { font-family: var(--serif); font-size: 14.5px; }
+.modal-body .doc-text {
+  font-family: var(--serif) !important; font-size: 15.5px !important;
+  line-height: 1.9 !important; padding: 14px !important;
+}
+.modal-body .field label { font-family: var(--mono); }
+@media (max-width: 900px) {
+  .rail-title-row { margin-top: 3px; }
+  .rail-kb { font-size: 20px; }
+  .rail-title { font-size: 21px; }
+  .hero-lede, .page-title p { font-size: 14px; }
+}

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#08060d">
 <title>KiraKB // CATHODE ARCHIVE</title>
-<link rel="stylesheet" href="cathode.css?v=20">
+<link rel="stylesheet" href="cathode.css?v=23">
 </head>
 <body class="boot-hold" data-theme="violet" data-crt="high">
 <svg class="svg-defs" aria-hidden="true" focusable="false">
@@ -55,7 +55,7 @@
       <aside class="rail">
         <div class="rail-top">
           <div class="rail-eyebrow">INDEX / 档案终端</div>
-          <div class="rail-title">知识库</div>
+          <div class="rail-title-row"><span class="rail-kb" id="railKb" data-fx="decode">KB</span><span class="rail-title" id="railTitle" data-fx="glitch">知识库</span></div>
           <div class="rail-sub">KNOWLEDGE BASE // <span id="railKbCount">0</span> ARCHIVES</div>
         </div>
         <nav class="channel-nav" aria-label="主导航">
@@ -110,7 +110,7 @@
                 <div class="hero-grid">
                   <div class="hero-copy">
                     <div class="eyebrow">KNOWLEDGE IS A CONTAINMENT UNIT</div>
-                    <h1 data-fx="decode">记忆不是档案。<br><em>但档案会记得。</em></h1>
+                    <h1 data-fx="decode">记忆不是档案<br><em>但档案会记得</em></h1>
                     <p class="hero-lede">从已建立的知识库中抽取、编排、复述。这里的每一行字幕都来自真实条目，而不是装饰性的空话。</p>
                     <div class="hero-actions">
                       <button class="btn primary" type="button" id="heroUploadBtn"><svg><use href="#i-upload"></use></svg>导入条目</button>
@@ -159,9 +159,9 @@
               <div class="view-art" data-art="versions"></div>
               <div class="view-inner">
                 <div class="chapter-row"><span class="chapter-no">02</span><span class="chapter-rule"></span><span class="chapter-label">VERSIONS / 版本</span><span class="chapter-stamp">3 INDEXES</span></div>
-                <div class="page-title"><div><div class="eyebrow">MULTI-MODEL CONTAINMENT</div><h1 data-fx="scan">同一段记忆，<em>不同的折射率。</em></h1><p>版本不是活索引。新增只写激活版本，编辑默认也只更新激活版本。</p></div><button class="btn primary" id="newVersionBtn" type="button"><svg><use href="#i-plus"></use></svg>新建版本</button></div>
+                <div class="page-title"><div><div class="eyebrow">MULTI-MODEL CONTAINMENT</div><h1 data-fx="scan">同一段记忆，<em>不同的折射率</em></h1><p>版本不是活索引。新增只写激活版本，编辑默认也只更新激活版本。</p></div><button class="btn primary" id="newVersionBtn" type="button"><svg><use href="#i-plus"></use></svg>新建版本</button></div>
                 <div class="version-grid" id="versionGrid"></div>
-                <div class="panel version-note"><div><span class="mini-label">FRESHNESS RULE / 新鲜度规则</span><h2>版本不是活索引。</h2><p>新增条目只写入激活版本；编辑默认只更新激活版本。其它版本按条目哈希与时间戳判断是否需要同步。删除和恢复会作用于所有可用版本。</p></div><div class="rule-diagram" aria-hidden="true"><span>EDIT</span><i></i><span>ACTIVE</span><i></i><span>SYNC</span></div></div>
+                <div class="panel version-note"><div><span class="mini-label">FRESHNESS RULE / 新鲜度规则</span><h2>版本不是活索引</h2><p>新增条目只写入激活版本；编辑默认只更新激活版本。其它版本按条目哈希与时间戳判断是否需要同步。删除和恢复会作用于所有可用版本。</p></div><div class="rule-diagram" aria-hidden="true"><span>EDIT</span><i></i><span>ACTIVE</span><i></i><span>SYNC</span></div></div>
               </div>
             </section>
 
@@ -170,7 +170,7 @@
               <div class="view-art" data-art="search"></div>
               <div class="view-inner">
                 <div class="chapter-row"><span class="chapter-no">03</span><span class="chapter-rule"></span><span class="chapter-label">SEARCH / 检索</span><span class="chapter-stamp">SIGNAL QUERY</span></div>
-                <div class="page-title"><div><div class="eyebrow">THE ARCHIVE ANSWERS</div><h1 data-fx="decode">不要等它发问，<em>先检索。</em></h1><p>从词法到语义，找到那条被遗忘的记录。</p></div></div>
+                <div class="page-title"><div><div class="eyebrow">THE ARCHIVE ANSWERS</div><h1 data-fx="decode">不要等它发问，<em>先检索</em></h1><p>从词法到语义，找到那条被遗忘的记录。</p></div></div>
                 <div class="panel search-panel"><div class="search-big"><svg><use href="#i-search"></use></svg><input id="searchInput" type="text" placeholder="想查什么？" autocomplete="off"><button class="btn primary" id="searchBtn" type="button">检索</button></div><div class="search-meta"><span>MODE <b id="searchMode">向量</b></span><span>RANGE <b>当前知识库</b></span><span>ENTER 检索</span></div><div id="searchResults" class="search-results"><div class="inspect-empty">输入关键词，按下回车。</div></div></div>
               </div>
             </section>
@@ -180,7 +180,7 @@
               <div class="view-art" data-art="access"></div>
               <div class="view-inner">
                 <div class="chapter-row"><span class="chapter-no">04</span><span class="chapter-rule"></span><span class="chapter-label">ACCESS / 权限</span><span class="chapter-stamp">OPEN CHANNEL</span></div>
-                <div class="page-title"><div><div class="eyebrow">WHO MAY WRITE TO THE ARCHIVE</div><h1 data-fx="glitch">不是所有人，<em>都能修改过去。</em></h1><p>知识库默认值与条目例外分开管理。</p></div><button class="btn primary" id="savePermBtn" type="button"><svg><use href="#i-check"></use></svg>保存策略</button></div>
+                <div class="page-title"><div><div class="eyebrow">WHO MAY WRITE TO THE ARCHIVE</div><h1 data-fx="glitch">不是所有人，<em>都能修改过去</em></h1><p>知识库默认值与条目例外分开管理。</p></div><button class="btn primary" id="savePermBtn" type="button"><svg><use href="#i-check"></use></svg>保存策略</button></div>
                 <div class="permission-grid">
                   <div class="panel"><div class="panel-head"><div><span class="mini-label">KB POLICY / 知识库策略</span><h2>默认写入权限</h2></div><span class="badge">ADMIN ONLY</span></div><div class="policy-table"><div class="policy-row"><span>新增条目</span><select class="policy-select" id="policyAdd"><option value="open">开放</option><option value="whitelist">名单</option><option value="admin">仅人工</option><option value="off">冻结</option></select><span class="badge">ALLOW</span></div><div class="policy-row"><span>编辑条目</span><select class="policy-select" id="policyEdit"><option value="open">开放</option><option value="whitelist">名单</option><option value="admin">仅人工</option><option value="off">冻结</option></select><span class="badge">ALLOW</span></div><div class="policy-row"><span>删除条目</span><select class="policy-select" id="policyDelete"><option value="open">开放</option><option value="whitelist">名单</option><option value="admin">仅人工</option><option value="off">冻结</option></select><span class="badge">ALLOW</span></div></div><div class="field-label">允许名单 <small>每行一个用户 ID；留空表示不限制</small></div><textarea id="kbAllowUsers" rows="3" placeholder="42&#10;7"></textarea></div>
                   <div class="panel"><div class="panel-head"><div><span class="mini-label">ENTRY OVERRIDE / 条目覆盖</span><h2>例外与例外之外</h2></div><span class="badge" id="overrideCount">0 OVERRIDES</span></div><div class="entry-policy-list" id="entryPolicyList"></div><div class="notice"><span>!</span><p>条目级策略优先于知识库默认值。`off` 同时阻止 WebUI 与 AI 写入。</p></div></div>
@@ -193,7 +193,7 @@
               <div class="view-art" data-art="recall"></div>
               <div class="view-inner">
                 <div class="chapter-row"><span class="chapter-no">05</span><span class="chapter-rule"></span><span class="chapter-label">RECALL / 召回</span><span class="chapter-stamp">PASSIVE LISTENING</span></div>
-                <div class="page-title"><div><div class="eyebrow">THE ARCHIVE SPEAKS FIRST</div><h1 data-fx="type">不要等它发问。<em>先让记忆开口。</em></h1><p>进入请求上下文，但不写入历史。</p></div><div class="toggle-big" id="globalRecallBadge"><span></span><b>全局召回</b><small>OFF</small></div></div>
+                <div class="page-title"><div><div class="eyebrow">THE ARCHIVE SPEAKS FIRST</div><h1 data-fx="type">不要等它发问，<em>先让记忆开口</em></h1><p>进入请求上下文，但不写入历史。</p></div><div class="toggle-big" id="globalRecallBadge"><span></span><b>全局召回</b><small>OFF</small></div></div>
                 <div class="recall-grid">
                   <div class="panel"><div class="panel-head"><div><span class="mini-label">KB RECALL / 知识库召回</span><h2>对此知识库启用</h2></div><span class="badge">KB LEVEL</span></div><div class="control-row"><label for="kbRecallEnabled">启用召回</label><label class="switch"><input id="kbRecallEnabled" type="checkbox"><span></span></label></div><div class="control-row"><label for="kbRecallTopK">条数 <small>留空跟随全局</small></label><input id="kbRecallTopK" type="number" min="1" max="10" placeholder="全局"></div><div class="control-row"><label for="kbRecallMinScore">最低相似度</label><input id="kbRecallMinScore" type="number" min="0" max="1" step="0.01" placeholder="全局"></div><div class="control-row"><label for="kbRecallMaxChars">字符上限</label><input id="kbRecallMaxChars" type="number" min="100" max="8000" placeholder="全局"></div><div class="panel-foot"><button class="btn primary" id="saveKbRecallBtn" type="button">保存召回</button></div></div>
                   <div class="panel"><div class="panel-head"><div><span class="mini-label">GLOBAL / 全局</span><h2>只读快照</h2></div><span class="badge">READ ONLY</span></div><div class="radar-log" id="globalRecallInfo"><p><b>MODE</b> —</p><p><b>TOP K</b> —</p><p><b>MIN SCORE</b> —</p><p><b>MAX CHARS</b> —</p></div><div class="notice"><span>i</span><p>全局参数在机台设置中修改；这里只显示当前生效值。</p></div></div>
@@ -207,7 +207,7 @@
               <div class="view-art" data-art="settings"></div>
               <div class="view-inner">
                 <div class="chapter-row"><span class="chapter-no">06</span><span class="chapter-rule"></span><span class="chapter-label">MACHINE SETTINGS / 机台设置</span><span class="chapter-stamp">USER SKIN</span></div>
-                <div class="page-title"><div><div class="eyebrow">A MACHINE YOU CAN CALL YOURS</div><h1 data-fx="pulse">调到你喜欢的<em>那一道噪点。</em></h1><p>主题、显像管、字幕与所有检索参数；大部分即时生效。</p></div><button class="btn primary" id="saveSettingsBtn" type="button"><svg><use href="#i-check"></use></svg>应用设置</button></div>
+                <div class="page-title"><div><div class="eyebrow">A MACHINE YOU CAN CALL YOURS</div><h1 data-fx="pulse">调到你喜欢的<em>那一道噪点</em></h1><p>主题、显像管、字幕与所有检索参数；大部分即时生效。</p></div><button class="btn primary" id="saveSettingsBtn" type="button"><svg><use href="#i-check"></use></svg>应用设置</button></div>
                 <div class="settings-grid">
                   <div class="panel span-2"><div class="panel-head"><div><span class="mini-label">MACHINE SKIN / 机台皮肤</span><h2>显像管与字幕</h2></div><span class="badge">LIVE</span></div><div class="skin-grid">
                     <div class="field"><label for="setUiTheme">配色主题</label><select id="setUiTheme"><option value="violet">紫色 · VIOLET</option><option value="pink">粉色 · PINK</option><option value="blue">蓝色 · BLUE</option><option value="amber">黄色 · AMBER</option><option value="green">绿色 · GREEN</option><option value="red">红色 · RED</option><option value="gray">灰色 · GRAY</option></select></div>
@@ -242,7 +242,7 @@
               <div class="view-art" data-art="tasks"></div>
               <div class="view-inner">
                 <div class="chapter-row"><span class="chapter-no">07</span><span class="chapter-rule"></span><span class="chapter-label">TASKS / 任务</span><span class="chapter-stamp">BACKGROUND</span></div>
-                <div class="page-title"><div><div class="eyebrow">THE ARCHIVE WORKS IN THE DARK</div><h1 data-fx="scan">后台正在整理，<em>请不要断电。</em></h1><p>版本构建、同步与索引维护的进度。</p></div><button class="btn ghost" id="refreshTasksBtn" type="button"><svg><use href="#i-refresh"></use></svg>刷新</button></div>
+                <div class="page-title"><div><div class="eyebrow">THE ARCHIVE WORKS IN THE DARK</div><h1 data-fx="scan">后台正在整理，<em>请不要断电</em></h1><p>版本构建、同步与索引维护的进度。</p></div><button class="btn ghost" id="refreshTasksBtn" type="button"><svg><use href="#i-refresh"></use></svg>刷新</button></div>
                 <div class="panel"><div id="taskList"></div></div>
               </div>
             </section>
@@ -263,7 +263,7 @@
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="modalRoot"></div>
-<script src="textfx.js?v=10"></script>
-<script src="cathode.js?v=9"></script>
+<script src="textfx.js?v=14"></script>
+<script src="cathode.js?v=11"></script>
 </body>
 </html>
