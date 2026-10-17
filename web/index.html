@@ -1,975 +1,2315 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KiraKB 知识库管理</title>
-<link rel="icon" href="data:,">
+<script>try{if(localStorage.getItem("kirakb-theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
+<title>KiraKB — Knowledge Archive</title>
 <style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+:root{
+  /* default: day mode, lilac white (the pre-1.2 palette family) */
+  --ink:#f7f4ff; --ink-2:#ffffff; --ink-3:#efe9ff; --paper:#241c3d;
+  --muted:#6f6889; --faint:#9a93b0;
+  --line:rgba(84,62,150,.12); --line-2:rgba(84,62,150,.22);
+  --acid:#7c5cff; --violet:#a78bfa; --cyan:#0f9b8e; --danger:#e11d48;
+  --ok:#0f9b8e; --warn:#b26a00; --info:#6d4aff; --bad:#d61f4a;
+  --card-grad:linear-gradient(180deg,#ffffff,#fbf9ff);
+  --hover:rgba(124,92,255,.07);
+  --rail-bg:rgba(255,255,255,.80);
+  --top-bg:rgba(249,246,255,.86);
+  --sheet-bg:linear-gradient(180deg,#ffffff,#fbf9ff);
+  --toast-bg:#ffffff;
+  --backdrop:rgba(45,32,80,.38);
+  --track:rgba(84,62,150,.16);
+  --progress-bg:rgba(84,62,150,.10);
+  --shadow:0 24px 70px rgba(80,50,150,.16);
+  --glow:radial-gradient(circle,rgba(124,92,255,.12),rgba(240,171,252,.08) 45%,transparent 70%);
+  --glow-opacity:.8; --grain-opacity:.035; --grain-blend:multiply; --aurora-opacity:.22;
+  --accent-soft:rgba(124,92,255,.07);
+  --accent-line:rgba(124,92,255,.32);
+  --accent-line-strong:rgba(124,92,255,.48);
+  --radius:22px; --radius-sm:14px;
+  --display:"Instrument Serif","Bodoni MT","Times New Roman","Songti SC","Noto Serif SC",serif;
+  --sans:"Inter","SF Pro Text","Segoe UI","PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+  --mono:"SF Mono","JetBrains Mono","Cascadia Code",ui-monospace,Menlo,monospace;
 }
-body {
-  font-family: system-ui, -apple-system, 'Segoe UI', 'Inter', sans-serif;
-  background: #f0f2f5;
-  color: #1e293b;
-  padding: 24px;
+html[data-theme="dark"]{
+  --ink:#07080a; --ink-2:#0b0d11; --ink-3:#11141a; --paper:#f3f0e8;
+  --muted:#8c919b; --faint:#5b606a;
+  --line:rgba(243,240,232,.10); --line-2:rgba(243,240,232,.18);
+  --acid:#d9ff43; --violet:#7c5cff; --cyan:#5eead4; --danger:#ff5c5c;
+  --ok:#5eead4; --warn:#ffb35c; --info:#b3a2ff; --bad:#ff5c5c;
+  --card-grad:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.008));
+  --hover:rgba(243,240,232,.05);
+  --rail-bg:rgba(7,8,10,.72);
+  --top-bg:rgba(7,8,10,.78);
+  --sheet-bg:linear-gradient(180deg,#0e1116,#0a0c10);
+  --toast-bg:#0f1217;
+  --backdrop:rgba(3,4,6,.66);
+  --track:rgba(243,240,232,.14);
+  --progress-bg:rgba(243,240,232,.08);
+  --shadow:0 40px 120px rgba(0,0,0,.6);
+  --glow:radial-gradient(circle,rgba(217,255,67,.08),rgba(124,92,255,.05) 40%,transparent 68%);
+  --glow-opacity:.55; --grain-opacity:.05; --grain-blend:overlay; --aurora-opacity:.38;
+  --accent-soft:rgba(217,255,67,.05);
+  --accent-line:rgba(217,255,67,.30);
+  --accent-line-strong:rgba(217,255,67,.45);
 }
-.container {
-  max-width: 1600px;
-  margin: 0 auto;
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--ink); color:var(--paper); font-family:var(--sans);
+  font-size:15px; line-height:1.55; overflow-x:hidden;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
 }
-h1 {
-  font-size: 1.8rem;
-  font-weight: 600;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+::selection{background:var(--acid); color:var(--ink)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none}
+a{color:inherit}
+img{max-width:100%}
+
+/* ---------- atmosphere ---------- */
+.aurora{position:fixed;inset:0;z-index:-3;pointer-events:none;overflow:hidden}
+.aurora i{position:absolute;display:block;border-radius:50%;filter:blur(90px);opacity:var(--aurora-opacity)}
+.aurora i:nth-child(1){width:52vw;height:52vw;left:-12vw;top:-18vw;background:radial-gradient(circle,#2a2f7a,transparent 65%)}
+.aurora i:nth-child(2){width:44vw;height:44vw;right:-10vw;top:6vh;background:radial-gradient(circle,#0f4d4a,transparent 68%);opacity:calc(var(--aurora-opacity) * .74)}
+.aurora i:nth-child(3){width:38vw;height:38vw;left:28vw;bottom:-18vw;background:radial-gradient(circle,#4a1f5e,transparent 66%);opacity:calc(var(--aurora-opacity) * .63)}
+.grain{
+  position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:var(--grain-opacity);mix-blend-mode:var(--grain-blend);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/></svg>");
 }
-h1::before {
-  content: "📚";
-  font-size: 2rem;
+.cursor-glow{
+  position:fixed;left:0;top:0;width:520px;height:520px;z-index:-1;pointer-events:none;
+  transform:translate3d(-50%,-50%,0);opacity:var(--glow-opacity);
+  background:var(--glow);
 }
-.kb-header {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  align-items: center;
+.scroll-progress{position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,var(--acid),var(--cyan));z-index:60;transition:width .12s linear}
+
+/* ---------- shell ---------- */
+.shell{display:flex;min-height:100vh}
+.rail{
+  position:fixed;left:0;top:0;bottom:0;width:88px;z-index:40;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:22px 0;border-right:1px solid var(--line);
+  background:var(--rail-bg);backdrop-filter:blur(18px);
 }
-.kb-selector {
-  flex: 2;
-  min-width: 200px;
+.brand{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:26px;user-select:none}
+.brand .mark{font-family:var(--display);font-size:34px;line-height:.9;letter-spacing:-.04em}
+.brand .dot{width:5px;height:5px;border-radius:50%;background:var(--acid);box-shadow:0 0 14px var(--acid)}
+.nav{display:flex;flex-direction:column;gap:6px;width:100%;align-items:center}
+.nav button{
+  position:relative;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;
+  color:var(--muted);transition:color .2s,background .2s,transform .2s;
 }
-select, input, textarea, button {
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  background: white;
-  font-size: 0.9rem;
-  transition: all 0.2s;
+.nav button:hover{color:var(--paper);background:var(--hover);transform:translateY(-1px)}
+.nav button.is-active{color:var(--ink);background:var(--acid)}
+.nav button.is-active::after{
+  content:"";position:absolute;left:-21px;width:3px;height:18px;border-radius:3px;background:var(--acid);
 }
-select:focus, input:focus, textarea:focus {
-  outline: none;
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+.nav button span.tip{
+  position:absolute;left:58px;top:50%;transform:translateY(-50%) translateX(-4px);
+  padding:6px 10px;border-radius:8px;background:var(--ink-3);border:1px solid var(--line);
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  white-space:nowrap;opacity:0;pointer-events:none;transition:.18s;color:var(--paper);
 }
-button {
-  background: #4f46e5;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
+.nav button:hover span.tip{opacity:1;transform:translateY(-50%) translateX(0)}
+.theme-toggle{margin-top:auto;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:var(--muted);border:1px solid var(--line);transition:.2s;background:var(--ink-2)}
+.theme-toggle:hover{color:var(--paper);border-color:var(--line-2);transform:translateY(-1px)}
+.rail-foot{margin-top:14px;font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--faint);writing-mode:vertical-rl}
+
+.main{margin-left:88px;width:calc(100% - 88px);max-width:1560px;padding:0 44px 90px}
+.topbar{
+  position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:18px;
+  height:84px;border-bottom:1px solid var(--line);
+  background:var(--top-bg);backdrop-filter:blur(18px);
 }
-button:hover {
-  background: #4338ca;
-  transform: translateY(-1px);
+.topbar .left{display:flex;align-items:center;gap:14px;min-width:0}
+.kb-select-wrap{position:relative}
+select.kb-select{
+  appearance:none;background:transparent;border:1px solid var(--line-2);border-radius:999px;
+  padding:10px 38px 10px 16px;font-size:13px;color:var(--paper);max-width:280px;
 }
-button.danger {
-  background: #ef4444;
+select.kb-select:focus{outline:none;border-color:var(--acid)}
+.kb-select-wrap::after{
+  content:"";position:absolute;right:14px;top:50%;width:8px;height:8px;pointer-events:none;
+  border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);
+  transform:translateY(-70%) rotate(45deg);
 }
-button.danger:hover {
-  background: #dc2626;
+.top-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-2);
+  border-radius:999px;padding:10px 18px;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--paper);white-space:nowrap;
+  transition:background .22s,color .22s,border-color .22s,transform .18s;
 }
-button.secondary {
-  background: #64748b;
+.btn:hover{background:var(--paper);color:var(--ink);border-color:var(--paper);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.solid{background:var(--acid);border-color:var(--acid);color:var(--ink)}
+.btn.solid:hover{background:var(--paper);border-color:var(--paper)}
+.btn.danger:hover{background:var(--danger);border-color:var(--danger);color:var(--ink)}
+#confirmOk.danger{background:var(--danger);border-color:var(--danger);color:var(--ink)}
+.btn.ghost{border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--paper);background:var(--hover)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.icon-btn{
+  width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  border:1px solid transparent;color:var(--muted);transition:.18s;
 }
-button.small {
-  padding: 4px 10px;
-  font-size: 0.8rem;
+.icon-btn:hover{color:var(--paper);background:var(--hover);border-color:var(--line)}
+.icon-btn.danger:hover{color:var(--danger)}
+.icon-btn.acid:hover{color:var(--acid)}
+
+/* ---------- views ---------- */
+.view{display:none;padding-top:34px}
+.view.is-active{display:block}
+.view.is-entering{animation:viewIn .5s cubic-bezier(.2,.7,.2,1) both}
+@keyframes viewIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+.hero{position:relative;padding:26px 0 42px}
+.hero h1{
+  font-family:var(--display);font-weight:400;font-size:clamp(56px,8.4vw,124px);
+  line-height:.88;letter-spacing:-.045em;margin:14px 0 18px;max-width:14ch;
 }
-.card {
-  background: white;
-  border-radius: 16px;
-  padding: 20px 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  transition: box-shadow 0.2s;
+.hero h1 em{font-style:italic;color:var(--acid)}
+.hero p{max-width:62ch;color:var(--muted);font-size:16px}
+.hero-kb{font-family:var(--sans);font-size:12px;letter-spacing:.02em;text-transform:none;color:var(--paper)}
+.title-dot{color:var(--acid);font-style:normal}
+.hero-meta{display:flex;gap:22px;margin-top:26px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.hero-meta b{color:var(--paper);font-weight:500}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:34px}
+.stat{background:var(--card-grad);padding:26px 24px;min-height:150px;display:flex;flex-direction:column;justify-content:space-between;transition:background .3s}
+.stat:hover{background:var(--hover)}
+.stat .num{font-family:var(--display);font-size:clamp(42px,5vw,72px);line-height:.9;letter-spacing:-.03em}
+.stat .num small{font-size:18px;color:var(--muted);font-family:var(--mono);letter-spacing:0;margin-left:6px}
+.stat .label{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.stat .sub{font-size:12px;color:var(--faint);margin-top:8px}
+
+.grid-2{display:grid;grid-template-columns:1.45fr 1fr;gap:22px;align-items:start}
+.panel{border:1px solid var(--line);border-radius:var(--radius);background:var(--card-grad);overflow:hidden}
+.panel-head{display:flex;align-items:center;gap:12px;padding:20px 24px;border-bottom:1px solid var(--line)}
+.panel-head h2{font-size:14px;font-weight:500;letter-spacing:.02em}
+.panel-head .count{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.12em}
+.panel-body{padding:8px 10px 10px}
+.panel-foot{padding:14px 24px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;justify-content:flex-end}
+
+.empty{padding:44px 24px;text-align:center;color:var(--faint)}
+.empty .big{font-family:var(--display);font-size:34px;color:var(--muted);margin-bottom:6px}
+
+/* document rows */
+.doc-toolbar{display:flex;gap:10px;align-items:center;padding:18px 24px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.search-mini{position:relative;flex:1;min-width:200px}
+.search-mini input{width:100%;background:transparent;border:1px solid var(--line-2);border-radius:12px;padding:10px 14px 10px 38px;font-size:13px}
+.search-mini input:focus{outline:none;border-color:var(--acid)}
+.search-mini svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.dropzone{
+  margin:18px 24px 6px;border:1px dashed var(--line-2);border-radius:16px;padding:20px 22px;
+  display:flex;align-items:center;gap:14px;color:var(--muted);transition:.2s;cursor:pointer;
 }
-.card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+.dropzone:hover,.dropzone.is-drag{border-color:var(--acid);background:var(--accent-soft);color:var(--paper)}
+.dropzone .dz-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;border:1px solid var(--line);color:var(--acid)}
+.dropzone b{display:block;color:var(--paper);font-weight:500;font-size:13px}
+.dropzone span{font-size:12px}
+.dropzone input{display:none}
+.doc-row{
+  display:grid;grid-template-columns:30px minmax(0,1fr) auto auto;gap:14px;align-items:center;
+  padding:14px 14px;border-radius:14px;transition:background .18s;
 }
-.card h3 {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.doc-row + .doc-row{border-top:1px solid rgba(243,240,232,.06)}
+.doc-row:hover{background:var(--hover)}
+.doc-name{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-meta{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.06em;margin-top:3px}
+.badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted)}
+.badge .dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.badge.acid{color:var(--acid);border-color:var(--accent-line)}
+.badge.violet{color:var(--info);border-color:rgba(124,92,255,.4)}
+.badge.cyan{color:var(--ok);border-color:rgba(94,234,212,.35)}
+.badge.warn{color:var(--warn);border-color:rgba(255,179,92,.35)}
+.badge.danger{color:var(--bad);border-color:rgba(255,92,92,.35)}
+.row-actions{display:flex;gap:2px;opacity:.35;transition:opacity .18s}
+.doc-row:hover .row-actions,.doc-row:focus-within .row-actions{opacity:1}
+.check{display:grid;place-items:center}
+.check input{appearance:none;width:15px;height:15px;border:1px solid var(--line-2);border-radius:4px;transition:.15s;cursor:pointer}
+.check input:checked{background:var(--acid);border-color:var(--acid)}
+.check input:checked::after{content:"";display:block;width:4px;height:8px;margin:1px auto 0;border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(42deg)}
+.bulkbar{
+  display:none;align-items:center;gap:12px;padding:12px 20px;margin:8px 10px 2px;
+  border:1px solid var(--accent-line);border-radius:14px;background:var(--accent-soft);
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
 }
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
+.bulkbar.is-on{display:flex}
+.bulkbar .spacer{flex:1}
+
+/* versions */
+.version-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:18px}
+.version-card{
+  border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px;
+  background:var(--card-grad);transition:.22s;position:relative;overflow:hidden;
 }
-.doc-list, .version-list {
-  max-height: 400px;
-  overflow-y: auto;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 8px;
+.version-card:hover{border-color:var(--line-2);transform:translateY(-2px)}
+.version-card.is-active{border-color:var(--accent-line-strong)}
+.version-card.is-active::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:var(--acid)}
+.version-card h3{font-family:var(--display);font-size:26px;font-weight:400;letter-spacing:-.02em;line-height:1.1}
+.v-meta{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.08em;display:flex;flex-direction:column;gap:4px}
+.v-actions{display:flex;gap:8px;margin-top:auto;flex-wrap:wrap}
+
+/* search */
+.search-stage{padding:40px 0 26px}
+.search-big{display:flex;gap:12px;align-items:center;border-bottom:1px solid var(--line-2);padding-bottom:16px}
+.search-big input{flex:1;background:transparent;border:none;font-family:var(--display);font-size:clamp(30px,4vw,54px);letter-spacing:-.03em;color:var(--paper)}
+.search-big input::placeholder{color:var(--faint)}
+.search-big input:focus{outline:none}
+.result{padding:18px 20px;border:1px solid var(--line);border-radius:16px;margin-bottom:12px;background:var(--card-grad)}
+.result-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.result-head .name{font-weight:500}
+.result-head .score{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--acid)}
+.score-bar{height:2px;background:var(--progress-bg);border-radius:2px;margin-bottom:12px;overflow:hidden}
+.score-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acid),var(--cyan))}
+.result p{white-space:pre-wrap;color:var(--muted);font-size:13px;line-height:1.65;max-height:260px;overflow:auto}
+
+/* access / recall */
+.matrix{display:grid;grid-template-columns:180px 1fr;gap:12px 18px;align-items:center;padding:20px 24px}
+.matrix .op{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.matrix .hint{grid-column:2;font-size:11px;color:var(--faint);margin-top:-6px}
+.select{
+  appearance:none;width:100%;background:var(--ink-2);border:1px solid var(--line-2);border-radius:10px;
+  padding:9px 34px 9px 12px;font-size:12px;color:var(--paper);
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 17px) 51%,calc(100% - 12px) 51%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;
 }
-.doc-item, .version-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  border-bottom: 1px solid #e2e8f0;
+.select:focus{outline:none;border-color:var(--acid)}
+.field{display:flex;flex-direction:column;gap:7px}
+.field label{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.field input,.field textarea{
+  background:var(--ink-2);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--paper);
 }
-.doc-item:last-child, .version-item:last-child {
-  border-bottom: none;
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--acid)}
+.field textarea{resize:vertical;min-height:78px;font-family:var(--mono);font-size:12px}
+.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:20px 24px}
+.form-grid .wide{grid-column:1/-1}
+.switch{position:relative;display:inline-flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
+.switch input{position:absolute;opacity:0;width:0;height:0}
+.switch .track{width:46px;height:26px;border-radius:999px;background:var(--track);border:1px solid var(--line-2);position:relative;transition:.22s}
+.switch .track::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(40,20,80,.28);transition:.22s}
+html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow:none}
+.switch input:checked + .track{background:var(--acid);border-color:var(--acid)}
+.switch input:checked + .track::after{transform:translateX(20px);background:var(--ink)}
+.switch .txt{font-size:12px;color:var(--muted)}
+.switch input:checked ~ .txt{color:var(--paper)}
+.settings-row{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:16px 24px;border-top:1px solid var(--line)}
+.settings-row .info b{display:block;font-weight:500;font-size:13px}
+.settings-row .info span{font-size:11.5px;color:var(--faint)}
+.entry-list{padding:6px 10px 10px}
+.entry-row{display:grid;grid-template-columns:minmax(0,1fr) 150px 200px;gap:12px;align-items:center;padding:12px 14px;border-radius:12px}
+.entry-row:hover{background:var(--hover)}
+.entry-row + .entry-row{border-top:1px solid var(--line)}
+.entry-row .name{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.entry-row .kw{display:flex;gap:8px}
+.entry-row .kw input{flex:1;background:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:11px}
+
+/* tasks */
+.task{padding:16px 20px;border-bottom:1px solid var(--line)}
+.task-head{display:flex;align-items:center;gap:10px}
+.task-head .name{font-size:13px;font-weight:500}
+.task-head .st{margin-left:auto;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line-2)}
+.task-head .st.running{color:var(--acid);border-color:rgba(217,255,67,.35)}
+.task-head .st.completed{color:var(--ok);border-color:rgba(94,234,212,.35)}
+.task-head .st.failed{color:var(--danger);border-color:rgba(255,92,92,.35)}
+.progress{height:3px;background:var(--progress-bg);border-radius:3px;margin-top:10px;overflow:hidden}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--acid),var(--cyan));transition:width .4s ease}
+.task .msg{font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:8px}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:24px;visibility:hidden;opacity:0;transition:opacity .22s,visibility .22s}
+.modal.is-open{visibility:visible;opacity:1}
+.modal .backdrop{position:absolute;inset:0;background:var(--backdrop);backdrop-filter:blur(12px)}
+.modal .sheet{
+  position:relative;width:min(760px,100%);max-height:86vh;overflow:auto;
+  background:var(--sheet-bg);border:1px solid var(--line-2);border-radius:26px;
+  padding:28px;transform:translateY(18px) scale(.985);transition:transform .28s cubic-bezier(.2,.7,.2,1);
+  box-shadow:var(--shadow);
 }
-.doc-name, .version-name {
-  font-weight: 500;
-  word-break: break-all;
-  flex: 1;
+.modal.is-open .sheet{transform:none}
+.modal.small .sheet{width:min(480px,100%)}
+.modal-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:20px}
+.modal-head h3{font-family:var(--display);font-size:34px;line-height:1;font-weight:400;letter-spacing:-.02em}
+.modal-head p{font-size:12px;color:var(--faint);margin-top:6px}
+.modal-head .icon-btn{margin-left:auto}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:24px}
+.modal .form-grid{padding:0}
+.modal .form-grid + .form-grid{margin-top:16px}
+.sheet .doc-text{width:100%;min-height:300px;background:var(--ink-2);border:1px solid var(--line-2);border-radius:12px;padding:14px;font-family:var(--mono);font-size:12.5px;line-height:1.7;resize:vertical}
+.check-list{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:8px}
+.check-list label{display:flex;align-items:center;gap:8px;font-size:12px;padding:5px 6px;border-radius:6px;cursor:pointer}
+.check-list label:hover{background:rgba(243,240,232,.05)}
+
+/* toast */
+.toasts{position:fixed;right:22px;bottom:22px;z-index:120;display:flex;flex-direction:column;gap:8px;max-width:min(420px,calc(100vw - 44px))}
+.toast{
+  display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:12px;
+  background:var(--toast-bg);border:1px solid var(--line-2);box-shadow:var(--shadow);
+  font-size:12.5px;animation:toastIn .28s cubic-bezier(.2,.7,.2,1) both;
 }
-.badge {
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 20px;
-  background: #e2e8f0;
-  color: #1e293b;
+.toast.ok{border-color:rgba(217,255,67,.35)}
+.toast.err{border-color:rgba(255,92,92,.4)}
+.toast .bar{width:3px;border-radius:3px;background:var(--acid);align-self:stretch}
+.toast.err .bar{background:var(--danger)}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* misc */
+.kbd{font-family:var(--mono);font-size:10px;border:1px solid var(--line-2);border-radius:5px;padding:2px 6px;color:var(--muted)}
+.hidden{display:none !important}
+.mono{font-family:var(--mono);letter-spacing:.06em}
+.muted{color:var(--muted)}
+.faint{color:var(--faint)}
+.reveal{animation:rise .55s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0) * 38ms)}
+.reveal.is-settled{animation:none;opacity:1;transform:none}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (max-width:1100px){.grid-2{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:900px){
+  .rail{left:0;right:0;top:auto;bottom:0;width:100%;height:64px;flex-direction:row;justify-content:center;border-right:none;border-top:1px solid var(--line);padding:6px 10px}
+  .brand,.rail-foot{display:none}
+  .nav{flex-direction:row;justify-content:space-around;width:100%}
+  .nav button{width:42px;height:42px}.nav button.is-active::after{display:none}
+  .nav button span.tip{display:none}
+  .main{margin-left:0;width:100%;padding:0 18px 96px}
+  .topbar{height:auto;padding:12px 0;flex-wrap:wrap;gap:10px}
+  .topbar .left{width:100%;gap:10px}
+  .top-actions{width:100%;overflow-x:auto;padding-bottom:2px}
+  .top-actions .btn{padding:9px 12px}
+  .top-actions .btn > span:not([data-icon]){display:none}
+  .hero{padding-top:10px}
+  .hero h1{font-size:clamp(46px,13vw,72px)}
+  .matrix{grid-template-columns:1fr;gap:8px}
+  .matrix .hint{grid-column:1}
+  .entry-row{grid-template-columns:1fr 1fr;gap:8px}
+  .entry-row .kw{grid-column:1/-1}
+  .form-grid{grid-template-columns:1fr}
+  .doc-row{grid-template-columns:24px minmax(0,1fr) auto;flex-wrap:wrap}
+  .badges{display:none}
+  .row-actions{opacity:1}
 }
-.badge.active {
-  background: #4f46e5;
-  color: white;
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-delay:0ms !important;transition-duration:.001ms !important;scroll-behavior:auto !important}
 }
-.progress-bar {
-  width: 100%;
-  height: 6px;
-  background: #e2e8f0;
-  border-radius: 3px;
-  overflow: hidden;
-  margin-top: 8px;
-}
-.progress-fill {
-  height: 100%;
-  background: #4f46e5;
-  width: 0%;
-  transition: width 0.3s;
-}
-.modal {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.modal-content {
-  background: white;
-  border-radius: 20px;
-  padding: 24px;
-  width: 600px;
-  max-width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-.modal-content h3 {
-  margin-bottom: 16px;
-}
-.modal-content textarea {
-  width: 100%;
-  min-height: 200px;
-  font-family: monospace;
-}
-#kbModal .modal-content { width: 480px; max-width: 92%; }
-#kbModal input[type="text"] {
-  width: 100%; box-sizing: border-box; padding: 10px 12px;
-  border: 1px solid #cbd5e1; border-radius: 10px; font-size: .95rem;
-  background: transparent; color: inherit; margin-bottom: 16px;
-}
-[data-theme="dark"] #kbModal .modal-content { background: #1e293b; color: #e2e8f0; }
-[data-theme="dark"] #kbModal input[type="text"] { border-color: #475569; }
-.task-item {
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 8px;
-}
-.task-status {
-  font-size: 0.8rem;
-  padding: 2px 8px;
-  border-radius: 20px;
-  display: inline-block;
-}
-.status-running { background: #fef9c3; color: #854d0e; }
-.status-completed { background: #dcfce7; color: #166534; }
-.status-failed { background: #fee2e2; color: #991b1b; }
 </style>
 </head>
 <body>
-<div class="container">
-  <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-    <h1 style="margin-bottom: 0;">KiraKB 知识库管理</h1>
-    <button id="openNewTabBtn" class="secondary" title="在新标签页中打开">↗ 新标签页打开</button>
-  </div>
-  <div style="height: 24px;"></div>
+<div class="aurora"><i></i><i></i><i></i></div>
+<div class="grain"></div>
+<div class="cursor-glow" id="cursorGlow"></div>
+<div class="scroll-progress" id="scrollProgress"></div>
 
-  <div class="kb-header">
-    <div class="kb-selector">
-      <select id="kbSelect" style="width:100%"></select>
+<div class="shell">
+  <aside class="rail">
+    <div class="brand">
+      <div class="mark">K</div>
+      <div class="dot"></div>
     </div>
-    <button id="createKbBtn">+ 新建知识库</button>
-    <button id="editKbInfoBtn" class="secondary">✎ 编辑信息</button>
-    <button id="deleteKbBtn" class="danger">🗑 删除当前知识库</button>
-  </div>
+    <nav class="nav" id="railNav">
+      <button type="button" data-action="nav" data-view="overview" class="is-active" aria-label="Overview">
+        <span data-icon="book-open" data-size="19"></span><span class="tip">Overview</span>
+      </button>
+      <button type="button" data-action="nav" data-view="docs" aria-label="Entries">
+        <span data-icon="file-text" data-size="19"></span><span class="tip">Entries</span>
+      </button>
+      <button type="button" data-action="nav" data-view="versions" aria-label="Versions">
+        <span data-icon="layers-3" data-size="19"></span><span class="tip">Versions</span>
+      </button>
+      <button type="button" data-action="nav" data-view="search" aria-label="Search">
+        <span data-icon="search" data-size="19"></span><span class="tip">Search</span>
+      </button>
+      <button type="button" data-action="nav" data-view="access" aria-label="Access">
+        <span data-icon="shield-check" data-size="19"></span><span class="tip">Access</span>
+      </button>
+      <button type="button" data-action="nav" data-view="recall" aria-label="Recall">
+        <span data-icon="radar" data-size="19"></span><span class="tip">Recall</span>
+      </button>
+      <button type="button" data-action="nav" data-view="settings" aria-label="Settings">
+        <span data-icon="settings-2" data-size="19"></span><span class="tip">Settings</span>
+      </button>
+      <button type="button" data-action="nav" data-view="tasks" aria-label="Tasks">
+        <span data-icon="activity" data-size="19"></span><span class="tip">Tasks</span>
+      </button>
+    </nav>
+    <button type="button" class="theme-toggle" id="themeToggle" data-action="toggle-theme" aria-label="Toggle light and dark theme" title="Toggle theme"></button>
+    <div class="rail-foot">KIRAKB / 1.2</div>
+  </aside>
 
-  <div class="grid-2">
-    <div class="card">
-      <h3>📄 文档管理</h3>
-      <div style="margin-bottom: 16px;">
-        <input type="file" id="fileInput" multiple accept=".txt,.md" style="margin-right: 8px;">
-        <button id="uploadBtn">上传</button>
-        <button id="showDeletedBtn" class="secondary small" style="margin-left: 8px;">🗑 显示已删除</button>
+  <main class="main" id="main">
+    <div class="topbar">
+      <div class="left">
+        <div class="kb-select-wrap">
+          <select class="kb-select" id="kbSelect" aria-label="Knowledge base"></select>
+        </div>
+        <span class="badge" id="activeBadge"><span class="dot"></span><span id="activeBadgeText">No version</span></span>
       </div>
-      <div id="docList" class="doc-list">加载中...</div>
-    </div>
-
-    <div class="card">
-      <h3>🔖 版本管理</h3>
-      <div style="margin-bottom: 12px;">
-        <button id="createVersionBtn" class="small">+ 创建新版本（切换模型）</button>
+      <div class="top-actions">
+        <button type="button" class="btn ghost" data-action="open-tab" title="Open in a new tab">
+          <span data-icon="external-link" data-size="14"></span><span>Tab</span>
+        </button>
+        <button type="button" class="btn ghost" data-action="create-kb">
+          <span data-icon="plus" data-size="14"></span><span>New KB</span>
+        </button>
+        <button type="button" class="btn" data-action="edit-kb">
+          <span data-icon="pencil-line" data-size="14"></span><span>Edit</span>
+        </button>
+        <button type="button" class="btn ghost danger" data-action="delete-kb" title="Delete knowledge base">
+          <span data-icon="trash-2" data-size="14"></span>
+        </button>
+        <button type="button" class="btn" data-action="upload-trigger">
+          <span data-icon="upload-cloud" data-size="14"></span><span>Upload</span>
+        </button>
       </div>
-      <div id="versionList" class="version-list">加载中...</div>
     </div>
-  </div>
 
-  <div class="card">
-    <h3>🔍 检索测试（当前激活版本）</h3>
-    <div style="display: flex; gap: 8px;">
-      <input type="text" id="searchQuery" placeholder="输入问题..." style="flex:1">
-      <button id="searchBtn">检索</button>
+    <!-- OVERVIEW -->
+    <section class="view is-active" id="view-overview">
+      <div class="hero">
+        <div class="eyebrow">Knowledge archive / <span id="heroIndex">01</span><span class="hero-kb" id="heroKbName"></span></div>
+        <h1 id="heroTitle">Kira<em>KB</em><span class="title-dot">.</span></h1>
+        <p id="heroDesc">知识在这里生长。翻得到，也回得去。</p>
+        <div class="hero-meta">
+          <span>Entries <b id="metaEntries">0</b></span>
+          <span>Versions <b id="metaVersions">0</b></span>
+          <span>Active model <b id="metaModel">—</b></span>
+          <span>Recall <b id="metaRecall">OFF</b></span>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat reveal" style="--i:0"><div class="num" id="statEntries">0</div><div><div class="label">Entries</div><div class="sub">Live documents in this archive</div></div></div>
+        <div class="stat reveal" style="--i:1"><div class="num" id="statVersions">0</div><div><div class="label">Versions</div><div class="sub">Independent embedding indexes</div></div></div>
+        <div class="stat reveal" style="--i:2"><div class="num" id="statChunks">—</div><div><div class="label">Active vector</div><div class="sub">Dimension of the active version</div></div></div>
+        <div class="stat reveal" style="--i:3"><div class="num" id="statRecall">OFF</div><div><div class="label">Passive recall</div><div class="sub">Automatic retrieval on mention</div></div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel reveal" style="--i:4">
+          <div class="panel-head">
+            <span data-icon="file-text" data-size="16"></span>
+            <h2>Recent entries</h2>
+            <span class="count" id="recentCount"></span>
+          </div>
+          <div class="panel-body" id="recentList"></div>
+        </div>
+        <div class="panel reveal" style="--i:5">
+          <div class="panel-head">
+            <span data-icon="layers-3" data-size="16"></span>
+            <h2>Versions</h2>
+            <span class="count" id="versionCount"></span>
+          </div>
+          <div class="panel-body" id="overviewVersions"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOCS -->
+    <section class="view" id="view-docs">
+      <div class="hero" style="padding-bottom:26px">
+        <div class="eyebrow">Archive / entries</div>
+        <h1 style="font-size:clamp(42px,6vw,84px)">Entries</h1>
+        <p>Write, browse, lock. Every entry has its own door.</p>
+      </div>
+      <div class="panel">
+        <div class="doc-toolbar">
+          <div class="search-mini">
+            <span data-icon="search" data-size="15"></span>
+            <input id="docFilter" type="text" placeholder="Filter entries by name" autocomplete="off">
+          </div>
+          <select class="select" id="docFilterKind" style="width:150px" aria-label="Filter entries">
+            <option value="all">all entries</option>
+            <option value="locked">WebUI only</option>
+            <option value="frozen">frozen</option>
+            <option value="recall">recall on</option>
+          </select>
+          <button type="button" class="btn ghost" data-action="open-deleted">
+            <span data-icon="rotate-ccw" data-size="14"></span><span>Deleted</span>
+          </button>
+          <span class="badge" id="docCountBadge">0 entries</span>
+        </div>
+        <div class="dropzone" id="dropzone" data-action="upload-trigger" tabindex="0" role="button">
+          <div class="dz-icon"><span data-icon="upload-cloud" data-size="20"></span></div>
+          <div><b>Drop files here, or click to upload</b><span>TXT and Markdown are read directly; PDF and Office files are parsed server-side.</span></div>
+          <input type="file" id="fileInput" multiple accept=".txt,.md,.markdown,.pdf,.docx,.xlsx,.pptx">
+        </div>
+        <div class="bulkbar" id="bulkBar">
+          <span id="bulkText">0 selected</span>
+          <div class="spacer"></div>
+          <button type="button" class="btn ghost" data-action="bulk-edit">Edit policy</button>
+          <button type="button" class="btn ghost" data-action="bulk-delete">Delete policy</button>
+          <button type="button" class="btn ghost" data-action="bulk-clear">Clear</button>
+        </div>
+        <div id="docList" class="panel-body"></div>
+      </div>
+    </section>
+
+    <!-- VERSIONS -->
+    <section class="view" id="view-versions">
+      <div class="hero" style="padding-bottom:26px">
+        <div class="eyebrow">Archive / indexes</div>
+        <h1 style="font-size:clamp(42px,6vw,84px)">Versions</h1>
+        <p>One archive, many readings.</p>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <span data-icon="layers-3" data-size="16"></span>
+          <h2>Embedding indexes</h2>
+          <span class="count" id="versionHeadCount"></span>
+          <div style="margin-left:auto">
+            <button type="button" class="btn solid" data-action="create-version">
+              <span data-icon="plus" data-size="14"></span><span>New version</span>
+            </button>
+          </div>
+        </div>
+        <div class="version-grid" id="versionGrid"></div>
+      </div>
+    </section>
+
+    <!-- SEARCH -->
+    <section class="view" id="view-search">
+      <div class="search-stage">
+        <div class="eyebrow">Archive / retrieval</div>
+        <div class="search-big">
+          <span data-icon="search" data-size="30"></span>
+          <input id="searchInput" type="text" placeholder="Ask the archive anything" autocomplete="off">
+          <button type="button" class="btn solid" data-action="search">Search</button>
+        </div>
+        <div class="hero-meta" style="margin-top:14px">
+          <span>Mode <b id="searchMode">vector</b></span>
+          <span>Scope <b id="searchScope">current KB</b></span>
+          <span class="faint">Press Enter to search</span>
+        </div>
+      </div>
+      <div id="searchResults"></div>
+    </section>
+
+    <!-- ACCESS -->
+    <section class="view" id="view-access">
+      <div class="hero" style="padding-bottom:26px">
+        <div class="eyebrow">Archive / permissions</div>
+        <h1 style="font-size:clamp(42px,6vw,84px)">Access</h1>
+        <p>You decide who may touch her knowledge.</p>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px">
+        <div class="panel-head">
+          <span data-icon="shield-check" data-size="16"></span>
+          <h2>Knowledge base policy</h2>
+          <span class="count">defaults for every entry</span>
+        </div>
+        <div class="matrix">
+          <div class="op">Add</div>
+          <select class="select" id="policyAdd" data-kb-policy="add">
+            <option value="open">open — anyone</option>
+            <option value="whitelist">whitelist — listed users</option>
+            <option value="admin">admin — WebUI only</option>
+            <option value="off">off — frozen</option>
+          </select>
+          <div class="hint">Creating a new entry.</div>
+          <div class="op">Edit</div>
+          <select class="select" id="policyEdit" data-kb-policy="edit">
+            <option value="open">open — anyone</option>
+            <option value="whitelist">whitelist — listed users</option>
+            <option value="admin">admin — WebUI only</option>
+            <option value="off">off — frozen</option>
+          </select>
+          <div class="hint">Changing an existing entry, including reviving a deleted one.</div>
+          <div class="op">Delete</div>
+          <select class="select" id="policyDelete" data-kb-policy="delete">
+            <option value="open">open — anyone</option>
+            <option value="whitelist">whitelist — listed users</option>
+            <option value="admin">admin — WebUI only</option>
+            <option value="off">off — frozen</option>
+          </select>
+          <div class="hint">Soft delete (recoverable) and restore.</div>
+        </div>
+        <div class="settings-row">
+          <div class="info">
+            <b>Allow list</b>
+            <span>One user id per line. An empty list falls back to the global whitelist; if both are empty, whitelist mode does not restrict anyone (legacy behaviour).</span>
+          </div>
+          <div style="width:min(320px,100%)">
+            <div class="field"><textarea id="kbAllowUsers" rows="2" placeholder="123456789"></textarea></div>
+          </div>
+        </div>
+        <div class="panel-foot">
+          <button type="button" class="btn solid" data-action="save-kb-perms">
+            <span data-icon="save" data-size="14"></span><span>Save policy</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span data-icon="users" data-size="16"></span>
+          <h2>Entry overrides</h2>
+          <span class="count" id="entryOverrideCount"></span>
+        </div>
+        <div class="panel-body" id="entryPolicyList"></div>
+      </div>
+    </section>
+
+    <!-- RECALL -->
+    <section class="view" id="view-recall">
+      <div class="hero" style="padding-bottom:26px">
+        <div class="eyebrow">Archive / passive recall</div>
+        <h1 style="font-size:clamp(42px,6vw,84px)">Recall</h1>
+        <p>Mention it, and it comes back.</p>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px">
+        <div class="panel-head">
+          <span data-icon="radar" data-size="16"></span>
+          <h2>Knowledge base recall</h2>
+          <span class="badge" id="globalRecallBadge">Global off</span>
+        </div>
+        <div class="settings-row">
+          <div class="info">
+            <b>Enable for this knowledge base</b>
+            <span>Requires the plugin-level master switch. Entries can still opt in individually when this is off.</span>
+          </div>
+          <label class="switch"><input type="checkbox" id="kbRecallEnabled"><span class="track"></span><span class="txt">Enabled</span></label>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Top K</label><input id="kbRecallTopK" type="number" min="1" max="10" placeholder="global"></div>
+          <div class="field"><label>Min score</label><input id="kbRecallMinScore" type="number" min="0" max="1" step="0.01" placeholder="global"></div>
+          <div class="field"><label>Max chars</label><input id="kbRecallMaxChars" type="number" min="100" max="8000" step="50" placeholder="global"></div>
+        </div>
+        <div class="panel-foot">
+          <button type="button" class="btn solid" data-action="save-kb-recall">
+            <span data-icon="save" data-size="14"></span><span>Save recall</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span data-icon="target" data-size="16"></span>
+          <h2>Entry recall</h2>
+          <span class="count">inherit / force on / opt out</span>
+        </div>
+        <div class="panel-body" id="entryRecallList"></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" id="view-settings">
+      <div class="hero" style="padding-bottom:26px">
+        <div class="eyebrow">Archive / runtime settings</div>
+        <h1 style="font-size:clamp(42px,6vw,84px)">Settings</h1>
+        <p>Tune how she remembers. Applied live.</p>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px">
+        <div class="panel-head">
+          <span data-icon="search" data-size="16"></span>
+          <h2>Search and entries</h2>
+          <span class="count">hot applied</span>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Default top K</label><input id="setTopK" type="number" min="1" max="20"></div>
+          <div class="field"><label>Chunk size</label><input id="setChunkSize" type="number" min="100" max="8000"></div>
+          <div class="field"><label>Chunk overlap</label><input id="setChunkOverlap" type="number" min="0" max="7999"></div>
+          <div class="field"><label>Entry title max chars</label><input id="setTitleMax" type="number" min="4" max="60"></div>
+          <div class="field"><label>History keep (intermediate)</label><input id="setHistoryKeep" type="number" min="1" max="200"></div>
+          <div class="field"><label>Hybrid search</label>
+            <label class="switch"><input type="checkbox" id="setHybrid"><span class="track"></span><span class="txt">BM25 + vector</span></label>
+          </div>
+          <div class="field"><label>Read-only entry tools</label>
+            <label class="switch"><input type="checkbox" id="setExtraTools"><span class="track"></span><span class="txt">list / get</span></label>
+          </div>
+          <div class="field"><label>Auto sync other versions</label>
+            <label class="switch"><input type="checkbox" id="setAutoSync"><span class="track"></span><span class="txt">After edit</span></label>
+          </div>
+          <div class="field"><label>Stopwords</label>
+            <label class="switch"><input type="checkbox" id="setStopwords"><span class="track"></span><span class="txt">BM25 filter</span></label>
+          </div>
+          <div class="field"><label>Rerank</label>
+            <label class="switch"><input type="checkbox" id="setRerank"><span class="track"></span><span class="txt">Default model</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px">
+        <div class="panel-head">
+          <span data-icon="radar" data-size="16"></span>
+          <h2>Passive recall</h2>
+          <span class="count">master switch + tuning</span>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Master switch</label>
+            <label class="switch"><input type="checkbox" id="setRecallEnabled"><span class="track"></span><span class="txt">Enabled</span></label>
+          </div>
+          <div class="field"><label>Mode</label>
+            <select class="select" id="setRecallMode">
+              <option value="hybrid">hybrid</option>
+              <option value="mention">mention</option>
+              <option value="semantic">semantic</option>
+            </select>
+          </div>
+          <div class="field"><label>Top K</label><input id="setRecallTopK" type="number" min="1" max="10"></div>
+          <div class="field"><label>Min score (cosine)</label><input id="setRecallMin" type="number" min="0" max="1" step="0.01"></div>
+          <div class="field"><label>Strong score (no lexical hit)</label><input id="setRecallStrong" type="number" min="0" max="1" step="0.01"></div>
+          <div class="field"><label>Max chars</label><input id="setRecallChars" type="number" min="100" max="8000"></div>
+          <div class="field"><label>Timeout (ms)</label><input id="setRecallTimeout" type="number" min="200" max="10000"></div>
+          <div class="field"><label>Dedupe turns</label><input id="setRecallDedupe" type="number" min="0" max="20"></div>
+          <div class="field"><label>Max KBs per turn</label><input id="setRecallMaxKbs" type="number" min="1" max="20"></div>
+          <div class="field"><label>Min query chars</label><input id="setRecallMinQuery" type="number" min="1" max="32"></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px">
+        <div class="panel-head">
+          <span data-icon="shield-check" data-size="16"></span>
+          <h2>Default permissions</h2>
+          <span class="count">applies to knowledge bases without explicit policy</span>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Add</label><select class="select" id="setAddPolicy"></select></div>
+          <div class="field"><label>Edit</label><select class="select" id="setEditPolicy"></select></div>
+          <div class="field"><label>Delete</label><select class="select" id="setDeletePolicy"></select></div>
+          <div class="field wide"><label>Global allow list (one user id per line)</label><textarea id="setOwnerWhitelist" rows="3"></textarea></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span data-icon="alert-triangle" data-size="16"></span>
+          <h2>Requires restart</h2>
+          <span class="count">read only here</span>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Knowledge base directory</label><input id="setKbDir" type="text" disabled></div>
+          <div class="field"><label>Standalone host</label><input id="setWebHost" type="text" disabled></div>
+          <div class="field"><label>Standalone port</label><input id="setWebPort" type="number" disabled></div>
+        </div>
+        <div class="panel-foot">
+          <button type="button" class="btn solid" data-action="save-settings">
+            <span data-icon="save" data-size="14"></span><span>Apply settings</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TASKS -->
+    <section class="view" id="view-tasks">
+      <div class="hero" style="padding-bottom:26px">
+        <div class="eyebrow">Archive / jobs</div>
+        <h1 style="font-size:clamp(42px,6vw,84px)">Tasks</h1>
+        <p>She is sorting knowledge in the background.</p>
+      </div>
+      <div class="panel"><div id="taskList"></div></div>
+    </section>
+  </main>
+</div>
+
+<!-- ============ modals ============ -->
+<div class="modal small" id="modalConfirm" aria-hidden="true">
+  <div class="backdrop" data-action="close-modal" data-modal="modalConfirm"></div>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="modal-head"><div><h3 id="confirmTitle">Confirm</h3><p id="confirmText"></p></div></div>
+    <div class="modal-foot">
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalConfirm">Cancel</button>
+      <button type="button" class="btn solid" id="confirmOk">Confirm</button>
     </div>
-    <div id="searchResults" style="margin-top: 16px;"></div>
-  </div>
-
-  <div class="card">
-    <h3>⏳ 后台任务</h3>
-    <div id="taskList">暂无任务</div>
   </div>
 </div>
 
-<!-- 模态框：编辑知识库信息 -->
-<div id="infoModal" class="modal">
-  <div class="modal-content">
-    <h3>编辑知识库信息</h3>
-    <label>显示名称</label>
-    <input type="text" id="modalDisplayName" placeholder="显示名称">
-    <label>描述</label>
-    <textarea id="modalDescription" rows="3" placeholder="知识库描述"></textarea>
-    <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
-      <button id="modalCancelBtn">取消</button>
-      <button id="modalSaveBtn" style="background:#4f46e5;">保存</button>
+<div class="modal small" id="modalPrompt" aria-hidden="true">
+  <div class="backdrop" data-action="close-modal" data-modal="modalPrompt"></div>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="modal-head"><div><h3 id="promptTitle">Input</h3><p id="promptText"></p></div></div>
+    <div class="field"><input id="promptInput" type="text" autocomplete="off"></div>
+    <div class="modal-foot">
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalPrompt">Cancel</button>
+      <button type="button" class="btn solid" id="promptOk">OK</button>
     </div>
   </div>
 </div>
 
-<!-- 模态框：创建版本 -->
-<div id="versionModal" class="modal">
-  <div class="modal-content">
-    <h3>创建新版本</h3>
-    <label>嵌入模型</label>
-    <select id="versionModelSelect" style="width:100%"></select>
-    <div class="hint" style="font-size:0.8rem; color:#666; margin:4px 0 10px;">
-      选择用于本版本的嵌入模型。留空则使用 KiraAI 的默认嵌入模型。
+<div class="modal" id="modalKbInfo" aria-hidden="true">
+  <div class="backdrop" data-action="close-modal" data-modal="modalKbInfo"></div>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div><h3>Knowledge base</h3><p>Display name and description shown in the archive.</p></div>
+      <button type="button" class="icon-btn" data-action="close-modal" data-modal="modalKbInfo"><span data-icon="x" data-size="16"></span></button>
     </div>
-    <label>模型名称（备注）</label>
-    <input type="text" id="versionModelName" placeholder="例如 BAAI/bge-m3">
-    <label>向量维度</label>
-    <div style="display:flex; gap:8px; align-items:center;">
-      <input type="number" id="versionDimension" placeholder="点击右侧按钮自动探测" style="flex:1">
-      <button type="button" class="small" id="probeDimensionBtn">探测维度</button>
+    <div class="form-grid">
+      <div class="field wide"><label>Display name</label><input id="kbInfoName" type="text"></div>
+      <div class="field wide"><label>Description</label><textarea id="kbInfoDesc" rows="4"></textarea></div>
+      <div class="field"><label>History keep (intermediate revisions)</label><input id="kbInfoHistoryKeep" type="number" min="1" max="200"></div>
     </div>
-    <div id="probeStatus" class="hint" style="font-size:0.8rem; margin:4px 0 10px;"></div>
-    <label>选择文档（可选，留空表示全部）</label>
-    <select id="versionDocSelect" multiple size="5" style="width:100%"></select>
-    <div class="hint" style="font-size:0.8rem; color:#666;">按住 Ctrl 多选</div>
-    <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
-      <button id="versionModalCancel">取消</button>
-      <button id="versionModalCreate">创建</button>
+    <div class="modal-foot">
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalKbInfo">Cancel</button>
+      <button type="button" class="btn solid" data-action="save-kb-info"><span data-icon="save" data-size="14"></span><span>Save</span></button>
     </div>
   </div>
 </div>
 
-<!-- 模态框：编辑文档内容 -->
-<div id="docEditModal" class="modal">
-  <div class="modal-content">
-    <h3>编辑文档内容</h3>
-    <textarea id="docEditContent" rows="10" style="width:100%; font-family: monospace;"></textarea>
-    <div class="hint" style="margin: 8px 0;">保存后会自动重新向量化到当前激活版本。</div>
-    <div style="display: flex; gap: 8px; justify-content: flex-end;">
-      <button id="docEditCancel">取消</button>
-      <button id="docEditSave">保存并重新向量化</button>
+<div class="modal" id="modalDoc" aria-hidden="true">
+  <div class="backdrop" data-action="close-modal" data-modal="modalDoc"></div>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div><h3 id="docModalTitle">Entry</h3><p id="docModalMeta"></p></div>
+      <button type="button" class="icon-btn" data-action="close-modal" data-modal="modalDoc"><span data-icon="x" data-size="16"></span></button>
+    </div>
+    <div class="field" style="margin-bottom:14px"><label>Title</label><input id="docName" type="text"></div>
+    <div class="field"><label>Content</label><textarea id="docContent" class="doc-text"></textarea></div>
+    <div class="modal-foot">
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalDoc">Cancel</button>
+      <button type="button" class="btn solid" data-action="save-doc"><span data-icon="save" data-size="14"></span><span>Save and re-index</span></button>
     </div>
   </div>
 </div>
 
-<!-- 模态框：已删除文档列表 -->
-<div id="deletedModal" class="modal">
-  <div class="modal-content">
-    <h3>🗑 已删除文档（可恢复）</h3>
-    <div id="deletedList" style="max-height: 400px; overflow-y: auto;"></div>
-    <div style="margin-top: 16px; text-align: right;">
-      <button id="deletedModalClose" class="secondary">关闭</button>
+<div class="modal" id="modalVersion" aria-hidden="true">
+  <div class="backdrop" data-action="close-modal" data-modal="modalVersion"></div>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div><h3>New version</h3><p>Select an embedding model, probe its dimension, then build.</p></div>
+      <button type="button" class="icon-btn" data-action="close-modal" data-modal="modalVersion"><span data-icon="x" data-size="16"></span></button>
+    </div>
+    <div class="form-grid">
+      <div class="field wide"><label>Embedding model</label><select class="select" id="versionModel"></select></div>
+      <div class="field wide" id="modelHint"></div>
+      <div class="field"><label>Label</label><input id="versionName" type="text" placeholder="version label"></div>
+      <div class="field"><label>Dimension</label><input id="versionDim" type="number" min="1"></div>
+      <div class="field"><label>&nbsp;</label><button type="button" class="btn" data-action="probe"><span data-icon="zap" data-size="14"></span><span>Probe</span></button></div>
+      <div class="field wide"><label>Documents (empty = all)</label><div class="check-list" id="versionDocs"></div></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalVersion">Cancel</button>
+      <button type="button" class="btn solid" data-action="create-version-submit"><span data-icon="plus" data-size="14"></span><span>Build version</span></button>
     </div>
   </div>
 </div>
 
-<!-- Modal: sandbox-safe prompt/confirm/alert (KiraAI iframe blocks native ones) -->
-<div id="kbModal" class="modal">
-  <div class="modal-content">
-    <h3 id="kbModalTitle">提示</h3>
-    <div id="kbModalBody" style="margin-bottom:16px; word-break:break-all;"></div>
-    <input type="text" id="kbModalInput" style="display:none;">
-    <div style="display: flex; gap: 8px; justify-content: flex-end;">
-      <button id="kbModalCancel" class="secondary" style="display:none;">取消</button>
-      <button id="kbModalOk" style="background:#4f46e5;">确定</button>
+<div class="modal" id="modalDeleted" aria-hidden="true">
+  <div class="backdrop" data-action="close-modal" data-modal="modalDeleted"></div>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div><h3>Deleted entries</h3><p>Soft-deleted entries keep their raw content and can be restored into every version.</p></div>
+      <button type="button" class="icon-btn" data-action="close-modal" data-modal="modalDeleted"><span data-icon="x" data-size="16"></span></button>
+    </div>
+    <div id="deletedList"></div>
+    <div class="modal-foot">
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalDeleted">Close</button>
     </div>
   </div>
 </div>
+
+<div class="modal" id="modalEntry" aria-hidden="true">
+  <div class="backdrop" data-action="close-modal" data-modal="modalEntry"></div>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div><h3 id="entryModalTitle">Entry settings</h3><p>Permissions and passive recall for a single entry.</p></div>
+      <button type="button" class="icon-btn" data-action="close-modal" data-modal="modalEntry"><span data-icon="x" data-size="16"></span></button>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Edit policy</label><select class="select" id="entryPolicyEdit"></select></div>
+      <div class="field"><label>Delete policy</label><select class="select" id="entryPolicyDelete"></select></div>
+      <div class="field"><label>Recall</label><select class="select" id="entryRecallEnabled"></select></div>
+      <div class="field wide"><label>Entry allow list (empty = inherit KB)</label><textarea id="entryAllowUsers" rows="2"></textarea></div>
+      <div class="field wide"><label>Recall keywords (comma separated)</label><input id="entryKeywords" type="text" placeholder="安装, deploy"></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalEntry">Cancel</button>
+      <button type="button" class="btn solid" data-action="save-entry-settings"><span data-icon="save" data-size="14"></span><span>Save settings</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modalHistory" aria-hidden="true">
+  <div class="backdrop" data-action="close-modal" data-modal="modalHistory"></div>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div><h3 id="historyTitle">History</h3><p id="historyMeta"></p></div>
+      <button type="button" class="icon-btn" data-action="close-modal" data-modal="modalHistory"><span data-icon="x" data-size="16"></span></button>
+    </div>
+    <div id="historyPanel">
+      <div id="historyList"></div>
+    </div>
+    <div id="historyViewer" class="hidden">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <button type="button" class="btn ghost" data-action="history-back"><span data-icon="arrow-left" data-size="13"></span><span>Back</span></button>
+        <span id="historyViewMeta" class="mono faint"></span>
+      </div>
+      <pre id="historyContent" class="doc-text" style="white-space:pre-wrap;max-height:48vh;overflow:auto;resize:none"></pre>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalHistory">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal small" id="modalBulk" aria-hidden="true">
+  <div class="backdrop" data-action="close-modal" data-modal="modalBulk"></div>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="modal-head"><div><h3>Bulk policy</h3><p id="bulkSubtitle">Apply to selected entries.</p></div></div>
+    <div class="form-grid">
+      <div class="field wide"><label>Edit policy</label><select class="select" id="bulkEditPolicy"></select></div>
+      <div class="field wide"><label>Delete policy</label><select class="select" id="bulkDeletePolicy"></select></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalBulk">Cancel</button>
+      <button type="button" class="btn solid" data-action="bulk-apply"><span data-icon="check" data-size="14"></span><span>Apply</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
 
 <script>
-// ── KB modal helper: KiraAI renders plugin pages in a sandboxed <iframe>
-// without the allow-modals flag, so native prompt()/confirm()/alert() are
-// silently ignored (e.g. createKB's prompt() returned null → "nothing
-// happens"). Replace them with an in-page modal.
-const KB = (() => {
-  let modal, titleEl, bodyEl, inputEl, okBtn, cancelBtn, resolveFn;
-  function init() {
-    if (modal) return;
-    modal = document.getElementById('kbModal');
-    if (!modal) return;
-    titleEl = document.getElementById('kbModalTitle');
-    bodyEl = document.getElementById('kbModalBody');
-    inputEl = document.getElementById('kbModalInput');
-    okBtn = document.getElementById('kbModalOk');
-    cancelBtn = document.getElementById('kbModalCancel');
-    const close = (val) => {
-      modal.style.display = 'none';
-      if (resolveFn) { const r = resolveFn; resolveFn = null; r(val); }
-    };
-    okBtn.onclick = () => {
-      if (inputEl.style.display !== 'none') close(inputEl.value);
-      else close(true);
-    };
-    cancelBtn.onclick = () => close(false);
-    inputEl.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); okBtn.click(); }
-      else if (e.key === 'Escape') cancelBtn.click();
-    });
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) close(false);
-    });
-  }
-  function open(opts) {
-    init();
-    if (!modal) { // last-resort fallback (should not happen)
-      if (opts.type === 'confirm') return Promise.resolve(window.confirm(opts.message) !== false);
-      if (opts.type === 'alert') { window.alert(opts.message); return Promise.resolve(true); }
-      return Promise.resolve(window.prompt(opts.message, opts.inputValue));
-    }
-    titleEl.textContent = opts.title || '提示';
-    bodyEl.textContent = opts.message || '';
-    const isPrompt = opts.type === 'prompt';
-    inputEl.style.display = isPrompt ? '' : 'none';
-    inputEl.value = opts.inputValue || '';
-    okBtn.textContent = opts.okText || '确定';
-    cancelBtn.style.display = opts.type === 'alert' ? 'none' : '';
-    if (isPrompt) setTimeout(() => { inputEl.focus(); inputEl.select(); }, 60);
-    modal.style.display = 'flex';
-    return new Promise((res) => { resolveFn = res; });
-  }
-  return {
-    alert:   (msg)   => open({ type: 'alert', message: msg }),
-    confirm: (msg)   => open({ type: 'confirm', message: msg, okText: '确定' }),
-    prompt:  (msg, v) => open({ type: 'prompt', message: msg, inputValue: v || '' }),
-  };
-})();
+const ICONS = {
+  "activity": "<path d=\"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2\" />",
+  "alert-triangle": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\" /> <path d=\"M12 9v4\" /> <path d=\"M12 17h.01\" />",
+  "arrow-left": "<path d=\"m12 19-7-7 7-7\" /> <path d=\"M19 12H5\" />",
+  "arrow-right": "<path d=\"M5 12h14\" /> <path d=\"m12 5 7 7-7 7\" />",
+  "arrow-up-right": "<path d=\"M7 7h10v10\" /> <path d=\"M7 17 17 7\" />",
+  "book-open": "<path d=\"M12 5v16\" /> <path d=\"M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z\" />",
+  "box": "<path d=\"M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z\" /> <path d=\"m3.3 7 8.7 5 8.7-5\" /> <path d=\"M12 22V12\" />",
+  "check": "<path d=\"M20 6 9 17l-5-5\" />",
+  "chevron-down": "<path d=\"m6 9 6 6 6-6\" />",
+  "circle-dot": "<circle cx=\"12\" cy=\"12\" r=\"1\" /> <circle cx=\"12\" cy=\"12\" r=\"10\" />",
+  "clock-3": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 6v6h4\" />",
+  "command": "<path d=\"M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3\" />",
+  "corner-down-right": "<path d=\"m15 10 5 5-5 5\" /> <path d=\"M4 4v7a4 4 0 0 0 4 4h12\" />",
+  "database": "<ellipse cx=\"12\" cy=\"5\" rx=\"9\" ry=\"3\" /> <path d=\"M3 5V19A9 3 0 0 0 21 19V5\" /> <path d=\"M3 12A9 3 0 0 0 21 12\" />",
+  "external-link": "<path d=\"M15 3h6v6\" /> <path d=\"M10 14 21 3\" /> <path d=\"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6\" />",
+  "eye-off": "<path d=\"M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49\" /> <path d=\"M14.084 14.158a3 3 0 0 1-4.242-4.242\" /> <path d=\"M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143\" /> <path d=\"m2 2 20 20\" />",
+  "eye": "<path d=\"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0\" /> <circle cx=\"12\" cy=\"12\" r=\"3\" />",
+  "git-branch": "<path d=\"M15 6a9 9 0 0 0-9 9V3\" /> <circle cx=\"18\" cy=\"6\" r=\"3\" /> <circle cx=\"6\" cy=\"18\" r=\"3\" />",
+  "hard-drive": "<path d=\"M10 16h.01\" /> <path d=\"M2.212 11.577a2 2 0 0 0-.212.896V18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5.527a2 2 0 0 0-.212-.896L18.55 5.11A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\" /> <path d=\"M21.946 12.013H2.054\" /> <path d=\"M6 16h.01\" />",
+  "history": "<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\" /> <path d=\"M3 3v5h5\" /> <path d=\"M12 7v5l4 2\" />",
+  "info": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 16v-4\" /> <path d=\"M12 8h.01\" />",
+  "key-round": "<path d=\"M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z\" /> <circle cx=\"16.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\" />",
+  "layers-3": "<path d=\"M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z\" /> <path d=\"M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12\" /> <path d=\"M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17\" />",
+  "library": "<path d=\"m16 6 4 14\" /> <path d=\"M12 6v14\" /> <path d=\"M8 8v12\" /> <path d=\"M4 4v16\" />",
+  "list-checks": "<path d=\"M13 5h8\" /> <path d=\"M13 12h8\" /> <path d=\"M13 19h8\" /> <path d=\"m3 17 2 2 4-4\" /> <path d=\"m3 7 2 2 4-4\" />",
+  "lock-keyhole": "<circle cx=\"12\" cy=\"16\" r=\"1\" /> <rect x=\"3\" y=\"10\" width=\"18\" height=\"12\" rx=\"2\" /> <path d=\"M7 10V7a5 5 0 0 1 10 0v3\" />",
+  "lock": "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\" /> <path d=\"M7 11V7a5 5 0 0 1 10 0v4\" />",
+  "moon": "<path d=\"M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401\" />",
+  "more-horizontal": "<circle cx=\"12\" cy=\"12\" r=\"1\" /> <circle cx=\"19\" cy=\"12\" r=\"1\" /> <circle cx=\"5\" cy=\"12\" r=\"1\" />",
+  "pencil-line": "<path d=\"M13 21h8\" /> <path d=\"m15 5 4 4\" /> <path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\" />",
+  "plus": "<path d=\"M5 12h14\" /> <path d=\"M12 5v14\" />",
+  "radar": "<path d=\"M19.07 4.93A10 10 0 0 0 6.99 3.34\" /> <path d=\"M4 6h.01\" /> <path d=\"M2.29 9.62A10 10 0 1 0 21.31 8.35\" /> <path d=\"M16.24 7.76A6 6 0 1 0 8.23 16.67\" /> <path d=\"M12 18h.01\" /> <path d=\"M17.99 11.66A6 6 0 0 1 15.77 16.67\" /> <circle cx=\"12\" cy=\"12\" r=\"2\" /> <path d=\"m13.41 10.59 5.66-5.66\" />",
+  "refresh-cw": "<path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\" /> <path d=\"M21 3v5h-5\" /> <path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\" /> <path d=\"M8 16H3v5\" />",
+  "rotate-ccw": "<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\" /> <path d=\"M3 3v5h5\" />",
+  "save": "<path d=\"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z\" /> <path d=\"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7\" /> <path d=\"M7 3v4a1 1 0 0 0 1 1h7\" />",
+  "search": "<path d=\"m21 21-4.34-4.34\" /> <circle cx=\"11\" cy=\"11\" r=\"8\" />",
+  "server": "<rect width=\"20\" height=\"8\" x=\"2\" y=\"2\" rx=\"2\" ry=\"2\" /> <rect width=\"20\" height=\"8\" x=\"2\" y=\"14\" rx=\"2\" ry=\"2\" /> <line x1=\"6\" x2=\"6.01\" y1=\"6\" y2=\"6\" /> <line x1=\"6\" x2=\"6.01\" y1=\"18\" y2=\"18\" />",
+  "settings-2": "<path d=\"M14 17H5\" /> <path d=\"M19 7h-9\" /> <circle cx=\"17\" cy=\"17\" r=\"3\" /> <circle cx=\"7\" cy=\"7\" r=\"3\" />",
+  "shield-check": "<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\" /> <path d=\"m9 12 2 2 4-4\" />",
+  "sliders-horizontal": "<path d=\"M10 5H3\" /> <path d=\"M12 19H3\" /> <path d=\"M14 3v4\" /> <path d=\"M16 17v4\" /> <path d=\"M21 12h-9\" /> <path d=\"M21 19h-5\" /> <path d=\"M21 5h-7\" /> <path d=\"M8 10v4\" /> <path d=\"M8 12H3\" />",
+  "sparkles": "<path d=\"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z\" /> <path d=\"M20 2v4\" /> <path d=\"M22 4h-4\" /> <circle cx=\"4\" cy=\"20\" r=\"2\" />",
+  "square-stack": "<path d=\"M4 10c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2\" /> <path d=\"M10 16c-1.1 0-2-.9-2-2v-4c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2\" /> <rect width=\"8\" height=\"8\" x=\"14\" y=\"14\" rx=\"2\" />",
+  "sun": "<circle cx=\"12\" cy=\"12\" r=\"4\" /> <path d=\"M12 2v2\" /> <path d=\"M12 20v2\" /> <path d=\"m4.93 4.93 1.41 1.41\" /> <path d=\"m17.66 17.66 1.41 1.41\" /> <path d=\"M2 12h2\" /> <path d=\"M20 12h2\" /> <path d=\"m6.34 17.66-1.41 1.41\" /> <path d=\"m19.07 4.93-1.41 1.41\" />",
+  "target": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <circle cx=\"12\" cy=\"12\" r=\"6\" /> <circle cx=\"12\" cy=\"12\" r=\"2\" />",
+  "trash-2": "<path d=\"M10 11v6\" /> <path d=\"M14 11v6\" /> <path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6\" /> <path d=\"M3 6h18\" /> <path d=\"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\" />",
+  "unlock-keyhole": "<circle cx=\"12\" cy=\"16\" r=\"1\" /> <rect width=\"18\" height=\"12\" x=\"3\" y=\"10\" rx=\"2\" /> <path d=\"M7 10V7a5 5 0 0 1 9.33-2.5\" />",
+  "upload-cloud": "<path d=\"M12 13v8\" /> <path d=\"M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242\" /> <path d=\"m8 17 4-4 4 4\" />",
+  "users": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" /> <path d=\"M16 3.128a4 4 0 0 1 0 7.744\" /> <path d=\"M22 21v-2a4 4 0 0 0-3-3.87\" /> <circle cx=\"9\" cy=\"7\" r=\"4\" />",
+  "x": "<path d=\"M18 6 6 18\" /> <path d=\"m6 6 12 12\" />",
+  "zap": "<path d=\"M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z\" />",
+};
 
-let currentKbId = null;
-let token = new URLSearchParams(location.search).get('token') || '';
-if (token) sessionStorage.setItem('kirakb_token', token);
-else token = sessionStorage.getItem('kirakb_token') || '';
-const headers = { 'Content-Type': 'application/json' };
-if (token) headers['Authorization'] = `Bearer ${token}`;
-let taskPollInterval = null;
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-// Detect mode: sidebar iframe (plugin-bridge injected) vs standalone.
-// NOTE: a top-level tab opened via the "open in new tab" button has no
-// parent to answer the bridge's ready(), so always treat top-level
-// windows (window.parent === window) as standalone.
-const isSidebarMode = typeof window.PluginPageContext !== 'undefined'
+const POLICY_LABELS = {
+  open: "Open",
+  whitelist: "Whitelist",
+  admin: "WebUI only",
+  off: "Frozen",
+  inherit: "Inherit"
+};
+const POLICY_OPTIONS_SCOPE = [
+  ["open", "open — anyone"],
+  ["whitelist", "whitelist — listed users"],
+  ["admin", "admin — WebUI only"],
+  ["off", "off — frozen"]
+];
+const POLICY_OPTIONS_ENTRY = [["inherit", "inherit — follow KB"]].concat(POLICY_OPTIONS_SCOPE);
+const RECALL_OPTIONS = [["inherit", "inherit — follow KB"], ["on", "force on"], ["off", "opt out"]];
+
+const state = {
+  kbs: [], current: null, docs: [], versions: [], tasks: [], deleted: [],
+  models: [], globalRecall: { enabled: false }, view: "overview",
+  selected: new Set(), docFilter: "", docFilterKind: "all", editingDoc: null,
+  entryDoc: null, bulkMode: null,
+  defaults: { add: "open", edit: "open", delete: "whitelist" },
+  kbPolicy: { add: "open", edit: "open", delete: "whitelist", allow_users: [] },
+  busy: false, taskTimer: null, settings: null, historyDoc: null, historyList: []
+};
+
+/* ---------- theme (day mode is the default; choice persists) ---------- */
+const THEME_KEY = "kirakb-theme";
+function applyTheme(theme) {
+  const value = theme === "dark" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", value);
+  try { localStorage.setItem(THEME_KEY, value); } catch (e) { /* private mode */ }
+  const btn = document.getElementById("themeToggle");
+  if (btn) btn.innerHTML = icon(value === "dark" ? "sun" : "moon", 18);
+}
+applyTheme((() => { try { return localStorage.getItem(THEME_KEY) || "light"; } catch (e) { return "light"; } })());
+
+/* ---------- bootstrap / api ---------- */
+const isSidebarMode = typeof window.PluginPageContext !== "undefined"
   && window.PluginPageContext.ready
   && window.parent !== window;
+const token = new URLSearchParams(location.search).get("token") || "";
+let bridgeCtx = null;
+
 function pluginIdFromPath() {
   const m = location.pathname.match(/^\/page\/plugin\/([^\/]+)\//);
   return m ? decodeURIComponent(m[1]) : null;
 }
 
 async function api(path, opts = {}) {
-  const method = (opts.method || 'GET').toUpperCase();
+  const method = (opts.method || "GET").toUpperCase();
+  let data;
   if (isSidebarMode) {
-    // Sidebar mode: use the plugin bridge (same-origin, cookie auth).
-    // MUST await ready() first — bridge URLs need context.pluginId.
-    const ctx = await Promise.race([
-      window.PluginPageContext.ready(),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('bridge 初始化超时，请刷新重试')), 8000))
-    ]);
-    const bridge = window.PluginPageContext.api;
-    if (method === 'GET') {
-      return bridge.get(path);
-    } else if (method === 'POST') {
-      return bridge.post(path, opts.body ? JSON.parse(opts.body) : {});
-    } else if (method === 'DELETE') {
-      return bridge.delete(path);
+    if (!bridgeCtx) {
+      bridgeCtx = await Promise.race([
+        window.PluginPageContext.ready(),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("Bridge timeout")), 8000))
+      ]);
     }
-    // PUT: bridge has no PUT helper — fall back to same-origin fetch
-    const res = await fetch('/api/plugin/' + encodeURIComponent(ctx.pluginId) + path, {
-      method: 'PUT',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: opts.body || '{}'
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    if (method === "GET") data = await window.PluginPageContext.api.get(path);
+    else if (method === "POST") data = await window.PluginPageContext.api.post(path, opts.body ? JSON.parse(opts.body) : {});
+    else if (method === "DELETE") data = await window.PluginPageContext.api.delete(path);
+    else {
+      const res = await fetch("/api/plugin/" + encodeURIComponent(bridgeCtx.pluginId) + path, {
+        method, credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: opts.body || "{}"
+      });
+      data = await res.json();
+    }
+  } else {
+    const pid = pluginIdFromPath();
+    const base = pid ? "/api/plugin/" + encodeURIComponent(pid) : "/api";
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers.Authorization = "Bearer " + token;
+    const res = await fetch(base + path, { ...opts, headers });
+    data = await res.json().catch(() => ({ error: "Invalid JSON response" }));
   }
-  // Standalone mode: direct fetch with optional token.
-  // When served by KiraAI itself (/page/plugin/<id>/...), the API root is
-  // /api/plugin/<id>; the standalone web_server exposes /api instead.
-  const pid = pluginIdFromPath();
-  const base = pid ? '/api/plugin/' + pid : '/api';
-  const res = await fetch(base + path, { ...opts, headers });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err);
-  }
-  return res.json();
+  if (data && data.error && !opts.allowError) throw new Error(data.error);
+  return data;
 }
 
-// Upload helper (works in both modes)
 async function apiUpload(path, formData) {
   if (isSidebarMode) {
-    await window.PluginPageContext.ready();
-    const file = formData.get('file');
-    return window.PluginPageContext.api.upload(path, file, 'file');
+    if (!bridgeCtx) bridgeCtx = await window.PluginPageContext.ready();
+    const file = formData.get("file");
+    const data = await window.PluginPageContext.api.upload(path, file, "file");
+    if (data && data.error) throw new Error(data.error);
+    return data;
   }
   const pid = pluginIdFromPath();
-  const base = pid ? '/api/plugin/' + pid : '/api';
-  const res = await fetch(base + path, {
-    method: 'POST',
-    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-    body: formData
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  const base = pid ? "/api/plugin/" + encodeURIComponent(pid) : "/api";
+  const headers = token ? { Authorization: "Bearer " + token } : {};
+  const res = await fetch(base + path, { method: "POST", headers, body: formData });
+  const data = await res.json().catch(() => ({ error: "Invalid JSON response" }));
+  if (data && data.error) throw new Error(data.error);
+  return data;
 }
 
-// Open in a new tab — absolute URL so the plugin id is present, plus the
-// token query param so the standalone (non-iframe) fetch can authenticate.
-document.getElementById('openNewTabBtn').onclick = () => {
-  const pid = pluginIdFromPath();
-  if (!pid) { window.open(location.href, '_blank'); return; }
-  const q = new URLSearchParams(location.search);
-  q.set('token', token);
-  const url = '/page/plugin/' + encodeURIComponent(pid) + '/index' + (q.toString() ? '?' + q.toString() : '');
-  window.open(url, '_blank');
-};
-
-// Dark theme support via plugin bridge
-if (isSidebarMode) {
-  window.PluginPageContext.onThemeChange((isDark) => {
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+/* ---------- ui utilities ---------- */
+function icon(name, size = 18) {
+  const body = ICONS[name] || ICONS["circle-dot"] || "";
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+}
+function hydrateIcons(root = document) {
+  $$("[data-icon]", root).forEach(el => {
+    if (el.dataset.hydrated === "1") return;
+    el.innerHTML = icon(el.dataset.icon, Number(el.dataset.size || 18));
+    el.dataset.hydrated = "1";
   });
 }
-
-function escapeHtml(s) {
-  if (!s) return '';
-  return s.replace(/[&<>]/g, function(m) {
-    if (m === '&') return '&amp;';
-    if (m === '<') return '&lt;';
-    if (m === '>') return '&gt;';
-    return m;
-  });
+function esc(value) {
+  return String(value == null ? "" : value).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
 }
-
-async function loadKBs() {
-  try {
-    const kbs = await api('/kbs');
-    const select = document.getElementById('kbSelect');
-    select.innerHTML = '';
-    if (kbs.length === 0) {
-      select.innerHTML = '<option value="">无知识库，请先创建</option>';
-      currentKbId = null;
-      document.getElementById('docList').innerHTML = '<p>暂无文档</p>';
-      document.getElementById('versionList').innerHTML = '<p>暂无版本</p>';
-      return;
-    }
-    for (const kb of kbs) {
-      const option = document.createElement('option');
-      option.value = kb.kb_id;
-      option.textContent = `${kb.display_name} (${kb.version_count} 版本)`;
-      select.appendChild(option);
-    }
-    if (!currentKbId || !kbs.some(k => k.kb_id === currentKbId)) {
-      currentKbId = kbs[0].kb_id;
-    }
-    select.value = currentKbId;
-    await loadDocuments();
-    await loadVersions();
-  } catch (e) {
-    console.error(e);
-    document.getElementById('docList').innerHTML = `<p style="color:#dc2626;">加载失败: ${e.message}</p>`;
-    document.getElementById('versionList').innerHTML = '';
-  }
+function fmtBytes(n) {
+  const v = Number(n || 0);
+  if (v < 1024) return v + " B";
+  if (v < 1024 * 1024) return (v / 1024).toFixed(1) + " KB";
+  return (v / 1024 / 1024).toFixed(2) + " MB";
 }
-
-async function loadDocuments() {
-  if (!currentKbId) return;
-  try {
-    const docs = await api(`/kbs/${encodeURIComponent(currentKbId)}/documents`);
-    const container = document.getElementById('docList');
-    if (docs.length === 0) {
-      container.innerHTML = '<p>暂无文档，请上传</p>';
-      return;
-    }
-    container.innerHTML = docs.map(d => `
-      <div class="doc-item">
-        <span class="doc-name">${escapeHtml(d.name)}</span>
-        <div>
-          <button class="small" onclick="editDocument('${d.doc_id}')">编辑</button>
-          <button class="small danger" onclick="deleteDocument('${d.doc_id}')">删除</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (e) {
-    document.getElementById('docList').innerHTML = `<p>加载失败: ${e.message}</p>`;
-  }
+function fmtTime(ts) {
+  if (!ts) return "—";
+  const d = new Date(Number(ts) * 1000);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleString(undefined, { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
-
-async function loadVersions() {
-  if (!currentKbId) return;
-  try {
-    const versions = await api(`/kbs/${encodeURIComponent(currentKbId)}/versions`);
-    const container = document.getElementById('versionList');
-    if (versions.length === 0) {
-      container.innerHTML = '<p>暂无版本，请创建新版本</p>';
-      return;
-    }
-    container.innerHTML = versions.map(v => `
-      <div class="version-item">
-        <div class="version-name">
-          <strong>${escapeHtml(v.model_name)}</strong> (${v.dimension}维)
-          <span class="badge ${v.is_active ? 'active' : ''}">${v.is_active ? '当前激活' : ''}</span>
-          ${(v.status && v.status !== 'ready')
-            ? '<span class="badge" style="background:#fee2e2;color:#b91c1c;">不完整・建库失败残留</span>'
-            : ''}
-          <div style="font-size:0.7rem; color:#666;">创建于 ${new Date(v.created_at * 1000).toLocaleString()}</div>
-        </div>
-        <div>
-          ${(!v.is_active && (!v.status || v.status === 'ready'))
-            ? `<button class="small" onclick="activateVersion('${v.version_id}')">激活</button>` : ''}
-          ${(!v.is_active || (v.status && v.status !== 'ready'))
-            ? `<button class="small danger" onclick="deleteVersion('${v.version_id}')">删除</button>` : ''}
-        </div>
-      </div>
-    `).join('');
-  } catch (e) {
-    document.getElementById('versionList').innerHTML = `<p>加载失败: ${e.message}</p>`;
-  }
+function toast(message, type = "ok") {
+  const el = document.createElement("div");
+  el.className = "toast " + (type === "err" ? "err" : "ok");
+  el.innerHTML = `<span class="bar"></span><div>${esc(message)}</div>`;
+  $("#toasts").appendChild(el);
+  setTimeout(() => {
+    el.style.transition = "opacity .2s, transform .2s";
+    el.style.opacity = "0";
+    el.style.transform = "translateY(6px)";
+    setTimeout(() => el.remove(), 220);
+  }, type === "err" ? 5200 : 3200);
 }
-
-async function editDocument(docId) {
-  try {
-    const data = await api(`/kbs/${encodeURIComponent(currentKbId)}/documents/${docId}`);
-    document.getElementById('docEditContent').value = data.content;
-    const modal = document.getElementById('docEditModal');
-    modal.style.display = 'flex';
-    window._currentEditDocId = docId;
-  } catch (e) {
-    await KB.alert('获取文档内容失败: ' + e.message);
-  }
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add("is-open");
+  el.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
 }
-
-async function deleteDocument(docId) {
-  if (!(await KB.confirm('确定删除此文档？可后续恢复。'))) return;
-  try {
-    await api(`/kbs/${encodeURIComponent(currentKbId)}/documents/${docId}`, { method: 'DELETE' });
-    await loadDocuments();
-  } catch (e) {
-    await KB.alert('删除失败: ' + e.message);
-  }
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove("is-open");
+  el.setAttribute("aria-hidden", "true");
+  if (!$$(".modal.is-open").length) document.body.style.overflow = "";
 }
-
-async function activateVersion(versionId) {
-  try {
-    await api(`/kbs/${encodeURIComponent(currentKbId)}/versions/${versionId}/activate`, { method: 'POST' });
-    await loadVersions();
-    await KB.alert('版本已激活，后续检索将使用此版本');
-  } catch (e) {
-    await KB.alert('激活失败: ' + e.message);
-  }
+function closeAllModals() {
+  $$(".modal.is-open").forEach(el => closeModal(el.id));
 }
-
-async function deleteVersion(versionId) {
-  if (!(await KB.confirm('确定删除此版本？不可恢复。'))) return;
-  try {
-    await api(`/kbs/${encodeURIComponent(currentKbId)}/versions/${versionId}`, { method: 'DELETE' });
-    await loadVersions();
-  } catch (e) {
-    await KB.alert('删除失败: ' + e.message);
-  }
-}
-
-// ---- Embedding model picker + automatic dimension probing ----
-
-function setProbeStatus(msg, color) {
-  const el = document.getElementById('probeStatus');
-  el.textContent = msg || '';
-  el.style.color = color || '#666';
-}
-
-async function loadEmbeddingModels() {
-  const select = document.getElementById('versionModelSelect');
-  setProbeStatus('');
-  try {
-    const data = await api('/embedding-models');
-    const models = (data && data.models) || [];
-    const opts = ['<option value="">（使用 KiraAI 默认嵌入模型）</option>'];
-    for (const m of models) {
-      opts.push(`<option value="${escapeHtml(m.uuid)}">${escapeHtml(m.label)}</option>`);
-    }
-    select.innerHTML = opts.join('');
-    if (data && data.default_uuid) {
-      // If the configured default isn't among the registered embedding models,
-      // add it explicitly so the dropdown can still show what will be used.
-      if (!models.some(m => m.uuid === data.default_uuid)) {
-        const opt = document.createElement('option');
-        opt.value = data.default_uuid;
-        opt.textContent = data.default_uuid + '（KiraAI 默认）';
-        select.appendChild(opt);
-      }
-      select.value = data.default_uuid;
-    }
-    // Pre-fill the name (and clear a stale dimension) for the preselected model
-    // so the dialog is usable without touching the dropdown first.
-    syncModelName();
-    document.getElementById('versionDimension').value = '';
-    document.getElementById('versionModelName').dataset.auto = '1';
-    if (!models.length) {
-      setProbeStatus(
-        data && data.default_available
-          ? '未在 KiraAI 中单独登记嵌入模型，将使用默认嵌入模型。'
-          : '⚠ 未检测到可用嵌入模型，请先在 KiraAI 主系统中配置 default_embedding。',
-        data && data.default_available ? '#666' : '#b45309'
-      );
-    }
-  } catch (e) {
-    select.innerHTML = '<option value="">（使用 KiraAI 默认嵌入模型）</option>';
-    setProbeStatus('无法获取模型列表：' + e.message, '#b45309');
-  }
-}
-
-// Fill the model-name field from the chosen model, unless the user typed one.
-function syncModelName() {
-  const sel = document.getElementById('versionModelSelect');
-  const nameInput = document.getElementById('versionModelName');
-  if (!sel.value) return;
-  // Don't clobber a name the user typed by hand.
-  if (nameInput.value.trim() && nameInput.dataset.auto !== '1') return;
-  const label = sel.options[sel.selectedIndex]
-    ? sel.options[sel.selectedIndex].textContent
-    : '';
-  const short = label.includes(' / ') ? label.split(' / ').pop().trim() : label.trim();
-  if (short) {
-    nameInput.value = short;
-    nameInput.dataset.auto = '1';
-  }
-}
-
-document.getElementById('versionModelSelect').onchange = () => {
-  syncModelName();
-  setProbeStatus('');
-};
-
-// Once the user types a name by hand, stop auto-filling it from the dropdown.
-document.getElementById('versionModelName').addEventListener('input', () => {
-  document.getElementById('versionModelName').dataset.auto = '';
-});
-
-document.getElementById('probeDimensionBtn').onclick = async () => {
-  const btn = document.getElementById('probeDimensionBtn');
-  const uuid = document.getElementById('versionModelSelect').value || null;
-  btn.disabled = true;
-  const oldText = btn.textContent;
-  btn.textContent = '探测中…';
-  setProbeStatus('正在调用嵌入模型…');
-  try {
-    const res = await api('/embedding-models/probe', {
-      method: 'POST',
-      body: JSON.stringify({ model_uuid: uuid })
+function askConfirm(title, text, confirmText = "Confirm", danger = false) {
+  return new Promise(resolve => {
+    $("#confirmTitle").textContent = title;
+    $("#confirmText").textContent = text || "";
+    const ok = $("#confirmOk");
+    ok.textContent = confirmText;
+    ok.className = "btn " + (danger ? "danger" : "solid");
+    const done = value => {
+      ok.onclick = null;
+      closeModal("modalConfirm");
+      resolve(value);
+    };
+    ok.onclick = () => done(true);
+    $("#modalConfirm").querySelectorAll('[data-action="close-modal"]').forEach(b => {
+      b.onclick = e => { e.preventDefault(); done(false); };
     });
-    if (res.error) {
-      setProbeStatus('✗ ' + res.error, '#b91c1c');
-    } else {
-      document.getElementById('versionDimension').value = res.dimension;
-      setProbeStatus(`✓ 实际输出 ${res.dimension} 维，已自动填入`, '#15803d');
+    openModal("modalConfirm");
+  });
+}
+function askPrompt(title, text, value = "", placeholder = "") {
+  return new Promise(resolve => {
+    $("#promptTitle").textContent = title;
+    $("#promptText").textContent = text || "";
+    const input = $("#promptInput");
+    input.value = value || "";
+    input.placeholder = placeholder;
+    const done = v => {
+      $("#promptOk").onclick = null;
+      closeModal("modalPrompt");
+      resolve(v);
+    };
+    $("#promptOk").onclick = () => done(input.value.trim());
+    $("#modalPrompt").querySelectorAll('[data-action="close-modal"]').forEach(b => {
+      b.onclick = e => { e.preventDefault(); done(null); };
+    });
+    openModal("modalPrompt");
+    setTimeout(() => input.focus(), 80);
+    input.onkeydown = e => {
+      if (e.key === "Enter") { e.preventDefault(); done(input.value.trim()); }
+      if (e.key === "Escape") { e.preventDefault(); done(null); }
+    };
+  });
+}
+function currentKb() {
+  return state.kbs.find(k => k.kb_id === state.current) || null;
+}
+function defaultPolicy(op) {
+  return state.defaults[op] || "open";
+}
+function kbPolicyValue(op) {
+  const kb = currentKb();
+  const perms = (kb && kb.permissions) || null;
+  return (perms && perms[op]) || defaultPolicy(op);
+}
+function entryPolicyValue(doc, op) {
+  const perms = doc && doc.permissions;
+  if (perms && perms[op] && perms[op] !== "inherit") return perms[op];
+  return kbPolicyValue(op);
+}
+function entryPolicyRaw(doc, op) {
+  return (doc && doc.permissions && doc.permissions[op]) || "inherit";
+}
+function activeVersion() {
+  return state.versions.find(v => v.is_active) || null;
+}
+function badge(text, cls = "") {
+  return `<span class="badge ${cls}"><span class="dot"></span>${esc(text)}</span>`;
+}
+function policyBadge(policy) {
+  if (policy === "admin") return badge("WebUI only", "violet");
+  if (policy === "off") return badge("Frozen", "danger");
+  if (policy === "whitelist") return badge("Whitelist", "warn");
+  return badge("Open", "cyan");
+}
+
+/* ---------- rendering ---------- */
+function settleReveals() {
+  setTimeout(() => $$(".reveal").forEach(el => el.classList.add("is-settled")), 1200);
+}
+function renderAll() {
+  renderSelect();
+  renderTopbar();
+  renderHero();
+  renderDocs();
+  renderVersions();
+  renderAccess();
+  renderRecall();
+  renderTasks();
+  renderOverviewLists();
+  hydrateIcons();
+  settleReveals();
+}
+
+function renderSelect() {
+  const sel = $("#kbSelect");
+  sel.innerHTML = state.kbs.length
+    ? state.kbs.map(k => `<option value="${esc(k.kb_id)}">${esc(k.display_name)} · ${k.entry_count || 0}</option>`).join("")
+    : `<option value="">No knowledge base</option>`;
+  if (state.current) sel.value = state.current;
+}
+
+function renderTopbar() {
+  const kb = currentKb();
+  const ver = activeVersion();
+  $("#activeBadgeText").textContent = ver ? ver.model_name : "No version";
+  $("#activeBadge").className = "badge " + (ver ? "acid" : "");
+  $$("#railNav button").forEach(b => b.classList.toggle("is-active", b.dataset.view === state.view));
+}
+
+function renderHero() {
+  const kb = currentKb();
+  $("#heroTitle").innerHTML = `Kira<em>KB</em><span class="title-dot">.</span>`;
+  $("#heroKbName").textContent = kb ? ` · ${kb.display_name}` : "";
+  $("#heroDesc").textContent = "知识在这里生长。翻得到，也回得去。";
+  const ver = activeVersion();
+  $("#metaEntries").textContent = String(state.docs.length).padStart(2, "0");
+  $("#metaVersions").textContent = String(state.versions.length).padStart(2, "0");
+  $("#metaModel").textContent = ver ? ver.model_name : "—";
+  const recallOn = (kb && kb.recall && kb.recall.enabled) || false;
+  $("#metaRecall").textContent = recallOn ? "ON" : "OFF";
+  $("#heroIndex").textContent = String(Math.max(1, state.kbs.findIndex(k => k.kb_id === state.current) + 1)).padStart(2, "0");
+
+  animateNumber($("#statEntries"), state.docs.length);
+  animateNumber($("#statVersions"), state.versions.length);
+  $("#statChunks").textContent = ver ? String(ver.dimension) : "—";
+  $("#statRecall").textContent = recallOn ? "ON" : "OFF";
+  $("#statRecall").style.color = recallOn ? "var(--acid)" : "";
+}
+
+function animateNumber(el, value) {
+  if (!el) return;
+  const target = Number(value) || 0;
+  const start = Number(el.textContent) || 0;
+  if (start === target) { el.textContent = String(target); return; }
+  const t0 = performance.now();
+  const dur = 520;
+  const step = now => {
+    const p = Math.min(1, (now - t0) / dur);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = String(Math.round(start + (target - start) * eased));
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function renderOverviewLists() {
+  const recent = state.docs.slice(0, 5);
+  $("#recentCount").textContent = recent.length ? String(state.docs.length) : "";
+  $("#recentList").innerHTML = recent.length
+    ? recent.map((d, i) => `
+      <div class="doc-row reveal" style="--i:${i}">
+        <span class="mono faint">${String(i + 1).padStart(2, "0")}</span>
+        <div><div class="doc-name">${esc(d.name)}</div><div class="doc-meta">${fmtBytes(d.size)} · ${fmtTime(d.updated_at)}</div></div>
+        <div class="badges">${policyBadge(entryPolicyValue(d, "edit"))}${d.recall && d.recall.enabled === true ? badge("Recall on", "acid") : ""}</div>
+        <span></span>
+      </div>`).join("")
+    : `<div class="empty"><div class="big">Empty</div>No entries yet.</div>`;
+
+  const vlist = state.versions.slice(0, 4);
+  $("#versionCount").textContent = String(state.versions.length);
+  $("#overviewVersions").innerHTML = vlist.length
+    ? vlist.map((v, i) => `
+      <div class="doc-row reveal" style="--i:${i}">
+        <span class="mono faint">${v.is_active ? "ON" : String(i + 1).padStart(2, "0")}</span>
+        <div><div class="doc-name">${esc(v.model_name)}</div><div class="doc-meta">${v.dimension} dim · ${fmtTime(v.created_at)}</div></div>
+        <div class="badges">${v.is_active ? badge("Active", "acid") : badge("Standby", "")}${v.outdated ? badge(v.outdated + " to sync", "warn") : ""}</div>
+        <span></span>
+      </div>`).join("")
+    : `<div class="empty"><div class="big">No index</div>Create a version to enable search.</div>`;
+}
+
+function renderDocs() {
+  const filter = state.docFilter.trim().toLowerCase();
+  const kind = state.docFilterKind || "all";
+  const docs = state.docs.filter(d => {
+    if (filter && !d.name.toLowerCase().includes(filter)) return false;
+    if (kind === "locked") return entryPolicyValue(d, "edit") === "admin";
+    if (kind === "frozen") return entryPolicyValue(d, "edit") === "off" || entryPolicyValue(d, "delete") === "off";
+    if (kind === "recall") return d.recall && d.recall.enabled === true;
+    return true;
+  });
+  $("#docCountBadge").textContent = state.docs.length + " entries";
+  $("#docList").innerHTML = docs.length
+    ? docs.map((d, i) => {
+      const edit = entryPolicyValue(d, "edit");
+      const del = entryPolicyValue(d, "delete");
+      return `
+      <div class="doc-row reveal" data-id="${esc(d.doc_id)}" style="--i:${i}">
+        <label class="check"><input type="checkbox" data-check="doc" value="${esc(d.doc_id)}" ${state.selected.has(d.doc_id) ? "checked" : ""}></label>
+        <div>
+          <div class="doc-name">${esc(d.name)}</div>
+          <div class="doc-meta">${fmtBytes(d.size)} · updated ${fmtTime(d.updated_at)}</div>
+        </div>
+        <div class="badges">
+          ${policyBadge(edit)}
+          ${del !== edit ? policyBadge(del) : ""}
+          ${d.recall && d.recall.enabled === true ? badge("Recall on", "acid") : ""}
+          ${d.recall && d.recall.enabled === false ? badge("Recall off", "") : ""}
+          ${d.history && d.history.count > 1 ? badge("H" + d.history.count, "violet") : ""}
+          ${d.history && d.history.ai_edited ? badge("AI edited", "warn") : ""}
+        </div>
+        <div class="row-actions">
+          <button type="button" class="icon-btn" title="Read / edit" data-action="edit-doc" data-id="${esc(d.doc_id)}">${icon("pencil-line", 15)}</button>
+          <button type="button" class="icon-btn" title="History" data-action="history" data-id="${esc(d.doc_id)}">${icon("history", 15)}</button>
+          <button type="button" class="icon-btn acid" title="Settings" data-action="entry-settings" data-id="${esc(d.doc_id)}">${icon("sliders-horizontal", 15)}</button>
+          <button type="button" class="icon-btn danger" title="Delete" data-action="delete-doc" data-id="${esc(d.doc_id)}">${icon("trash-2", 15)}</button>
+        </div>
+      </div>`;
+    }).join("")
+    : `<div class="empty"><div class="big">Nothing here</div>${state.docs.length ? "No entry matches the filter." : "Upload a file or create a version to begin."}</div>`;
+  updateBulkBar();
+  settleReveals();
+}
+
+function renderVersions() {
+  const grid = $("#versionGrid");
+  $("#versionHeadCount").textContent = state.versions.length + " total";
+  grid.innerHTML = state.versions.length
+    ? state.versions.map((v, i) => `
+      <article class="version-card reveal ${v.is_active ? "is-active" : ""}" style="--i:${i}">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <h3>${esc(v.model_name)}</h3>
+          <div style="margin-left:auto">${v.is_active ? badge("Active", "acid") : badge("Standby", "")}</div>
+        </div>
+        <div class="v-meta">
+          <span>${v.dimension} dimensions</span>
+          <span>${fmtTime(v.created_at)}</span>
+          <span>${v.status === "ready" ? "Ready" : "Incomplete"}</span>
+          ${v.outdated ? `<span style="color:var(--warn,#ffb35c)">${v.outdated} entries to sync</span>` : `<span>Up to date</span>`}
+        </div>
+        <div class="v-actions">
+          ${!v.is_active && v.status === "ready" ? `<button type="button" class="btn" data-action="activate-version" data-id="${esc(v.version_id)}">${icon("check", 13)}<span>Activate</span></button>` : ""}
+          ${v.status === "ready" ? `<button type="button" class="btn ghost" data-action="sync-version" data-id="${esc(v.version_id)}">${icon("refresh-cw", 13)}<span>Sync</span></button>` : ""}
+          ${!v.is_active || v.status !== "ready" ? `<button type="button" class="btn ghost danger" data-action="delete-version" data-id="${esc(v.version_id)}">${icon("trash-2", 13)}</button>` : ""}
+        </div>
+      </article>`).join("")
+    : `<div class="empty" style="grid-column:1/-1"><div class="big">No index yet</div>Create a version to make the archive searchable.</div>`;
+}
+
+function renderAccess() {
+  const kb = currentKb();
+  const perms = (kb && kb.permissions) || {};
+  $("#policyAdd").value = perms.add || defaultPolicy("add");
+  $("#policyEdit").value = perms.edit || defaultPolicy("edit");
+  $("#policyDelete").value = perms.delete || defaultPolicy("delete");
+  $("#kbAllowUsers").value = (perms.allow_users || []).join("\n");
+  $("#entryOverrideCount").textContent = state.docs.length + " entries";
+  $("#entryPolicyList").innerHTML = state.docs.length
+    ? state.docs.map((d, i) => {
+      const edit = entryPolicyRaw(d, "edit");
+      const del = entryPolicyRaw(d, "delete");
+      return `
+      <div class="entry-row reveal" style="--i:${i}" data-id="${esc(d.doc_id)}">
+        <div class="name">${esc(d.name)}</div>
+        <select class="select" data-entry-policy="edit" data-id="${esc(d.doc_id)}">
+          ${POLICY_OPTIONS_ENTRY.map(o => `<option value="${o[0]}" ${o[0] === edit ? "selected" : ""}>${o[1]}</option>`).join("")}
+        </select>
+        <select class="select" data-entry-policy="delete" data-id="${esc(d.doc_id)}">
+          ${POLICY_OPTIONS_ENTRY.map(o => `<option value="${o[0]}" ${o[0] === del ? "selected" : ""}>${o[1]}</option>`).join("")}
+        </select>
+      </div>`;
+    }).join("")
+    : `<div class="empty">No entries to configure.</div>`;
+}
+
+function renderRecall() {
+  const kb = currentKb();
+  const recall = (kb && kb.recall) || {};
+  const globalOn = state.globalRecall.enabled;
+  $("#globalRecallBadge").textContent = globalOn ? "Global on" : "Global off";
+  $("#globalRecallBadge").className = "badge " + (globalOn ? "acid" : "");
+  $("#kbRecallEnabled").checked = !!recall.enabled;
+  $("#kbRecallTopK").value = recall.top_k == null ? "" : recall.top_k;
+  $("#kbRecallMinScore").value = recall.min_score == null ? "" : recall.min_score;
+  $("#kbRecallMaxChars").value = recall.max_chars == null ? "" : recall.max_chars;
+
+  $("#entryRecallList").innerHTML = state.docs.length
+    ? state.docs.map((d, i) => {
+      const r = d.recall || { enabled: null, keywords: [] };
+      const value = r.enabled === true ? "on" : r.enabled === false ? "off" : "inherit";
+      return `
+      <div class="entry-row reveal" style="--i:${i}" data-id="${esc(d.doc_id)}">
+        <div class="name">${esc(d.name)}</div>
+        <select class="select" data-entry-recall="mode" data-id="${esc(d.doc_id)}">
+          ${RECALL_OPTIONS.map(o => `<option value="${o[0]}" ${o[0] === value ? "selected" : ""}>${o[1]}</option>`).join("")}
+        </select>
+        <div class="kw">
+          <input type="text" data-entry-recall="keywords" data-id="${esc(d.doc_id)}" value="${esc((r.keywords || []).join(", "))}" placeholder="keywords">
+          <button type="button" class="btn ghost" data-action="save-entry-recall" data-id="${esc(d.doc_id)}">${icon("save", 13)}</button>
+        </div>
+      </div>`;
+    }).join("")
+    : `<div class="empty">No entries to configure.</div>`;
+}
+
+function renderTasks() {
+  const list = $("#taskList");
+  if (!state.tasks.length) {
+    list.innerHTML = `<div class="empty"><div class="big">Idle</div>No background jobs.</div>`;
+    return;
+  }
+  list.innerHTML = state.tasks.slice().reverse().map((t, i) => `
+    <div class="task">
+      <div class="task-head">
+        <span class="name">${esc(t.description)}</span>
+        <span class="st ${esc(t.status)}">${esc(t.status)}</span>
+      </div>
+      <div class="progress"><i style="width:${Number(t.progress) || 0}%"></i></div>
+      <div class="msg">${esc(t.message || "")} ${t.progress ? "· " + t.progress + "%" : ""}</div>
+    </div>`).join("");
+  settleReveals();
+}
+
+function updateBulkBar() {
+  const bar = $("#bulkBar");
+  const count = state.selected.size;
+  bar.classList.toggle("is-on", count > 0);
+  $("#bulkText").textContent = count + " selected";
+}
+
+/* ---------- data loading ---------- */
+async function refresh(options = {}) {
+  if (state.busy) return;
+  state.busy = true;
+  try {
+    const kbs = await api("/kbs");
+    state.kbs = Array.isArray(kbs) ? kbs : [];
+    if (!state.kbs.length) {
+      state.current = null;
+      state.docs = []; state.versions = [];
+      renderAll();
+      return;
     }
+    if (!state.current || !state.kbs.some(k => k.kb_id === state.current)) {
+      state.current = state.kbs[0].kb_id;
+    }
+    await Promise.all([loadDocs(), loadVersions(), loadTasks(), loadGlobalRecall()]);
+    const ids = new Set(state.docs.map(d => d.doc_id));
+    state.selected = new Set(Array.from(state.selected).filter(id => ids.has(id)));
+    if (!options.quiet) renderAll();
   } catch (e) {
-    setProbeStatus('✗ 探测失败：' + e.message, '#b91c1c');
+    toast("Load failed: " + e.message, "err");
   } finally {
-    btn.disabled = false;
-    btn.textContent = oldText;
-  }
-};
-
-document.getElementById('createVersionBtn').onclick = async () => {
-  if (!currentKbId) { await KB.alert('请先创建或选择一个知识库'); return; }
-  const docs = await api(`/kbs/${encodeURIComponent(currentKbId)}/documents`);
-  const select = document.getElementById('versionDocSelect');
-  select.innerHTML = docs.map(d => `<option value="${d.doc_id}">${escapeHtml(d.name)}</option>`).join('');
-  document.getElementById('versionModal').style.display = 'flex';
-  await loadEmbeddingModels();
-};
-
-document.getElementById('versionModalCreate').onclick = async () => {
-  const modelUuid = document.getElementById('versionModelSelect').value;
-  const modelName = document.getElementById('versionModelName').value.trim();
-  const dimRaw = document.getElementById('versionDimension').value;
-  const dimension = parseInt(dimRaw, 10);
-  if (!modelName) {
-    await KB.alert('请填写模型名称（备注）');
-    return;
-  }
-  if (!dimRaw || isNaN(dimension) || dimension <= 0) {
-    await KB.alert('请填写向量维度，或点击「探测维度」自动获取');
-    return;
-  }
-  const select = document.getElementById('versionDocSelect');
-  const selectedOptions = Array.from(select.selectedOptions);
-  const docIds = selectedOptions.map(opt => opt.value);
-  const payload = { model_name: modelName, dimension: dimension };
-  if (modelUuid) payload.model_uuid = modelUuid;
-  if (docIds.length > 0) payload.doc_ids = docIds;
-  try {
-    const res = await api(`/kbs/${encodeURIComponent(currentKbId)}/versions`, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    });
-    if (res && res.error) {
-      await KB.alert('创建失败: ' + res.error);
-      return;
-    }
-    await KB.alert(`任务已创建，ID: ${res.task_id}，请稍后在任务列表中查看进度`);
-    document.getElementById('versionModal').style.display = 'none';
-    startTaskPolling();
-  } catch (e) {
-    await KB.alert('创建失败: ' + e.message);
-  }
-};
-
-document.getElementById('uploadBtn').onclick = async () => {
-  if (!currentKbId) { await KB.alert('请先创建或选择一个知识库'); return; }
-  const files = document.getElementById('fileInput').files;
-  if (!files.length) return;
-  for (const file of files) {
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const res = await apiUpload(`/kbs/${encodeURIComponent(currentKbId)}/documents`, formData);
-      if (res.error) await KB.alert(`上传 ${file.name} 失败: ${res.error}`);
-      else await KB.alert(`上传 ${file.name} 成功`);
-    } catch (e) {
-      await KB.alert(`上传 ${file.name} 失败: ${e.message}`);
-    }
-  }
-  await loadDocuments();
-};
-
-document.getElementById('searchBtn').onclick = async () => {
-  if (!currentKbId) { await KB.alert('请先创建或选择一个知识库'); return; }
-  const query = document.getElementById('searchQuery').value;
-  if (!query) return;
-  try {
-    const results = await api(`/kbs/${encodeURIComponent(currentKbId)}/search`, {
-      method: 'POST',
-      body: JSON.stringify({ query, top_k: 5 })
-    });
-    const container = document.getElementById('searchResults');
-    if (results && results.error) {
-      container.innerHTML = `<p style="color:#b91c1c;">检索失败：${escapeHtml(results.error)}</p>`;
-      return;
-    }
-    if (!Array.isArray(results) || results.length === 0) {
-      container.innerHTML = '<p>未找到相关结果</p>';
-      return;
-    }
-    container.innerHTML = results.map(r => `
-      <div style="background:#f8fafc; padding:12px; border-radius:12px; margin-bottom:8px;">
-        <strong>${escapeHtml(r.doc_name)}</strong> (相关度: ${r.score.toFixed(2)})<br>
-        ${escapeHtml(r.content.substring(0, 300))}...
-      </div>
-    `).join('');
-  } catch (e) {
-    document.getElementById('searchResults').innerHTML =
-      `<p style="color:#b91c1c;">检索失败：${escapeHtml(e.message)}</p>`;
-  }
-};
-
-document.getElementById('editKbInfoBtn').onclick = async () => {
-  if (!currentKbId) { await KB.alert('请先创建或选择一个知识库'); return; }
-  const info = await api(`/kbs/${encodeURIComponent(currentKbId)}/info`);
-  document.getElementById('modalDisplayName').value = info.display_name || '';
-  document.getElementById('modalDescription').value = info.description || '';
-  document.getElementById('infoModal').style.display = 'flex';
-};
-
-document.getElementById('modalSaveBtn').onclick = async () => {
-  const displayName = document.getElementById('modalDisplayName').value.trim();
-  const description = document.getElementById('modalDescription').value.trim();
-  await api(`/kbs/${encodeURIComponent(currentKbId)}/info`, {
-    method: 'PUT',
-    body: JSON.stringify({ display_name: displayName, description: description })
-  });
-  document.getElementById('infoModal').style.display = 'none';
-  await loadKBs();
-};
-
-document.getElementById('createKbBtn').onclick = async () => {
-  const name = await KB.prompt('输入知识库 ID (英文，数字，下划线，连字符)');
-  if (!name || !name.trim()) return;
-  if (!/^[a-zA-Z0-9_-]+$/.test(name.trim())) {
-    await KB.alert('知识库 ID 只能包含字母、数字、下划线、连字符');
-    return;
-  }
-  try {
-    await api('/kbs', { method: 'POST', body: JSON.stringify({ kb_id: name.trim() }) });
-    await loadKBs();
-  } catch (e) {
-    await KB.alert('创建失败: ' + e.message);
-  }
-};
-
-document.getElementById('deleteKbBtn').onclick = async () => {
-  if (!currentKbId) return;
-  if (!(await KB.confirm(`删除知识库 ${currentKbId} 将删除所有文档和版本，不可恢复！`))) return;
-  try {
-    await api(`/kbs/${encodeURIComponent(currentKbId)}`, { method: 'DELETE' });
-    currentKbId = null;
-    await loadKBs();
-  } catch (e) {
-    await KB.alert('删除失败: ' + e.message);
-  }
-};
-
-document.getElementById('kbSelect').onchange = () => {
-  currentKbId = document.getElementById('kbSelect').value;
-  loadDocuments();
-  loadVersions();
-};
-
-function closeModals() {
-  document.getElementById('infoModal').style.display = 'none';
-  document.getElementById('versionModal').style.display = 'none';
-  document.getElementById('docEditModal').style.display = 'none';
-  document.getElementById('deletedModal').style.display = 'none';
-}
-document.getElementById('modalCancelBtn').onclick = closeModals;
-document.getElementById('versionModalCancel').onclick = closeModals;
-document.getElementById('docEditCancel').onclick = closeModals;
-document.getElementById('deletedModalClose').onclick = closeModals;
-window.onclick = (e) => {
-  if (e.target.classList.contains('modal')) closeModals();
-};
-
-document.getElementById('docEditSave').onclick = async () => {
-  const newContent = document.getElementById('docEditContent').value;
-  const docId = window._currentEditDocId;
-  try {
-    await api(`/kbs/${encodeURIComponent(currentKbId)}/documents/${docId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ content: newContent })
-    });
-    await KB.alert('文档已更新并重新向量化');
-    closeModals();
-    await loadDocuments();
-  } catch (e) {
-    await KB.alert('保存失败: ' + e.message);
-  }
-};
-
-async function loadDeletedDocuments() {
-  if (!currentKbId) return;
-  try {
-    const docs = await api(`/kbs/${encodeURIComponent(currentKbId)}/documents/deleted`);
-    const container = document.getElementById('deletedList');
-    if (docs.length === 0) {
-      container.innerHTML = '<p>暂无已删除文档</p>';
-      return;
-    }
-    container.innerHTML = docs.map(d => `
-      <div class="doc-item">
-        <span>${escapeHtml(d.name)}</span>
-        <button class="small" onclick="restoreDocument('${d.doc_id}')">恢复</button>
-      </div>
-    `).join('');
-  } catch (e) {
-    document.getElementById('deletedList').innerHTML = `<p>加载失败: ${e.message}</p>`;
+    state.busy = false;
   }
 }
 
-async function restoreDocument(docId) {
+async function loadDocs() {
   try {
-    await api(`/kbs/${encodeURIComponent(currentKbId)}/documents/${docId}/restore`, { method: 'POST' });
-    await KB.alert('恢复成功，文档将重新向量化。');
-    loadDeletedDocuments();
-    loadDocuments();
-    loadVersions();
+    const docs = await api(`/kbs/${encodeURIComponent(state.current)}/documents`);
+    state.docs = Array.isArray(docs) ? docs : [];
   } catch (e) {
-    await KB.alert('恢复失败: ' + e.message);
+    state.docs = [];
+    throw e;
   }
 }
-
-document.getElementById('showDeletedBtn').onclick = () => {
-  loadDeletedDocuments();
-  document.getElementById('deletedModal').style.display = 'flex';
-};
-
+async function loadVersions() {
+  try {
+    const versions = await api(`/kbs/${encodeURIComponent(state.current)}/versions`);
+    state.versions = Array.isArray(versions) ? versions : [];
+  } catch (e) {
+    state.versions = [];
+    throw e;
+  }
+}
 async function loadTasks() {
   try {
-    const tasks = await api('/tasks');
-    const container = document.getElementById('taskList');
-    if (tasks.length === 0) {
-      container.innerHTML = '暂无任务';
-      return;
-    }
-    container.innerHTML = tasks.map(t => `
-      <div class="task-item">
-        <div><strong>${escapeHtml(t.description)}</strong> 
-          <span class="task-status status-${t.status}">${t.status}</span>
-        </div>
-        <div class="progress-bar"><div class="progress-fill" style="width: ${t.progress}%"></div></div>
-        <div style="font-size:0.8rem;">${t.message || ''}</div>
-        ${t.result ? `<div style="font-size:0.8rem; color:#166534;">结果: ${JSON.stringify(t.result)}</div>` : ''}
-      </div>
-    `).join('');
+    const tasks = await api("/tasks");
+    state.tasks = Array.isArray(tasks) ? tasks : [];
   } catch (e) {
-    console.error('加载任务失败', e);
+    state.tasks = [];
+  }
+}
+async function loadGlobalRecall() {
+  try {
+    state.globalRecall = await api("/recall/global");
+  } catch (e) {
+    state.globalRecall = { enabled: false };
   }
 }
 
-function startTaskPolling() {
-  if (taskPollInterval) clearInterval(taskPollInterval);
-  taskPollInterval = setInterval(loadTasks, 2000);
+/* ---------- actions ---------- */
+async function selectKb(kbId) {
+  if (!kbId || kbId === state.current) return;
+  state.current = kbId;
+  state.selected.clear();
+  state.docFilter = "";
+  $("#docFilter").value = "";
+  $("#searchResults").innerHTML = "";
+  $("#searchInput").value = "";
+  try {
+    await Promise.all([loadDocs(), loadVersions()]);
+    renderAll();
+  } catch (e) {
+    toast("Switch failed: " + e.message, "err");
+  }
 }
 
-loadKBs();
+function switchView(view) {
+  state.view = view;
+  $$(".view").forEach(el => el.classList.toggle("is-active", el.id === "view-" + view));
+  $$("#railNav button").forEach(b => b.classList.toggle("is-active", b.dataset.view === view));
+  const section = document.getElementById("view-" + view);
+  if (section) {
+    section.classList.remove("is-entering");
+    void section.offsetWidth;
+    section.classList.add("is-entering");
+  }
+  if (view === "tasks") { loadTasks().then(renderTasks); startTaskPolling(); }
+  else stopTaskPolling();
+  if (view === "settings") { loadSettings().then(renderSettings); }
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+async function createKb() {
+  const name = await askPrompt("New knowledge base", "Lowercase letters, numbers, underscore or hyphen.", "", "kira_notes");
+  if (!name) return;
+  if (!/^[-_a-zA-Z0-9]+$/.test(name)) { toast("Invalid id. Use letters, numbers, _ or -.", "err"); return; }
+  try {
+    await api("/kbs", { method: "POST", body: JSON.stringify({ kb_id: name }) });
+    state.current = name;
+    await refresh();
+    toast("Knowledge base created.");
+  } catch (e) { toast("Create failed: " + e.message, "err"); }
+}
+
+async function deleteKb() {
+  const kb = currentKb();
+  if (!kb) return;
+  const ok = await askConfirm("Delete knowledge base", `Delete "${kb.display_name}" and every entry, version and index? This cannot be undone.`, "Delete", true);
+  if (!ok) return;
+  try {
+    await api(`/kbs/${encodeURIComponent(kb.kb_id)}`, { method: "DELETE" });
+    state.current = null;
+    await refresh();
+    toast("Knowledge base deleted.");
+  } catch (e) { toast("Delete failed: " + e.message, "err"); }
+}
+
+async function openKbInfo() {
+  const kb = currentKb();
+  if (!kb) { toast("Create a knowledge base first.", "err"); return; }
+  $("#kbInfoName").value = kb.display_name || "";
+  $("#kbInfoDesc").value = kb.description || "";
+  $("#kbInfoHistoryKeep").value = kb.history_keep || 5;
+  openModal("modalKbInfo");
+}
+
+async function saveKbInfo() {
+  const kb = currentKb();
+  if (!kb) return;
+  try {
+    await api(`/kbs/${encodeURIComponent(kb.kb_id)}/info`, {
+      method: "PUT",
+      body: JSON.stringify({
+        display_name: $("#kbInfoName").value.trim() || kb.kb_id,
+        description: $("#kbInfoDesc").value.trim(),
+        history_keep: Number($("#kbInfoHistoryKeep").value) || null
+      })
+    });
+    closeModal("modalKbInfo");
+    await refresh();
+    toast("Saved.");
+  } catch (e) { toast("Save failed: " + e.message, "err"); }
+}
+
+async function uploadFiles(files) {
+  if (!state.current) { toast("Create a knowledge base first.", "err"); return; }
+  if (!files || !files.length) return;
+  let ok = 0;
+  for (const file of files) {
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      await apiUpload(`/kbs/${encodeURIComponent(state.current)}/documents`, fd);
+      ok += 1;
+    } catch (e) {
+      toast(`Upload ${file.name} failed: ${e.message}`, "err");
+    }
+  }
+  if (ok) toast(`${ok} file(s) uploaded.`);
+  await refresh();
+}
+
+function openDocEditor(doc) {
+  if (!doc) return;
+  state.editingDoc = doc.doc_id;
+  $("#docModalTitle").textContent = doc.name || "Entry";
+  $("#docModalMeta").textContent = `${fmtBytes(doc.size)} · updated ${fmtTime(doc.updated_at)}`;
+  $("#docName").value = doc.name || "";
+  $("#docContent").value = "";
+  openModal("modalDoc");
+  api(`/kbs/${encodeURIComponent(state.current)}/documents/${doc.doc_id}`)
+    .then(data => {
+      $("#docContent").value = data.content || "";
+      if (data.name) $("#docName").value = data.name;
+    })
+    .catch(e => toast("Read failed: " + e.message, "err"));
+}
+
+async function saveDoc() {
+  const id = state.editingDoc;
+  if (!id) return;
+  const name = $("#docName").value.trim();
+  if (!name) { toast("Title cannot be empty.", "err"); return; }
+  try {
+    await api(`/kbs/${encodeURIComponent(state.current)}/documents/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ content: $("#docContent").value, name })
+    });
+    closeModal("modalDoc");
+    await refresh();
+    toast("Entry saved and re-indexed.");
+  } catch (e) { toast("Save failed: " + e.message, "err"); }
+}
+
+async function deleteDoc(id) {
+  const doc = state.docs.find(d => d.doc_id === id);
+  const ok = await askConfirm("Delete entry", `Soft delete "${doc ? doc.name : id}"? It can be restored later.`, "Delete", true);
+  if (!ok) return;
+  try {
+    await api(`/kbs/${encodeURIComponent(state.current)}/documents/${id}`, { method: "DELETE" });
+    state.selected.delete(id);
+    await refresh();
+    toast("Entry deleted.");
+  } catch (e) { toast("Delete failed: " + e.message, "err"); }
+}
+
+function openEntrySettings(doc) {
+  if (!doc) return;
+  state.entryDoc = doc.doc_id;
+  $("#entryModalTitle").textContent = doc.name || "Entry settings";
+  const perms = doc.permissions || {};
+  const recall = doc.recall || { enabled: null, keywords: [] };
+  const fill = (sel, options, value) => {
+    sel.innerHTML = options.map(o => `<option value="${o[0]}" ${o[0] === value ? "selected" : ""}>${o[1]}</option>`).join("");
+  };
+  fill($("#entryPolicyEdit"), POLICY_OPTIONS_ENTRY, perms.edit || "inherit");
+  fill($("#entryPolicyDelete"), POLICY_OPTIONS_ENTRY, perms.delete || "inherit");
+  fill($("#entryRecallEnabled"), RECALL_OPTIONS, recall.enabled === true ? "on" : recall.enabled === false ? "off" : "inherit");
+  $("#entryAllowUsers").value = (perms.allow_users || []).join("\n");
+  $("#entryKeywords").value = (recall.keywords || []).join(", ");
+  openModal("modalEntry");
+}
+
+async function saveEntrySettings() {
+  const id = state.entryDoc;
+  if (!id) return;
+  const users = $("#entryAllowUsers").value.split(/\n+/).map(s => s.trim()).filter(Boolean);
+  const keywords = $("#entryKeywords").value.split(/[,，]/).map(s => s.trim()).filter(Boolean);
+  const perms = {
+    edit: $("#entryPolicyEdit").value,
+    delete: $("#entryPolicyDelete").value,
+    allow_users: users
+  };
+  const recall = {
+    enabled: $("#entryRecallEnabled").value === "on" ? true : $("#entryRecallEnabled").value === "off" ? false : null,
+    keywords
+  };
+  try {
+    await api(`/kbs/${encodeURIComponent(state.current)}/documents/${id}/permissions`, {
+      method: "PUT", body: JSON.stringify(perms)
+    });
+    await api(`/kbs/${encodeURIComponent(state.current)}/documents/${id}/recall`, {
+      method: "PUT", body: JSON.stringify(recall)
+    });
+    closeModal("modalEntry");
+    await refresh();
+    toast("Entry settings saved.");
+  } catch (e) { toast("Save failed: " + e.message, "err"); }
+}
+
+async function saveKbPerms() {
+  try {
+    await api(`/kbs/${encodeURIComponent(state.current)}/permissions`, {
+      method: "PUT",
+      body: JSON.stringify({
+        add: $("#policyAdd").value,
+        edit: $("#policyEdit").value,
+        delete: $("#policyDelete").value,
+        allow_users: $("#kbAllowUsers").value.split(/\n+/).map(s => s.trim()).filter(Boolean)
+      })
+    });
+    await refresh();
+    toast("Policy saved.");
+  } catch (e) { toast("Save failed: " + e.message, "err"); }
+}
+
+async function saveKbRecall() {
+  const num = el => el.value === "" ? null : Number(el.value);
+  try {
+    await api(`/kbs/${encodeURIComponent(state.current)}/recall`, {
+      method: "PUT",
+      body: JSON.stringify({
+        enabled: $("#kbRecallEnabled").checked,
+        top_k: num($("#kbRecallTopK")),
+        min_score: num($("#kbRecallMinScore")),
+        max_chars: num($("#kbRecallMaxChars"))
+      })
+    });
+    await refresh();
+    toast("Recall settings saved.");
+  } catch (e) { toast("Save failed: " + e.message, "err"); }
+}
+
+async function saveEntryRecall(id) {
+  const mode = document.querySelector(`[data-entry-recall="mode"][data-id="${id}"]`);
+  const kw = document.querySelector(`[data-entry-recall="keywords"][data-id="${id}"]`);
+  if (!mode || !kw) return;
+  try {
+    await api(`/kbs/${encodeURIComponent(state.current)}/documents/${id}/recall`, {
+      method: "PUT",
+      body: JSON.stringify({
+        enabled: mode.value === "on" ? true : mode.value === "off" ? false : null,
+        keywords: kw.value.split(/[,，]/).map(s => s.trim()).filter(Boolean)
+      })
+    });
+    toast("Recall saved.");
+  } catch (e) { toast("Save failed: " + e.message, "err"); }
+}
+
+async function openDeleted() {
+  try {
+    const docs = await api(`/kbs/${encodeURIComponent(state.current)}/documents/deleted`);
+    state.deleted = Array.isArray(docs) ? docs : [];
+    $("#deletedList").innerHTML = state.deleted.length
+      ? state.deleted.map((d, i) => `
+        <div class="doc-row reveal" style="--i:${i}">
+          <span class="mono faint">${String(i + 1).padStart(2, "0")}</span>
+          <div><div class="doc-name">${esc(d.name)}</div><div class="doc-meta">deleted ${fmtTime(d.updated_at)}</div></div>
+          <div></div>
+          <button type="button" class="btn" data-action="restore-doc" data-id="${esc(d.doc_id)}">${icon("rotate-ccw", 13)}<span>Restore</span></button>
+        </div>`).join("")
+      : `<div class="empty">No deleted entries.</div>`;
+    hydrateIcons($("#deletedList"));
+    settleReveals();
+    openModal("modalDeleted");
+  } catch (e) { toast("Load failed: " + e.message, "err"); }
+}
+
+async function restoreDoc(id) {
+  try {
+    await api(`/kbs/${encodeURIComponent(state.current)}/documents/${id}/restore`, { method: "POST" });
+    closeModal("modalDeleted");
+    await refresh();
+    toast("Entry restored into every version.");
+  } catch (e) { toast("Restore failed: " + e.message, "err"); }
+}
+
+async function openVersionModal() {
+  if (!state.current) { toast("Create a knowledge base first.", "err"); return; }
+  $("#versionName").value = "";
+  $("#versionDim").value = "";
+  $("#modelHint").innerHTML = `<span class="faint" style="font-size:11px">Loading models…</span>`;
+  try {
+    const data = await api("/embedding-models");
+    state.models = data.models || [];
+    const sel = $("#versionModel");
+    sel.innerHTML = `<option value="">Default embedding model</option>` + state.models.map(m =>
+      `<option value="${esc(m.uuid)}">${esc(m.label)}</option>`).join("");
+    if (data.default_uuid && !state.models.some(m => m.uuid === data.default_uuid)) {
+      sel.innerHTML += `<option value="${esc(data.default_uuid)}">${esc(data.default_uuid)}</option>`;
+    }
+    $("#modelHint").innerHTML = data.default_available
+      ? `<span class="faint" style="font-size:11px">Leave the model empty to use the KiraAI default. Probe fills the real dimension.</span>`
+      : `<span style="font-size:11px;color:#ffb35c">No usable embedding model detected. Configure default_embedding first.</span>`;
+    const docs = state.docs;
+    $("#versionDocs").innerHTML = docs.length
+      ? docs.map(d => `<label><input type="checkbox" value="${esc(d.doc_id)}"> ${esc(d.name)}</label>`).join("")
+      : `<span class="faint" style="font-size:11px;padding:6px">No documents. The version will be empty but valid.</span>`;
+    openModal("modalVersion");
+  } catch (e) { toast("Load models failed: " + e.message, "err"); }
+}
+
+async function probeDimension() {
+  const uuid = $("#versionModel").value || null;
+  const btn = document.querySelector('[data-action="probe"]');
+  if (btn) btn.disabled = true;
+  try {
+    const res = await api("/embedding-models/probe", { method: "POST", body: JSON.stringify({ model_uuid: uuid }), allowError: true });
+    if (res.error) { toast(res.error, "err"); return; }
+    $("#versionDim").value = res.dimension;
+    $("#modelHint").innerHTML = `<span style="font-size:11px;color:var(--acid)">Dimension ${res.dimension} detected.</span>`;
+  } catch (e) { toast("Probe failed: " + e.message, "err"); }
+  finally { if (btn) btn.disabled = false; }
+}
+
+async function createVersionSubmit() {
+  const name = $("#versionName").value.trim();
+  const dim = Number($("#versionDim").value);
+  if (!name) { toast("Give the version a label.", "err"); return; }
+  if (!dim || dim <= 0) { toast("Probe or enter the dimension.", "err"); return; }
+  const selected = $$("#versionDocs input:checked").map(i => i.value);
+  const payload = { model_name: name, dimension: dim };
+  const uuid = $("#versionModel").value;
+  if (uuid) payload.model_uuid = uuid;
+  if (selected.length) payload.doc_ids = selected;
+  try {
+    const res = await api(`/kbs/${encodeURIComponent(state.current)}/versions`, {
+      method: "POST", body: JSON.stringify(payload)
+    });
+    closeModal("modalVersion");
+    if (res.task_id) { toast("Version build queued."); switchView("tasks"); }
+    else toast("Version created.");
+    await refresh();
+  } catch (e) { toast("Create failed: " + e.message, "err"); }
+}
+
+async function activateVersion(id) {
+  try {
+    await api(`/kbs/${encodeURIComponent(state.current)}/versions/${id}/activate`, { method: "POST" });
+    await refresh();
+    toast("Version activated.");
+  } catch (e) { toast("Activate failed: " + e.message, "err"); }
+}
+
+async function deleteVersion(id) {
+  const ok = await askConfirm("Delete version", "Delete this index? The raw entries stay; only the vectors are removed.", "Delete", true);
+  if (!ok) return;
+  try {
+    await api(`/kbs/${encodeURIComponent(state.current)}/versions/${id}`, { method: "DELETE" });
+    await refresh();
+    toast("Version deleted.");
+  } catch (e) { toast("Delete failed: " + e.message, "err"); }
+}
+
+async function syncVersion(id) {
+  try {
+    const res = await api(`/kbs/${encodeURIComponent(state.current)}/versions/${id}/sync`, { method: "POST", body: "{}" });
+    if (res.task_id) { toast("Sync queued."); switchView("tasks"); }
+    else toast("Sync finished.");
+    await refresh();
+  } catch (e) { toast("Sync failed: " + e.message, "err"); }
+}
+
+async function runSearch() {
+  const query = $("#searchInput").value.trim();
+  if (!query) return;
+  if (!state.current) { toast("Select a knowledge base first.", "err"); return; }
+  const box = $("#searchResults");
+  box.innerHTML = `<div class="empty">Searching…</div>`;
+  try {
+    const res = await api(`/kbs/${encodeURIComponent(state.current)}/search`, {
+      method: "POST", body: JSON.stringify({ query, top_k: 8 }), allowError: true
+    });
+    if (res.error) { box.innerHTML = `<div class="empty">${esc(res.error)}</div>`; return; }
+    if (!Array.isArray(res) || !res.length) { box.innerHTML = `<div class="empty">No match.</div>`; return; }
+    settleReveals();
+    box.innerHTML = res.map((r, i) => {
+      const score = Math.max(0, Math.min(1, Number(r.score) || 0));
+      return `<div class="result reveal" style="--i:${i}">
+        <div class="result-head">
+          <span class="name">${esc(r.doc_name || r.doc_id)}</span>
+          ${r.metadata && r.metadata.chunk_index != null ? `<span class="badge">chunk ${Number(r.metadata.chunk_index) + 1}</span>` : ""}
+          <span class="score">${score.toFixed(2)}</span>
+        </div>
+        <div class="score-bar"><i style="width:${Math.round(score * 100)}%"></i></div>
+        <p>${esc(r.content || "")}</p>
+      </div>`;
+    }).join("");
+  } catch (e) {
+    box.innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+  }
+}
+
+function openBulk(mode) {
+  if (!state.selected.size) return;
+  state.bulkMode = mode;
+  $("#bulkSubtitle").textContent = `Apply to ${state.selected.size} selected entries.`;
+  const fill = (sel, value) => {
+    sel.innerHTML = POLICY_OPTIONS_ENTRY.map(o => `<option value="${o[0]}" ${o[0] === value ? "selected" : ""}>${o[1]}</option>`).join("");
+  };
+  fill($("#bulkEditPolicy"), mode === "edit" ? "admin" : "inherit");
+  fill($("#bulkDeletePolicy"), mode === "delete" ? "admin" : "inherit");
+  $("#bulkEditPolicy").disabled = mode !== "edit";
+  $("#bulkDeletePolicy").disabled = mode !== "delete";
+  openModal("modalBulk");
+}
+
+async function applyBulk() {
+  const ids = Array.from(state.selected);
+  if (!ids.length) return;
+  const perms = {};
+  if (state.bulkMode === "edit") perms.edit = $("#bulkEditPolicy").value;
+  if (state.bulkMode === "delete") perms.delete = $("#bulkDeletePolicy").value;
+  try {
+    await api(`/kbs/${encodeURIComponent(state.current)}/documents/permissions`, {
+      method: "PUT", body: JSON.stringify({ doc_ids: ids, permissions: perms })
+    });
+    closeModal("modalBulk");
+    state.selected.clear();
+    await refresh();
+    toast("Bulk policy applied.");
+  } catch (e) { toast("Apply failed: " + e.message, "err"); }
+}
+
+/* ---------- runtime settings ---------- */
+async function loadSettings() {
+  try {
+    state.settings = await api("/settings");
+  } catch (e) {
+    state.settings = null;
+  }
+}
+
+function fillPolicySelect(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = POLICY_OPTIONS_SCOPE.map(o =>
+    `<option value="${o[0]}" ${o[0] === value ? "selected" : ""}>${o[1]}</option>`).join("");
+}
+
+function renderSettings() {
+  const cfg = state.settings;
+  if (!cfg) return;
+  const val = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined && v !== null) el.value = v; };
+  const chk = (id, v) => { const el = document.getElementById(id); if (el) el.checked = !!v; };
+  const search = cfg.search || {};
+  val("setTopK", search.default_top_k);
+  val("setChunkSize", search.chunk_size);
+  val("setChunkOverlap", search.chunk_overlap);
+  chk("setHybrid", search.enable_hybrid_search);
+  chk("setStopwords", search.enable_stopwords);
+  chk("setRerank", search.enable_rerank);
+  const entries = cfg.entries || {};
+  val("setTitleMax", entries.entry_title_max_chars);
+  val("setHistoryKeep", entries.entry_history_keep);
+  chk("setExtraTools", entries.extra_tools_enabled);
+  chk("setAutoSync", entries.auto_sync_versions);
+  const perm = cfg.permission || {};
+  fillPolicySelect("setAddPolicy", perm.default_add_policy || "open");
+  fillPolicySelect("setEditPolicy", perm.default_edit_policy || "open");
+  fillPolicySelect("setDeletePolicy", perm.default_delete_policy || "whitelist");
+  const owner = document.getElementById("setOwnerWhitelist");
+  if (owner) owner.value = (perm.owner_whitelist || []).join("\n");
+  const recall = cfg.recall || {};
+  chk("setRecallEnabled", recall.enabled);
+  val("setRecallMode", recall.mode || "hybrid");
+  val("setRecallTopK", recall.top_k);
+  val("setRecallMin", recall.min_score);
+  val("setRecallStrong", recall.strong_score);
+  val("setRecallChars", recall.max_chars);
+  val("setRecallTimeout", recall.timeout_ms);
+  val("setRecallDedupe", recall.dedupe_turns);
+  val("setRecallMaxKbs", recall.max_kbs);
+  val("setRecallMinQuery", recall.min_query_chars);
+  const restart = cfg.restart || {};
+  val("setKbDir", restart.knowledge_base_dir);
+  val("setWebHost", restart.webui_host);
+  val("setWebPort", restart.webui_port);
+}
+
+async function saveSettings() {
+  const num = id => {
+    const el = document.getElementById(id);
+    if (!el || el.value === "") return null;
+    return Number(el.value);
+  };
+  const payload = {
+    search: {
+      enable_hybrid_search: document.getElementById("setHybrid").checked,
+      default_top_k: num("setTopK"),
+      chunk_size: num("setChunkSize"),
+      chunk_overlap: num("setChunkOverlap"),
+      enable_stopwords: document.getElementById("setStopwords").checked,
+      enable_rerank: document.getElementById("setRerank").checked
+    },
+    entries: {
+      entry_title_max_chars: num("setTitleMax"),
+      entry_history_keep: num("setHistoryKeep"),
+      extra_tools_enabled: document.getElementById("setExtraTools").checked,
+      auto_sync_versions: document.getElementById("setAutoSync").checked
+    },
+    permission: {
+      owner_whitelist: document.getElementById("setOwnerWhitelist").value.split(/\n+/).map(v => v.trim()).filter(Boolean),
+      default_add_policy: document.getElementById("setAddPolicy").value,
+      default_edit_policy: document.getElementById("setEditPolicy").value,
+      default_delete_policy: document.getElementById("setDeletePolicy").value
+    },
+    recall: {
+      recall_enabled: document.getElementById("setRecallEnabled").checked,
+      recall_mode: document.getElementById("setRecallMode").value,
+      recall_top_k: num("setRecallTopK"),
+      recall_min_score: num("setRecallMin"),
+      recall_strong_score: num("setRecallStrong"),
+      recall_max_chars: num("setRecallChars"),
+      recall_timeout_ms: num("setRecallTimeout"),
+      recall_dedupe_turns: num("setRecallDedupe"),
+      recall_max_kbs: num("setRecallMaxKbs"),
+      recall_min_query_chars: num("setRecallMinQuery")
+    }
+  };
+  try {
+    const res = await api("/settings", { method: "PUT", body: JSON.stringify(payload) });
+    state.settings = res.settings;
+    renderSettings();
+    await refresh({ quiet: true });
+    renderAll();
+    if (res.warnings && res.warnings.length) toast(res.warnings.join(" "), "err");
+    else toast("Settings applied.");
+  } catch (e) { toast("Settings failed: " + e.message, "err"); }
+}
+
+/* ---------- revision history ---------- */
+async function openHistory(doc) {
+  if (!doc) return;
+  state.historyDoc = doc.doc_id;
+  $("#historyTitle").textContent = doc.name || "History";
+  $("#historyMeta").textContent = "Loading…";
+  $("#historyList").innerHTML = "";
+  $("#historyPanel").classList.remove("hidden");
+  $("#historyViewer").classList.add("hidden");
+  openModal("modalHistory");
+  try {
+    const data = await api(`/kbs/${encodeURIComponent(state.current)}/documents/${doc.doc_id}/history`);
+    state.historyList = data.revisions || [];
+    renderHistory(data);
+  } catch (e) {
+    $("#historyMeta").textContent = "";
+    $("#historyList").innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+  }
+}
+
+function renderHistory(data) {
+  const rows = data.revisions || [];
+  $("#historyMeta").textContent =
+    `${rows.length} revisions · original is permanent · keeping the latest ${data.keep}`;
+  $("#historyList").innerHTML = rows.length
+    ? rows.map((r, i) => `
+      <div class="doc-row" style="grid-template-columns:36px minmax(0,1fr) auto auto">
+        <span class="mono faint">${String(i + 1).padStart(2, "0")}</span>
+        <div>
+          <div class="doc-name">${fmtTime(r.created_at)}</div>
+          <div class="doc-meta">${r.size} chars · ${r.actor === "ai" ? "AI" : r.actor === "human" ? "Human" : "System"} · ${esc(r.source)}${r.restored_from ? " · from " + esc(r.restored_from) : ""}${r.last_restored_at ? " · restored " + fmtTime(r.last_restored_at) : ""}</div>
+        </div>
+        <div class="badges">
+          ${r.is_original ? badge("Original", "acid") : ""}
+          ${r.is_current ? badge("Current", "cyan") : ""}
+          ${r.actor === "ai" ? badge("AI", "violet") : ""}
+          ${r.actor === "human" && !r.is_original ? badge("Human", "") : ""}
+          ${r.last_restored_at ? badge("Restored", "warn") : ""}
+        </div>
+        <div class="row-actions" style="opacity:1">
+          <button type="button" class="icon-btn" title="View" data-action="history-view" data-id="${esc(r.rev_id)}">${icon("eye", 15)}</button>
+          ${!r.is_current ? `<button type="button" class="icon-btn acid" title="Restore this revision" data-action="history-restore" data-id="${esc(r.rev_id)}">${icon("rotate-ccw", 15)}</button>` : ""}
+        </div>
+      </div>`).join("")
+    : `<div class="empty"><div class="big">No history</div>The original is archived on the first edit.</div>`;
+  hydrateIcons($("#historyList"));
+  settleReveals();
+}
+
+async function viewRevision(revId) {
+  if (!state.historyDoc || !revId) return;
+  try {
+    const data = await api(`/kbs/${encodeURIComponent(state.current)}/documents/${state.historyDoc}/history/${revId}`);
+    $("#historyViewMeta").textContent = `${revId} · ${fmtTime(data.created_at)} · ${data.actor}`;
+    $("#historyContent").textContent = data.content || "";
+    $("#historyPanel").classList.add("hidden");
+    $("#historyViewer").classList.remove("hidden");
+  } catch (e) { toast("Read failed: " + e.message, "err"); }
+}
+
+function historyBack() {
+  $("#historyViewer").classList.add("hidden");
+  $("#historyPanel").classList.remove("hidden");
+}
+
+async function restoreRevision(revId) {
+  if (!state.historyDoc || !revId) return;
+  const ok = await askConfirm("Restore revision", "Move the current pointer to this revision? No new revision is added and no backup slot is consumed.", "Restore");
+  if (!ok) return;
+  try {
+    await api(`/kbs/${encodeURIComponent(state.current)}/documents/${state.historyDoc}/history/${revId}/restore`, {
+      method: "POST", body: "{}"
+    });
+    closeModal("modalHistory");
+    await refresh();
+    toast("Revision restored and re-indexed.");
+  } catch (e) { toast("Restore failed: " + e.message, "err"); }
+}
+
+/* ---------- task polling ---------- */
+function startTaskPolling() {
+  if (state.taskTimer) return;
+  state.taskTimer = setInterval(async () => {
+    await loadTasks();
+    if (state.view === "tasks") renderTasks();
+    const running = state.tasks.some(t => t.status === "running" || t.status === "pending");
+    if (!running) {
+      stopTaskPolling();
+      await refresh({ quiet: true });
+      renderAll();
+    }
+  }, 2500);
+}
+function stopTaskPolling() {
+  if (state.taskTimer) { clearInterval(state.taskTimer); state.taskTimer = null; }
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", async (event) => {
+  const el = event.target.closest("[data-action]");
+  if (!el) return;
+  const action = el.dataset.action;
+  const id = el.dataset.id;
+  try {
+    switch (action) {
+      case "nav": switchView(el.dataset.view); break;
+      case "toggle-theme": applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark"); break;
+      case "close-modal": closeModal(el.dataset.modal); break;
+      case "create-kb": await createKb(); break;
+      case "edit-kb": await openKbInfo(); break;
+      case "save-kb-info": await saveKbInfo(); break;
+      case "delete-kb": await deleteKb(); break;
+      case "open-tab": {
+        const pid = pluginIdFromPath();
+        if (!pid) { window.open(location.href, "_blank"); break; }
+        const q = new URLSearchParams(location.search);
+        q.set("token", token);
+        window.open(`/page/plugin/${encodeURIComponent(pid)}/index?${q.toString()}`, "_blank");
+        break;
+      }
+      case "upload-trigger": $("#fileInput").click(); break;
+      case "open-deleted": await openDeleted(); break;
+      case "restore-doc": await restoreDoc(id); break;
+      case "edit-doc": openDocEditor(state.docs.find(d => d.doc_id === id)); break;
+      case "save-doc": await saveDoc(); break;
+      case "delete-doc": await deleteDoc(id); break;
+      case "entry-settings": openEntrySettings(state.docs.find(d => d.doc_id === id)); break;
+      case "save-entry-settings": await saveEntrySettings(); break;
+      case "save-settings": await saveSettings(); break;
+      case "history": await openHistory(state.docs.find(d => d.doc_id === id)); break;
+      case "history-view": await viewRevision(id); break;
+      case "history-restore": await restoreRevision(id); break;
+      case "history-back": historyBack(); break;
+      case "save-kb-perms": await saveKbPerms(); break;
+      case "save-kb-recall": await saveKbRecall(); break;
+      case "save-entry-recall": await saveEntryRecall(id); break;
+      case "create-version": await openVersionModal(); break;
+      case "probe": await probeDimension(); break;
+      case "create-version-submit": await createVersionSubmit(); break;
+      case "activate-version": await activateVersion(id); break;
+      case "delete-version": await deleteVersion(id); break;
+      case "sync-version": await syncVersion(id); break;
+      case "search": await runSearch(); break;
+      case "bulk-edit": openBulk("edit"); break;
+      case "bulk-delete": openBulk("delete"); break;
+      case "bulk-apply": await applyBulk(); break;
+      case "bulk-clear": state.selected.clear(); renderDocs(); break;
+      default: break;
+    }
+  } catch (e) {
+    toast(e.message || String(e), "err");
+  }
+});
+
+document.addEventListener("change", (event) => {
+  const el = event.target;
+  if (el.dataset.check === "doc") {
+    if (el.checked) state.selected.add(el.value); else state.selected.delete(el.value);
+    updateBulkBar();
+    return;
+  }
+  if (el.dataset.entryPolicy) {
+    const id = el.dataset.id;
+    const op = el.dataset.entryPolicy;
+    api(`/kbs/${encodeURIComponent(state.current)}/documents/${id}/permissions`, {
+      method: "PUT", body: JSON.stringify({ [op]: el.value })
+    }).then(() => { toast("Entry policy updated."); refresh({ quiet: true }).then(renderAll); })
+      .catch(e => toast("Update failed: " + e.message, "err"));
+    return;
+  }
+  if (el.id === "kbSelect") { selectKb(el.value); }
+});
+
+$("#docFilter").addEventListener("input", (event) => {
+  state.docFilter = event.target.value;
+  renderDocs();
+  hydrateIcons($("#docList"));
+});
+
+$("#docFilterKind").addEventListener("change", (event) => {
+  state.docFilterKind = event.target.value;
+  renderDocs();
+  hydrateIcons($("#docList"));
+});
+
+$("#searchInput").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") { event.preventDefault(); runSearch(); }
+});
+
+$("#fileInput").addEventListener("change", (event) => {
+  uploadFiles(event.target.files);
+  event.target.value = "";
+});
+
+const dz = $("#dropzone");
+["dragenter", "dragover"].forEach(name => dz.addEventListener(name, e => {
+  e.preventDefault(); dz.classList.add("is-drag");
+}));
+["dragleave", "drop"].forEach(name => dz.addEventListener(name, e => {
+  e.preventDefault(); dz.classList.remove("is-drag");
+}));
+dz.addEventListener("drop", e => {
+  if (e.dataTransfer && e.dataTransfer.files) uploadFiles(e.dataTransfer.files);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    const open = $$(".modal.is-open");
+    if (open.length) closeModal(open[open.length - 1].id);
+  }
+});
+
+window.addEventListener("pointermove", (event) => {
+  const glow = $("#cursorGlow");
+  if (!glow) return;
+  glow.style.left = event.clientX + "px";
+  glow.style.top = event.clientY + "px";
+}, { passive: true });
+
+window.addEventListener("scroll", () => {
+  const doc = document.documentElement;
+  const max = doc.scrollHeight - doc.clientHeight;
+  const p = max > 0 ? (doc.scrollTop / max) * 100 : 0;
+  $("#scrollProgress").style.width = p + "%";
+}, { passive: true });
+
+if (isSidebarMode && window.PluginPageContext.onThemeChange) {
+  window.PluginPageContext.onThemeChange(() => {});
+}
+
+hydrateIcons();
+refresh();
 startTaskPolling();
 </script>
 </body>
