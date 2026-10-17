@@ -395,6 +395,7 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
   *,*::before,*::after{animation-duration:.001ms !important;animation-delay:0ms !important;transition-duration:.001ms !important;scroll-behavior:auto !important}
 }
 </style>
+<link rel="stylesheet" href="cathode.css?v=7">
 </head>
 <body>
 <div class="aurora"><i></i><i></i><i></i></div>
@@ -434,7 +435,7 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       </button>
     </nav>
     <button type="button" class="theme-toggle" id="themeToggle" data-action="toggle-theme" aria-label="切换明暗主题" title="切换主题"></button>
-    <div class="rail-foot">KIRAKB / 1.3.4</div>
+    <div class="rail-foot">KIRAKB / 1.4.0</div>
   </aside>
 
   <main class="main" id="main">
@@ -700,6 +701,75 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
         <div class="eyebrow">Archive / runtime settings</div>
         <h1 style="font-size:clamp(42px,6vw,84px)">Settings</h1>
         <p>调她的记忆方式，改完立即生效。</p>
+      </div>
+
+      <div class="panel cathode-skin-panel" style="margin-bottom:22px">
+        <div class="panel-head">
+          <span data-icon="sparkles" data-size="16"></span>
+          <h2>机台皮肤</h2>
+          <span class="count">显像管 / 字幕 / 立绘</span>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>配色主题</label>
+            <select class="select" id="setUiTheme">
+              <option value="violet">紫色 · VIOLET</option>
+              <option value="pink">粉色 · PINK</option>
+              <option value="blue">蓝色 · BLUE</option>
+              <option value="amber">黄色 · AMBER</option>
+              <option value="green">绿色 · GREEN</option>
+              <option value="red">红色 · RED</option>
+              <option value="gray">灰色 · GRAY</option>
+            </select>
+          </div>
+          <div class="field"><label>CRT 强度</label>
+            <select class="select" id="setUiCrt">
+              <option value="high">高</option>
+              <option value="medium">中</option>
+              <option value="low">低</option>
+              <option value="off">关闭</option>
+            </select>
+          </div>
+          <div class="field"><label>性能模式</label>
+            <label class="switch"><input type="checkbox" id="setUiPerf"><span class="track"></span><span class="txt">减少噪点/转场</span></label>
+          </div>
+          <div class="field"><label>开屏特效</label>
+            <label class="switch"><input type="checkbox" id="setUiSplash"><span class="track"></span><span class="txt">信号锁定</span></label>
+          </div>
+          <div class="field"><label>文字特效</label>
+            <select class="select" id="setUiTextFx">
+              <option value="mix">混合</option>
+              <option value="radio">电波干扰</option>
+              <option value="pulse">脉冲</option>
+              <option value="type">打字机</option>
+              <option value="decode">解码</option>
+              <option value="scan">扫描</option>
+              <option value="glitch">故障</option>
+            </select>
+          </div>
+          <div class="field"><label>随机复播</label>
+            <label class="switch"><input type="checkbox" id="setUiFxLoop"><span class="track"></span><span class="txt">标题 / 文字</span></label>
+          </div>
+          <div class="field"><label>复播间隔（秒）</label><input id="setUiFxInterval" type="number" min="4" max="15"></div>
+          <div class="field"><label>随机字幕</label>
+            <label class="switch"><input type="checkbox" id="setUiQuoteEnabled"><span class="track"></span><span class="txt">知识库原文</span></label>
+          </div>
+          <div class="field"><label>字幕间隔（秒）</label><input id="setUiQuoteInterval" type="number" min="4" max="30"></div>
+          <div class="field wide"><label>字幕来源知识库</label><div class="cathode-kb-checks" id="setUiQuoteKbs"></div></div>
+          <div class="field wide"><label>自定义台词池（每行一条，优先于原文）</label><textarea id="setUiQuoteLines" rows="4" placeholder="留空则从真实条目正文抽取"></textarea></div>
+          <div class="field wide"><label>自定义格言（每行一条，留空用内置池）</label><textarea id="setUiQuoteMottos" rows="3"></textarea></div>
+        </div>
+        <div class="panel-head" style="border-top:1px solid var(--line)">
+          <span data-icon="square-stack" data-size="16"></span>
+          <h2>背景立绘</h2>
+          <span class="count">本地保存 · 自动压缩</span>
+        </div>
+        <div class="cathode-bg-grid" id="cathodeBgGrid"></div>
+        <div class="panel-foot">
+          <span class="faint" style="margin-right:auto;font-size:11px">主题 / CRT / 字幕 / 复播会同时写入插件配置。</span>
+          <button type="button" class="btn solid" id="cathodeSaveUi">
+            <span data-icon="save" data-size="14"></span><span>保存机台</span>
+          </button>
+        </div>
       </div>
 
       <div class="panel" style="margin-bottom:22px">
@@ -2357,5 +2427,7 @@ hydrateIcons();
 refresh();
 startTaskPolling();
 </script>
+<script src="textfx.js?v=3"></script>
+<script src="cathode.js?v=4"></script>
 </body>
 </html>

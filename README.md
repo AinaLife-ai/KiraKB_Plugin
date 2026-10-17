@@ -85,7 +85,10 @@ KiraKB/
 ├── retriever.py            # 混合检索
 ├── icon.png
 ├── web/
-│   └── index.html          # 管理界面
+│   ├── index.html          # 管理界面
+│   ├── cathode.css         # 阴极档案皮肤 / CRT / 主题 / 文字特效
+│   ├── cathode.js          # 真实 API 接入、字幕、背景、机台设置
+│   └── textfx.js           # 多形态文字特效引擎
 └── tests/
     ├── run_tests.py        # 既有回归套件（42 项）
     ├── test_permissions.py # 权限矩阵与工具层校验（28 项）
@@ -93,7 +96,7 @@ KiraKB/
     ├── test_upgrade.py     # 显示名、版本新鲜度、哈希修复、恢复、自动同步（44 项）
     ├── test_history.py     # 修订历史、原始版本保留、裁剪、回退（32 项）
     ├── test_lexical.py     # 标题 OR 内容、短词、时间开关、索引更新（22 项）
-    ├── test_settings.py    # 热设置、存储/WebUI 热切换、配置覆盖（44 项）
+    ├── test_settings.py    # 热设置、存储/WebUI、机台皮肤、配置覆盖（47 项）
     ├── test_dependencies.py # 依赖检测与清单（16 项）
     ├── stub_core.py        # 无 KiraAI 运行时的 core 桩
     └── reverse_validation.py
@@ -112,7 +115,7 @@ python3 tests/test_settings.py
 python3 tests/test_dependencies.py
 ```
 
-全部通过后分别输出 `42/42`、`28/28`、`36/36`、`44/44`、`32/32`、`22/22`、`44/44`、`16/16`。测试使用桩 `core` 包，不需要 KiraAI 本体。
+全部通过后分别输出 `42/42`、`28/28`、`36/36`、`44/44`、`32/32`、`22/22`、`47/47`、`16/16`。测试使用桩 `core` 包，不需要 KiraAI 本体。
 
 ---
 
@@ -453,6 +456,16 @@ data/knowledge_base/
 
 <details>
 <summary>点击展开更新日志</summary>
+
+### 1.4.0
+
+- WebUI 以「阴极档案」机台重构：保留原有目录 / 条目 / 版本 / 检索 / 权限 / 召回 / 设置 / 任务与全部弹窗、上传、历史、同步、权限逻辑。
+- 七套配色：紫（默认）、粉、蓝、黄、绿、红、灰；CRT 默认高强度。
+- 开屏、扫描线、玻璃反光、噪点、频道切换；文字特效含电波、脉冲、打字机、解码、扫描、故障，支持入场、常态、随机复播（默认 6 秒）。
+- 抽取台从真实知识库条目正文抽取字幕，底部字幕轨同步；支持自定义台词池、自定义格言、选择参与知识库。
+- 九个背景立绘槽位本地保存；主题 / CRT / 特效 / 字幕参数写入插件 `section_ui`，前后端一致。
+- 新增 `web/cathode.css`、`web/cathode.js`、`web/textfx.js`；独立 WebUI 提供对应静态资源。
+- 新增机台皮肤设置面板与 `section_ui` schema；测试覆盖配置往返。
 
 ### 1.3.4
 

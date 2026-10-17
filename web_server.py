@@ -12,7 +12,7 @@ from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import JSONResponse, HTMLResponse, Response
+from starlette.responses import JSONResponse, HTMLResponse, Response, FileResponse
 from starlette.routing import Route
 
 from core.logging_manager import get_logger
@@ -30,7 +30,9 @@ class TokenAuthMiddleware(BaseHTTPMiddleware):
         self.token = token
 
     async def dispatch(self, request: Request, call_next):
-        if not self.token or request.url.path == "/":
+        if not self.token or request.url.path in {
+            "/", "/cathode.css", "/textfx.js", "/cathode.js", "/favicon.ico"
+        }:
             return await call_next(request)
         auth = request.headers.get("authorization", "")
         if auth == f"Bearer {self.token}":
@@ -53,6 +55,15 @@ async def serve_index(request: Request) -> Response:
 
 async def favicon(request: Request) -> Response:
     return Response(status_code=204)
+
+async def serve_web_asset(request: Request) -> Response:
+    name = request.path_params.get("name", "")
+    if name not in {"cathode.css", "textfx.js", "cathode.js"}:
+        return Response(status_code=404)
+    path = _WEB_DIR / name
+    if not path.is_file():
+        return Response(status_code=404)
+    return FileResponse(path)
 
 
 def _json(data, status=200):
@@ -333,6 +344,7 @@ def create_app(kb_manager, token: str = "", default_embedding_uuid: Optional[str
     routes = [
         Route("/", serve_index, methods=["GET"]),
         Route("/favicon.ico", favicon, methods=["GET"]),
+        Route("/{name}", serve_web_asset, methods=["GET"]),
         # Runtime settings
         Route("/api/settings", api_get_settings, methods=["GET"]),
         Route("/api/settings", api_update_settings, methods=["PUT"]),
