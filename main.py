@@ -228,6 +228,7 @@ class KiraKBPlugin(BasePlugin):
             model_lister=self._model_lister,
             enable_hybrid=self.enable_hybrid,
             history_keep=self.history_keep,
+            auto_sync_versions=self.auto_sync_versions,
         )
 
     async def initialize(self):
@@ -526,6 +527,8 @@ class KiraKBPlugin(BasePlugin):
             )
         if "auto_sync_versions" in entries:
             self.auto_sync_versions = bool(entries.get("auto_sync_versions"))
+            if self.kb_manager:
+                self.kb_manager.auto_sync_versions = self.auto_sync_versions
         if "entry_history_keep" in entries:
             self.history_keep = clamp_int(
                 entries.get("entry_history_keep"), self.history_keep, 1, 200
@@ -1134,19 +1137,23 @@ class KiraKBPlugin(BasePlugin):
                     ver for ver in kb._versions.values()
                     if ver.version_id != active_ver.version_id and ver.status == "ready"
                 ]
-                synced = 0
-                if self.auto_sync_versions:
-                    for ver in others:
-                        try:
-                            await kb.sync_version(ver.version_id, doc_ids=[doc_id])
-                            synced += 1
-                        except Exception as exc:  # noqa: BLE001
-                            logger.warning(f"[kiraKB] auto sync {ver.version_id} failed: {exc}")
+                sync_result = {"synced": [], "failed": []}
+                if self.auto_sync_versions and others:
+                    sync_result = await kb.sync_document_to_other_versions(
+                        doc_id, active_ver.version_id
+                    )
+                    for failure in sync_result["failed"]:
+                        logger.warning(
+                            f"[kiraKB] auto sync {failure['version_id']} failed: "
+                            f"{failure['error']}"
+                        )
                 if not others:
                     return f"已更新 '{name}'（激活版本已同步）。"
-                if self.auto_sync_versions and synced == len(others):
-                    return f"已更新 '{name}'（全部版本已同步）。"
-                return f"已更新 '{name}'（激活版本已同步；{len(others)} 个版本待同步）。"
+                if not self.auto_sync_versions:
+                    return f"已更新 '{name}'（激活版本已同步；{len(others)} 个版本待同步）。"
+                if sync_result["failed"]:
+                    return f"已更新 '{name}'（激活版本已同步；{len(sync_result['failed'])} 个版本同步失败）。"
+                return f"已更新 '{name}'（全部版本已同步）。"
             return "已保存，但没有激活版本，暂未向量化。"
 
         allowed, reason, _ = self._check_write(event, "add", kb, None)

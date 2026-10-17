@@ -33,7 +33,7 @@ KiraKB 为同一个知识库保留多个独立版本。每个版本记录自己�
 - 用新模型增量创建版本，只处理新增或过期的文档；
 - 对比不同模型的检索效果，保留最合适的一个。
 
-版本不是「活索引」：新增/编辑条目只立即写入当前激活版本，其它版本会显示待同步数量，可在面板中一键增量同步。删除和恢复会作用于所有可用版本。
+版本不是「活索引」：新增条目只立即写入当前激活版本；编辑默认只写激活版本，开启 `auto_sync_versions` 后会把改动同步到其它可用版本。其它版本可显示待同步数量并在面板中一键增量同步。删除和恢复会作用于所有可用版本。
 
 ---
 
@@ -90,10 +90,10 @@ KiraKB/
     ├── run_tests.py        # 既有回归套件（42 项）
     ├── test_permissions.py # 权限矩阵与工具层校验（28 项）
     ├── test_recall.py      # 被动召回与注入形态（36 项）
-    ├── test_upgrade.py     # 显示名、版本新鲜度、哈希修复、恢复、口径统一（36 项）
+    ├── test_upgrade.py     # 显示名、版本新鲜度、哈希修复、恢复、自动同步（41 项）
     ├── test_history.py     # 修订历史、原始版本保留、裁剪、回退（32 项）
     ├── test_lexical.py     # 标题 OR 内容、短词、时间开关、索引更新（22 项）
-    ├── test_settings.py    # 热设置、存储/WebUI 热切换、配置覆盖（43 项）
+    ├── test_settings.py    # 热设置、存储/WebUI 热切换、配置覆盖（44 项）
     ├── test_dependencies.py # 依赖检测与清单（16 项）
     ├── stub_core.py        # 无 KiraAI 运行时的 core 桩
     └── reverse_validation.py
@@ -112,7 +112,7 @@ python3 tests/test_settings.py
 python3 tests/test_dependencies.py
 ```
 
-全部通过后分别输出 `42/42`、`28/28`、`36/36`、`36/36`、`32/32`、`22/22`、`43/43`、`16/16`。测试使用桩 `core` 包，不需要 KiraAI 本体。
+全部通过后分别输出 `42/42`、`28/28`、`36/36`、`41/41`、`32/32`、`22/22`、`44/44`、`16/16`。测试使用桩 `core` 包，不需要 KiraAI 本体。
 
 ---
 
@@ -133,7 +133,7 @@ python3 tests/test_dependencies.py
 | `enable_rerank` | 检索结果重排序 | false |
 | `entry_title_max_chars` | AI 生成标题的最大长度 | 20 |
 | `extra_tools_enabled` | 注册只读条目工具 | true |
-| `auto_sync_versions` | 编辑后自动同步其它版本 | false |
+| `auto_sync_versions` | 编辑后自动同步其它版本（前端/Bot） | false |
 | `entry_history_keep` | 每个条目保留的最近修订数（最初版本永久保留） | 5 |
 | `enable_lexical_search` | 词法召回（标题 + 内容，OR） | true |
 | `ignore_time` | 忽略时间因素（知识库不是越新越重要） | true |
@@ -453,6 +453,12 @@ data/knowledge_base/
 
 <details>
 <summary>点击展开更新日志</summary>
+
+### 1.3.3
+
+- 前端编辑现在也遵循 `auto_sync_versions`：开启后与 Bot 编辑一致，立即把改动同步到其它可用版本；关闭时仍只更新激活版本。
+- Bot 与前端共用 `sync_document_to_other_versions()`，避免两条编辑路径行为分叉。
+- 同步失败不会回滚已完成的编辑，会在返回消息与日志中报告。
 
 ### 1.3.2
 

@@ -125,6 +125,7 @@ async def main_async():
     check("标题长度", plugin.entry_title_max_chars == 32)
     check("历史保留", plugin.history_keep == 8 and plugin.kb_manager.history_keep == 8)
     check("自动同步", plugin.auto_sync_versions is True)
+    check("管理器自动同步", plugin.kb_manager.auto_sync_versions is True)
     check("名单更新", plugin.owner_whitelist == ["1", "2"], str(plugin.owner_whitelist))
     check("默认策略更新", plugin.default_policies["add"] == "admin"
           and plugin.default_policies["delete"] == "open", str(plugin.default_policies))

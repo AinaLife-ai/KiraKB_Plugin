@@ -1292,6 +1292,33 @@ class KnowledgeBase:
         await version.flush()
         return {"synced": done, "failed": failed, "total": len(targets)}
 
+    async def sync_document_to_other_versions(self, doc_id: str,
+                                              active_version_id: Optional[str] = None
+                                              ) -> Dict[str, Any]:
+        """Sync one edited document to every other ready version.
+
+        Shared by the bot tool and the WebUI save path so both obey
+        ``auto_sync_versions`` identically. Failures are returned, not raised:
+        the edit itself already succeeded in the active version.
+        """
+        synced, failed = [], []
+        for version in list(self._versions.values()):
+            if version.status != "ready" or version.version_id == active_version_id:
+                continue
+            try:
+                result = await self.sync_version(version.version_id, doc_ids=[doc_id])
+                if result.get("error") or result.get("failed"):
+                    failed.append({
+                        "version_id": version.version_id,
+                        "error": result.get("error") or result.get("failed"),
+                    })
+                else:
+                    synced.append(version.version_id)
+            except Exception as exc:  # noqa: BLE001
+                failed.append({"version_id": version.version_id,
+                               "error": f"{type(exc).__name__}: {exc}"})
+        return {"synced": synced, "failed": failed}
+
     async def close(self):
         for ver in self._versions.values():
             await ver.close()
@@ -1303,7 +1330,8 @@ class KnowledgeBaseManager:
                  vlm_client=None, rerank_client=None, enable_rerank: bool = False,
                  chunk_size: int = 500, chunk_overlap: int = 50,
                  client_resolver: Callable = None, model_lister: Callable = None,
-                 enable_hybrid: bool = False, history_keep: int = 5):
+                 enable_hybrid: bool = False, history_keep: int = 5,
+                 auto_sync_versions: bool = False):
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self.embedding_client_getter = embedding_client_getter
@@ -1323,6 +1351,7 @@ class KnowledgeBaseManager:
         self.lexical_min_score = 2
         self.ignore_time = True
         self.history_keep = max(1, min(200, int(history_keep or 5)))
+        self.auto_sync_versions = bool(auto_sync_versions)
         self.kbs: Dict[str, KnowledgeBase] = {}
 
     async def load_existing_kbs(self):
