@@ -70,6 +70,8 @@ async def main_async():
     check("原始版本仍在", any(r["rev_id"] == original_rev and r["is_original"] for r in rows))
     check("edited 标记", kb.get_document_settings(doc_id)["history"]["edited"] is True)
     check("AI 编辑标记持久", kb.get_document_settings(doc_id)["history"]["ai_edited"] is True)
+    ai_doc = await kb.add_raw_document("AI 创建的内容", "AI 条目", actor="ai")
+    check("AI 创建不算编辑", kb.get_document_settings(ai_doc)["history"]["ai_edited"] is False)
 
     print("\nH3  回退到最初版本")
     content = await kb.restore_revision(doc_id, original_rev, actor="human")

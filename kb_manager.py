@@ -573,7 +573,7 @@ class KnowledgeBase:
             "latest_actor": record["actor"],
             "original_hash": hist.get("original_hash") or digest,
             "latest_hash": digest,
-            "ai_edited": bool(hist.get("ai_edited")) or (actor == "ai"),
+            "ai_edited": bool(hist.get("ai_edited")) or (actor == "ai" and source != "create"),
             "updated_at": record["created_at"],
         }
         meta["history"] = hist
