@@ -38,7 +38,8 @@
     theme: "violet", crt: "high", performance: false, splash: true,
     text_fx: "mix", fx_loop: true, fx_interval: 6,
     quote_enabled: true, quote_interval: 9, quote_kb_ids: [],
-    quote_custom_lines: [], quote_custom_mottos: []
+    quote_custom_lines: [], quote_custom_mottos: [],
+    wall_rotate: true, wall_interval: 18, wall_parallax: true
   };
 
   const state = {
@@ -49,7 +50,12 @@
     ui: { ...UI_DEFAULT },
     quoteTimer: null, quoteBusy: false, tickerTimer: null,
     uiSaveTimer: null, backgrounds: loadBackgrounds(),
-    orgWallpaper: "", custom: loadCustomAssets()
+    orgWallpaper: "", custom: loadCustomAssets(),
+    wallDisabled: loadWallDisabled(), wallTimer: null, wallFxTimer: null,
+    zero: (window.linjiZero ? window.linjiZero() : null),
+    zeroRandomPick: false, wallVaultTheme: "violet",
+    apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null,
+    apprTickerTimer: null, apprForcedQuote: false, parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0
   };
 
   /* ---------- API ---------- */
@@ -175,25 +181,73 @@
     try { localStorage.setItem(CUSTOM_ASSET_KEY, JSON.stringify(state.custom)); }
     catch (_) { toast("自定义素材过大，未能写入本地存储", "err"); }
   }
-  function orgFor(theme) { return ORGS[theme] || ORGS.violet || null; }
+  function zeroData() { return state.zero || window.linjiZero?.() || {}; }
+  function zeroIsEnabled() { return !!(zeroData().enabled); }
+  function zeroTargets() { return Array.isArray(zeroData().targets) ? zeroData().targets : []; }
+  function zeroActiveFor(theme) {
+    if (!zeroIsEnabled()) return false;
+    const targets = zeroTargets();
+    if (targets.includes(theme)) return true;
+    return theme === state.ui.theme && state.zeroRandomPick && targets.includes("random");
+  }
+  function zeroAsOrg() {
+    const z = zeroData();
+    return {
+      theme: "zero", chapter: z.chapter || "00", name: z.name || "第零章",
+      en: z.en || "CHAPTER ZERO", color: z.color || "#d8c7a3",
+      badge: z.badge || "", walls: Array.isArray(z.walls) ? z.walls : [],
+      wallMeta: (z.walls || []).map((_, i) => ({ key: "zero-" + i, title: `第零章 · 残页 ${String(i + 1).padStart(2, "0")}`, caption: z.motto || "" })),
+      motto: z.motto || "", summary: z.summary || "", lore: z.lore || "",
+      doctrine: z.doctrine || "", uniform: z.uniform || "", relations: z.relations || "",
+      quote: z.quote || "", tags: Array.isArray(z.tags) ? z.tags : String(z.tags || "").split(/[,，]/).map(s => s.trim()).filter(Boolean),
+      chronicle: [], cases: [], extraLore: "", wallCount: (z.walls || []).length
+    };
+  }
+  function orgFor(theme) { return theme === "zero" ? zeroAsOrg() : (zeroActiveFor(theme) ? zeroAsOrg() : (ORGS[theme] || ORGS.violet || null)); }
   function orgEnabled(theme) {
+    if (theme === "zero") return true;
+    if (zeroActiveFor(theme)) return true;
     const item = state.custom?.[theme];
     return !item || item.enabled !== false;
   }
   function badgeFor(theme, respectEnabled = true) {
+    if (theme === "zero" || zeroActiveFor(theme)) return zeroData().badge || "";
     if (respectEnabled && !orgEnabled(theme)) return "";
     const org = orgFor(theme);
     return state.custom?.[theme]?.badge || (org && org.badge) || "";
   }
   function wallsFor(theme) {
+    if (theme === "zero") return (zeroData().walls || []).filter(Boolean);
+    if (zeroActiveFor(theme)) {
+      const zw = (zeroData().walls || []).filter(Boolean);
+      return zw.length ? zw : (ORGS[theme]?.walls || []);
+    }
     const custom = Array.isArray(state.custom?.[theme]?.walls) ? state.custom[theme].walls : [];
     const base = (orgFor(theme)?.walls || []);
     return [...custom, ...base].filter((v, i, a) => v && a.indexOf(v) === i);
   }
+  function wallMetaFor(theme, wall, index) {
+    const org = orgFor(theme);
+    const meta = Array.isArray(org?.wallMeta) ? org.wallMeta[index] : null;
+    return { title: meta?.title || `WALL ${String(index + 1).padStart(2, "0")}`, caption: meta?.caption || org?.motto || "" };
+  }
+  function loadWallDisabled() {
+    try { return new Set(JSON.parse(localStorage.getItem("linji-wall-disabled-v1") || "[]")); }
+    catch (_) { return new Set(); }
+  }
+  function persistWallDisabled() {
+    try { localStorage.setItem("linji-wall-disabled-v1", JSON.stringify([...state.wallDisabled])); }
+    catch (_) {}
+  }
+  function wallEnabled(url) { return !state.wallDisabled.has(url); }
+  function enabledWallsFor(theme) { return wallsFor(theme).filter(wallEnabled); }
   function pickOrgWallpaper(theme) {
     if (!orgEnabled(theme)) return "";
-    const pool = wallsFor(theme);
-    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : "";
+    const pool = enabledWallsFor(theme);
+    if (!pool.length) return "";
+    const current = state.orgWallpaper;
+    const choices = pool.length > 1 ? pool.filter(u => u !== current) : pool;
+    return choices[Math.floor(Math.random() * choices.length)];
   }
   function renderThemeBadges() {
     const row = $("#themeBadgeRow");
@@ -246,12 +300,16 @@
     }).join("") + `<button class="swatch random" type="button" data-theme-set="random" title="随机配色" aria-label="随机配色"></button>`;
   }
   function setTheme(theme, save = true) {
+    state.zeroRandomPick = false;
     if (theme === "random") {
       const pool = THEMES.filter(t => t !== state.ui.theme);
       theme = pool[Math.floor(Math.random() * pool.length)];
+      const z = zeroData();
+      if (z.enabled && zeroTargets().includes("random")) state.zeroRandomPick = Math.random() < 0.5;
     }
     if (!THEMES.includes(theme)) theme = "violet";
     state.ui.theme = theme;
+    state.wallVaultTheme = theme;
     document.documentElement.setAttribute("data-theme", "dark");
     document.body.dataset.theme = theme;
     $$("#themeStrip [data-theme-set]").forEach(b => b.classList.toggle("is-active", b.dataset.themeSet === theme));
@@ -288,6 +346,7 @@
     }
     syncUiControls();
     startBrandModes();
+    startWallRotation();
     if (state.ui.quote_enabled) startQuoteTimer(); else stopQuoteTimer();
   }
   function queueUiSave() {
@@ -308,7 +367,9 @@
       fx_loop: !!$("#setUiFxLoop")?.checked, fx_interval: Number($("#setUiFxInterval")?.value) || state.ui.fx_interval,
       quote_enabled: !!$("#setUiQuoteEnabled")?.checked, quote_interval: Number($("#setUiQuoteInterval")?.value) || state.ui.quote_interval,
       quote_kb_ids: selectedQuoteKbs(), quote_custom_lines: lines("#setUiQuoteLines"),
-      quote_custom_mottos: lines("#setUiQuoteMottos")
+      quote_custom_mottos: lines("#setUiQuoteMottos"),
+      wall_rotate: !!$("#setUiWallRotate")?.checked, wall_interval: Number($("#setUiWallInterval")?.value) || state.ui.wall_interval,
+      wall_parallax: !!$("#setUiParallax")?.checked
     };
   }
   function lines(sel) { return ($(sel)?.value || "").split("\n").map(s => s.trim()).filter(Boolean); }
@@ -324,9 +385,11 @@
     set("setUiTextFx", state.ui.text_fx); chk("setUiFxLoop", state.ui.fx_loop);
     set("setUiFxInterval", state.ui.fx_interval); chk("setUiQuoteEnabled", state.ui.quote_enabled);
     set("setUiQuoteInterval", state.ui.quote_interval);
+    chk("setUiWallRotate", state.ui.wall_rotate); set("setUiWallInterval", state.ui.wall_interval);
+    chk("setUiParallax", state.ui.wall_parallax);
     const ql = $("#setUiQuoteLines"); if (ql) ql.value = (state.ui.quote_custom_lines || []).join("\n");
     const qm = $("#setUiQuoteMottos"); if (qm) qm.value = (state.ui.quote_custom_mottos || []).join("\n");
-    renderQuoteKbs(); renderBgGrid();
+    renderQuoteKbs(); renderBgGrid(); renderWallVault();
   }
   function renderQuoteKbs() {
     const box = $("#setUiQuoteKbs");
@@ -346,6 +409,27 @@
       return `<div class="bg-slot" data-bg="${key}" style="background-image:${img ? "none" : "linear-gradient(135deg,rgba(181,140,255,.13),rgba(0,0,0,.35))"}">${img ? `<img src="${img}" alt="">` : ""}<span>${label}</span><div><button type="button" data-bg-upload="${key}">上传</button><button type="button" data-bg-reset="${key}">清除</button></div><input type="file" accept="image/*" data-bg-file="${key}" hidden></div>`;
     }).join("");
   }
+  function renderWallVault() {
+    const tabs = $("#wallVaultTabs"), grid = $("#wallVault");
+    if (!tabs || !grid) return;
+    const themes = Object.keys(ORGS);
+    if (zeroIsEnabled() && (zeroData().walls || []).length) themes.push("zero");
+    if (!themes.includes(state.wallVaultTheme)) state.wallVaultTheme = themes[0] || "violet";
+    tabs.innerHTML = themes.map(t => {
+      const org = t === "zero" ? zeroAsOrg() : orgFor(t);
+      return `<button type="button" data-wall-tab="${t}" class="${t === state.wallVaultTheme ? "is-on" : ""}">${esc(org?.name || t)}</button>`;
+    }).join("");
+    const theme = state.wallVaultTheme;
+    const walls = wallsFor(theme);
+    grid.innerHTML = walls.length ? walls.map((url, i) => {
+      const meta = wallMetaFor(theme, url, i);
+      const on = wallEnabled(url);
+      return `<div class="wall-cell ${on ? "is-on" : "is-off"}" data-wall-toggle="${esc(url)}" title="${esc(meta.title)}"><img src="${esc(url)}" alt="" loading="lazy"><span class="wall-check">✓</span><span class="wall-label">${esc(meta.title)}</span></div>`;
+    }).join("") : `<div class="inspect-empty">这一组还没有壁纸。</div>`;
+    const enabled = walls.filter(wallEnabled).length;
+    const count = $("#wallVaultCount"); if (count) count.textContent = `${enabled} / ${walls.length} ENABLED`;
+    const hint = $("#wallVaultHint"); if (hint) hint.textContent = walls.length ? `当前：${orgFor(theme)?.name || theme} · 点击缩略图切换` : "默认全部启用；点缩略图切换。";
+  }
   function applyBackgrounds() {
     $$("[data-view]").forEach(view => {
       const key = view.dataset.view;
@@ -355,6 +439,168 @@
     });
     const ticker = $("#ticker");
     if (ticker) ticker.style.setProperty("--ticker-art", state.backgrounds.ticker ? `url("${state.backgrounds.ticker}")` : "none");
+  }
+
+  /* ---------- wallpaper motion / transitions ---------- */
+  function wallFxClass(name) {
+    const fx = $("#wallFx"); if (!fx) return;
+    const host = document.querySelector(".view.is-active");
+    if (host && fx.parentElement !== host) host.appendChild(fx);
+    clearTimeout(state.wallFxTimer);
+    fx.style.display = "block";
+    fx.className = "wall-fx is-on " + name;
+    state.wallFxTimer = setTimeout(() => { fx.className = "wall-fx"; fx.style.display = "none"; }, 850);
+  }
+  function setOrgWallpaper(url, animate = true) {
+    if (!url) return;
+    state.orgWallpaper = url;
+    if (!animate || state.ui.performance || reduced) { applyBackgrounds(); return; }
+    const fx = ["fx-scan", "fx-tear", "fx-iris", "fx-shutter"][Math.floor(Math.random() * 4)];
+    wallFxClass(fx);
+    setTimeout(applyBackgrounds, 190);
+    if (state.apprOpen) setTimeout(() => syncApprArt(url), 190);
+  }
+  function startWallRotation() {
+    clearInterval(state.wallTimer);
+    const secs = Math.max(5, Number(state.ui.wall_interval) || 18);
+    if (!state.ui.wall_rotate) return;
+    state.wallTimer = setInterval(() => {
+      if (document.hidden || state.apprOpen) return;
+      const pool = enabledWallsFor(state.ui.theme);
+      if (pool.length < 2) return;
+      const next = pool.filter(u => u !== state.orgWallpaper);
+      setOrgWallpaper(next[Math.floor(Math.random() * next.length)], true);
+    }, secs * 1000);
+  }
+  function applyParallax() {
+    const enabled = !!state.ui.wall_parallax && !state.ui.performance && !reduced;
+    const x = enabled ? state.px : 0, y = enabled ? state.py : 0;
+    document.documentElement.style.setProperty("--wall-px", x.toFixed(2) + "px");
+    document.documentElement.style.setProperty("--wall-py", y.toFixed(2) + "px");
+  }
+  function initParallax() {
+    if (state.parallaxBound) return;
+    state.parallaxBound = true;
+    let t0 = performance.now();
+    const tick = (now) => {
+      if (typeof now !== "number") now = performance.now();
+      const sec = (now - t0) / 1000;
+      state.tx = Math.sin(sec / 11.3) * 16 + Math.sin(sec / 4.7) * 5;
+      state.ty = Math.cos(sec / 13.7) * 12 + Math.sin(sec / 6.1) * 4;
+      state.px += (state.tx - state.px) * .12;
+      state.py += (state.ty - state.py) * .12;
+      applyParallax();
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    const follow = (x, y) => {
+      if (!state.ui.wall_parallax) return;
+      state.tx = -((x / window.innerWidth) * 2 - 1) * 34;
+      state.ty = -((y / window.innerHeight) * 2 - 1) * 24;
+    };
+    window.addEventListener("mousemove", e => follow(e.clientX, e.clientY), { passive: true });
+    window.addEventListener("touchmove", e => { const p = e.touches[0]; if (p) follow(p.clientX, p.clientY); }, { passive: true });
+    window.addEventListener("mouseleave", () => { state.tx = 0; state.ty = 0; });
+  }
+
+  /* ---------- appreciation / 欣赏模式 ---------- */
+  function apprAll() {
+    const out = [];
+    const seen = new Set();
+    const add = (theme, url, i) => {
+      if (!url || seen.has(url)) return;
+      seen.add(url);
+      out.push({ theme, url, meta: wallMetaFor(theme, url, i), org: orgFor(theme) });
+    };
+    Object.keys(ORGS).forEach(theme => {
+      if (!orgEnabled(theme)) return;
+      wallsFor(theme).filter(wallEnabled).forEach((url, i) => add(theme, url, i));
+    });
+    if (zeroIsEnabled()) {
+      wallsFor("zero").filter(wallEnabled).forEach((url, i) => add("zero", url, i));
+    }
+    return out;
+  }
+  function apprPool() {
+    const all = apprAll();
+    if (!state.apprTheme || state.apprTheme === "all") return all;
+    return all.filter(x => x.theme === state.apprTheme);
+  }
+  function renderApprThemes() {
+    const box = $("#apprThemes"); if (!box) return;
+    const themes = [...new Set(apprAll().map(x => x.theme))];
+    box.innerHTML = `<button type="button" data-appr-theme="all" class="${state.apprTheme === "all" ? "is-on" : ""}" style="--sw:var(--accent)" title="全部"></button>` +
+      themes.map(t => { const org = orgFor(t); return `<button type="button" data-appr-theme="${t}" class="${state.apprTheme === t ? "is-on" : ""}" style="--sw:${org?.color || "#fff"}" title="${esc(org?.name || t)}"></button>`; }).join("");
+  }
+  function apprShow(animate = true) {
+    const pool = apprPool();
+    if (!pool.length) return closeAppreciate();
+    if (state.apprIndex < 0) state.apprIndex = pool.length - 1;
+    state.apprIndex %= pool.length;
+    const item = pool[state.apprIndex];
+    const set = () => {
+      const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${item.url}")`;
+      $("#apprTitle").textContent = item.org?.name || "第零章";
+      $("#apprMeta").textContent = `CHAPTER ${item.org?.chapter || "00"} // ${item.org?.en || "LINJI"} · ${String(state.apprIndex + 1).padStart(2, "0")} / ${String(pool.length).padStart(2, "0")}`;
+      $("#apprCaptionKicker").textContent = item.meta.title;
+      $("#apprCaption").textContent = item.meta.caption || item.org?.motto || "";
+      $("#apprIndex").textContent = `${String(state.apprIndex + 1).padStart(2, "0")} / ${String(pool.length).padStart(2, "0")}`;
+      document.documentElement.style.setProperty("--appr-accent", item.org?.color || "var(--accent)");
+    };
+    if (!animate || state.ui.performance || reduced) { set(); return; }
+    const fx = $("#apprFx");
+    if (fx) {
+      fx.className = "appr-fx is-on " + ["fx-scan", "fx-tear", "fx-iris", "fx-shutter"][Math.floor(Math.random() * 4)];
+      setTimeout(() => { fx.className = "appr-fx"; }, 850);
+    }
+    setTimeout(set, 170);
+    setTimeout(() => { const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${item.url}")`; }, 170);
+  }
+  function apprMove(delta) { state.apprIndex += delta; apprShow(true); }
+  function syncApprArt(url) {
+    if (!state.apprOpen) return;
+    const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${url}")`;
+  }
+  function startApprRotation() {
+    clearInterval(state.apprTimer);
+    if (!state.ui.wall_rotate) return;
+    const secs = Math.max(5, Number(state.ui.wall_interval) || 18);
+    state.apprTimer = setInterval(() => { if (!document.hidden && state.apprOpen) apprMove(1); }, secs * 1000);
+  }
+  function openAppreciate(url) {
+    const all = apprAll();
+    if (!all.length) { toast("还没有启用的壁纸。", "err"); return; }
+    state.apprTheme = "all"; state.apprPool = all;
+    const found = url ? all.findIndex(x => x.url === url) : all.findIndex(x => x.url === state.orgWallpaper);
+    state.apprIndex = found >= 0 ? found : 0;
+    state.apprOpen = true;
+    if (!state.ui.quote_enabled) { state.apprForcedQuote = true; state.ui.quote_enabled = true; startQuoteTimer(); broadcastQuote(true); }
+    document.body.classList.add("appreciating");
+    const el = $("#appreciate");
+    if (el) { el.hidden = false; el.classList.add("is-open"); el.setAttribute("aria-hidden", "false"); }
+    renderApprThemes(); apprShow(false);
+    startApprRotation();
+    // carry the current subtitle into the appreciation ticker immediately
+    const prefix = $("#tickerPrefix")?.textContent || "记录";
+    const text = $("#tickerText")?.textContent || "正在接收信号……";
+    const source = $("#tickerSource")?.textContent || "ARCHIVE // PENDING";
+    const ap = $("#apprPrefix"), at = $("#apprText"), as = $("#apprSource");
+    if (ap) ap.textContent = prefix; if (at) at.textContent = text; if (as) as.textContent = source;
+  }
+  function closeAppreciate() {
+    state.apprOpen = false;
+    if (state.apprForcedQuote) { state.apprForcedQuote = false; state.ui.quote_enabled = false; stopQuoteTimer(); }
+    document.body.classList.remove("appreciating");
+    clearInterval(state.apprTimer);
+    const el = $("#appreciate");
+    if (el) { el.classList.remove("is-open"); el.setAttribute("aria-hidden", "true"); setTimeout(() => { if (!state.apprOpen) el.hidden = true; }, 250); }
+  }
+  function updateApprTicker(quote) {
+    if (!state.apprOpen) return;
+    const ap = $("#apprPrefix"), at = $("#apprText"), as = $("#apprSource");
+    if (ap) ap.textContent = quote.prefix;
+    if (as) as.textContent = quote.source;
+    if (at) typeInto(at, quote.text, "apprTickerTimer");
   }
 
   /* ---------- textfx / boot ---------- */
@@ -411,6 +657,23 @@
     if (label && org) label.textContent = `CHAPTER ${org.chapter} // ${org.name}`;
     boot.classList.remove("boot-v1", "boot-v2", "boot-v3", "boot-v4");
     boot.classList.add(`boot-v${1 + Math.floor(Math.random() * 4)}`);
+    // per-line signal theatre: logo / kicker / org / sub each get a different random effect
+    const logoFx = ["radio", "pulse", "type", "mix"][Math.floor(Math.random() * 4)];
+    boot.dataset.logoFx = logoFx;
+    const logo = $("#bootLogo");
+    if (logo) logo.innerHTML = [..."KIRAKB"].map((c, i) => `<span class="char${i > 3 ? " kb" : ""}" style="--i:${i}">${c}</span>`).join("");
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    const setFx = (el, fx, delay = 0) => {
+      if (!el) return;
+      el.classList.remove("fx-radio", "fx-pulse", "fx-type");
+      el.classList.add("fx-" + fx);
+      el.style.setProperty("--fx-delay", delay + "ms");
+    };
+    setFx($("#bootKicker"), pick(["type", "radio"]), 60);
+    setFx(label, pick(["pulse", "radio", "type"]), 180);
+    setFx($("#bootSub"), pick(["radio", "type", "pulse"]), 260);
+    const status = $("#bootStatus"); if (status) status.textContent = "ACQUIRING SIGNAL";
+    const pct = $("#bootPct"); if (pct) pct.textContent = "00";
   }
 
   function runBoot() {
@@ -476,12 +739,50 @@
   }
 
   /* ---------- render ---------- */
+  function saveZero(patch, rerender = false) {
+    state.zero = { ...zeroData(), ...patch, custom: true };
+    try { localStorage.setItem("linji-zero-v1", JSON.stringify(state.zero)); } catch (_) {}
+    if (rerender) { renderZeroPanel(); renderThemeStrip(); renderThemeBadges(); renderWiki(); renderWallVault(); if (zeroActiveFor(state.ui.theme)) applyOrgIdentity(); }
+  }
+  function renderZeroPanel() {
+    const box = $("#zeroForm");
+    if (!box) return;
+    const z = zeroData();
+    const targets = ["violet", "pink", "blue", "amber", "sg", "green", "red", "gray", "random"];
+    const tset = new Set(Array.isArray(z.targets) ? z.targets : []);
+    const field = (key, label, type = "text", span = false) => {
+      const val = z[key] == null ? "" : z[key];
+      if (type === "textarea") return `<div class="field ${span ? "span-2" : ""}"><label>${label}</label><textarea data-zero-field="${key}">${esc(val)}</textarea></div>`;
+      return `<div class="field ${span ? "span-2" : ""}"><label>${label}</label><input data-zero-field="${key}" type="${type}" value="${esc(val)}"></div>`;
+    };
+    box.innerHTML = `
+      <div class="field span-2 zero-preview"><img src="${z.badge || ""}" alt=""><div><b>${esc(z.name || "第零章")}</b><small>${esc(z.en || "CHAPTER ZERO")} · ${(z.walls || []).length} 张插画</small></div><label class="switch"><input id="zeroEnabled" type="checkbox" ${z.enabled ? "checked" : ""}><span></span><b>启用第零章</b></label></div>
+      <div class="field span-2"><label>代替哪些配色 <small>选中的主题会显示第零章的徽章、文字与插画；“随机色”表示随机时有机会出现</small></label><div class="zero-targets">${targets.map(t => `<label class="${tset.has(t) ? "is-on" : ""}"><input type="checkbox" data-zero-target="${t}" ${tset.has(t) ? "checked" : ""}>${t === "random" ? "随机色" : esc(ORGS[t]?.name || t)}</label>`).join("")}</div></div>
+      ${field("name", "名称")}
+      ${field("en", "英文副题")}
+      ${field("motto", "格言", "text", true)}
+      ${field("summary", "摘要", "textarea", true)}
+      ${field("lore", "正文 / 故事", "textarea", true)}
+      ${field("doctrine", "信条")}
+      ${field("uniform", "制服 / 外观")}
+      ${field("relations", "关系")}
+      ${field("quote", "台词")}
+      ${field("tags", "标签 <small>逗号分隔</small>")}
+      <div class="field span-2"><label>素材</label><div class="zero-upload-row"><label class="btn ghost zero-upload">上传徽章<input id="zeroBadgeFile" type="file" accept="image/*" hidden></label><label class="btn ghost zero-upload">上传插画（可多选）<input id="zeroWallsFile" type="file" accept="image/*" multiple hidden></label><button class="btn small ghost" id="zeroClearWalls" type="button">清空插画</button></div><div class="zero-thumbs">${z.badge ? `<img class="zero-badge-thumb" src="${z.badge}" alt="">` : ""}${(z.walls || []).map((w, i) => `<img src="${esc(w)}" alt="" title="插画 ${i + 1}">`).join("")}</div></div>
+      <div class="field span-2"><span class="hint">第零章只保存在本机（localStorage），不会上传服务器。启用后可在主题、壁纸库和欣赏模式中看到。</span></div>`;
+    const st = $("#zeroState"); if (st) st.textContent = z.enabled ? "IN USE" : "UNWRITTEN";
+    const tset2 = new Set(zeroTargets());
+    $$("#zeroForm .zero-targets label").forEach(l => l.classList.toggle("is-on", tset2.has(l.querySelector("input")?.dataset.zeroTarget)));
+  }
   function renderWiki() {
     const grid = $("#orgGrid");
     if (!grid) return;
+    renderZeroPanel();
+    const tl = $("#wikiTimeline");
+    if (tl && window.LINJI_STORY) tl.innerHTML = window.LINJI_STORY.map(s => `<div><b>${esc(s.year)}</b><p>${esc(s.text)}</p></div>`).join("");
     const themes = Object.keys(ORGS);
     grid.innerHTML = themes.map(theme => {
-      const org = ORGS[theme];
+      const org = orgFor(theme);
       const badge = badgeFor(theme, false);
       const walls = wallsFor(theme);
       const enabled = orgEnabled(theme);
@@ -503,15 +804,15 @@
           <span>RELATIONS / 关系<b>${esc(org.relations)}</b></span>
           <span>TAGS / 标签<b>${org.tags.map(esc).join(" · ")}</b></span>
         </div>
-        <details class="org-details"><summary>展开档案全文 / LORE</summary><p class="org-lore">${esc(org.lore)}</p></details>
-        <div class="org-gallery">${walls.map((wall, index) => `<button type="button" data-org-wall="${theme}" data-org-wall-index="${index}" title="设为当前背景"><img src="${wall}" alt=""></button>`).join("")}</div>
+        <details class="org-details"><summary>展开档案全文 / LORE</summary><p class="org-lore">${esc(org.lore)}</p>${org.extraLore ? `<p class="org-lore">${esc(org.extraLore)}</p>` : ""}${org.chronicle?.length ? `<div class="org-chronicle">${org.chronicle.map((x, i) => `<p><b>${String(i + 1).padStart(2, "0")}</b>${esc(x)}</p>`).join("")}</div>` : ""}${org.cases?.length ? `<div class="org-cases"><span class="mini-label">CASE FILES / 未结案</span>${org.cases.map(x => `<p>${esc(x)}</p>`).join("")}</div>` : ""}</details>
+        <div class="org-gallery">${walls.map((wall, index) => { const meta = wallMetaFor(theme, wall, index); return `<button type="button" data-org-wall="${theme}" data-org-wall-index="${index}" title="${esc(meta.title)} — ${esc(meta.caption)}"><img src="${wall}" alt="" loading="lazy"><span>${esc(meta.title)}</span></button>`; }).join("")}</div>
         <div class="org-actions">
           <button type="button" class="btn" data-org-theme="${theme}">应用此主题</button>
           <label class="switch" title="关闭后不使用该组织的徽章与壁纸"><input type="checkbox" data-org-enabled="${theme}" ${enabled ? "checked" : ""}><span></span><b>启用组织外观</b></label>
           <label class="btn ghost org-upload">上传徽章<input type="file" accept="image/*" data-org-badge="${theme}"></label>
           <label class="btn ghost org-upload">上传壁纸<input type="file" accept="image/*" multiple data-org-walls="${theme}"></label>
         </div>
-        <div class="org-note">${walls.length} 张壁纸 · 徽章与壁纸存于本机，不上传服务器</div>
+        <div class="org-note">${walls.length} 张壁纸 · 十九个场景 · 徽章与壁纸存于本机，不上传服务器</div>
       </article>`;
     }).join("");
   }
@@ -910,12 +1211,15 @@
     }
     return { prefix: "格言", text: motto(), source: "MOTTO / 未归档格言" };
   }
-  function typeTicker(text) {
-    const el = $("#tickerText"); if (!el) return;
-    clearInterval(state.tickerTimer);
+  function typeInto(el, text, timerKey) {
+    if (!el) return;
+    clearInterval(state[timerKey]);
     if (reduced || state.ui.performance) { el.textContent = text; return; }
     el.textContent = ""; let i = 0;
-    state.tickerTimer = setInterval(() => { el.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(state.tickerTimer); }, 18);
+    state[timerKey] = setInterval(() => { el.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(state[timerKey]); }, 18);
+  }
+  function typeTicker(text) {
+    typeInto($("#tickerText"), text, "tickerTimer");
   }
   async function broadcastQuote(force = false) {
     if (state.quoteBusy) return; state.quoteBusy = true;
@@ -924,6 +1228,7 @@
       $("#tickerPrefix").textContent = quote.prefix; $("#tickerSource").textContent = quote.source;
       $("#tickerMode").textContent = state.ui.quote_enabled ? "AUTO" : "MANUAL";
       typeTicker(quote.text);
+      updateApprTicker(quote);
       if (window.KBTextFX) window.KBTextFX.burst($("#tickerText"), state.ui.text_fx);
       const card = $("#quoteCard");
       if (card) {
@@ -964,6 +1269,27 @@
     document.addEventListener("click", async (e) => {
       const nav = e.target.closest(".channel[data-view]"); if (nav) return switchView(nav.dataset.view);
       const theme = e.target.closest("[data-theme-set]"); if (theme) return setTheme(theme.dataset.themeSet);
+      if (e.target.closest("#appreciateBtn")) return openAppreciate();
+      if (e.target.closest("#apprClose")) return closeAppreciate();
+      if (e.target.closest("#apprPrev")) return apprMove(-1);
+      if (e.target.closest("#apprNext")) return apprMove(1);
+      const apprTheme = e.target.closest("[data-appr-theme]");
+      if (apprTheme) { state.apprTheme = apprTheme.dataset.apprTheme; state.apprIndex = 0; renderApprThemes(); apprShow(true); return; }
+      const wallToggle = e.target.closest("[data-wall-toggle]");
+      if (wallToggle) {
+        const url = wallToggle.dataset.wallToggle;
+        if (state.wallDisabled.has(url)) state.wallDisabled.delete(url); else state.wallDisabled.add(url);
+        persistWallDisabled(); renderWallVault();
+        if (state.orgWallpaper === url && !wallEnabled(url)) {
+          const next = pickOrgWallpaper(state.ui.theme); if (next) setOrgWallpaper(next, true);
+        }
+        return;
+      }
+      const wallTab = e.target.closest("[data-wall-tab]");
+      if (wallTab) { state.wallVaultTheme = wallTab.dataset.wallTab; renderWallVault(); return; }
+      if (e.target.closest("#wallAllBtn")) { wallsFor(state.wallVaultTheme).forEach(u => state.wallDisabled.delete(u)); persistWallDisabled(); renderWallVault(); return; }
+      if (e.target.closest("#wallNoneBtn")) { wallsFor(state.wallVaultTheme).forEach(u => state.wallDisabled.add(u)); persistWallDisabled(); renderWallVault(); return; }
+      if (e.target.closest("#zeroClearWalls")) { saveZero({ walls: [] }, true); toast("第零章插画已清空。"); return; }
       const doc = e.target.closest("[data-doc]"); if (doc && !e.target.closest("input")) return selectDoc(doc.dataset.doc);
       if (e.target.closest("#selectAllDocs")) return;
       const check = e.target.closest("[data-check]");
@@ -980,14 +1306,13 @@
       if (orgWall) {
         const theme = orgWall.dataset.orgWall, index = Number(orgWall.dataset.orgWallIndex);
         const walls = wallsFor(theme);
-        if (walls[index]) { state.orgWallpaper = walls[index]; applyBackgrounds(); toast("已设为当前背景。"); }
+        if (walls[index]) { setOrgWallpaper(walls[index], true); toast("已设为当前背景。"); }
         return;
       }
       if (e.target.closest("#replayBootBtn")) {
         const boot = $("#boot"); if (!boot) return;
-        prepareBoot();
         boot.style.display = "flex"; boot.classList.remove("is-off");
-        setTimeout(hideBoot, 2300);
+        prepareBoot(); runBoot();
         return;
       }
       if (e.target.closest("#settingsBtn")) return switchView("settings");
@@ -1018,6 +1343,35 @@
     $("#searchInput")?.addEventListener("keydown", e => { if (e.key === "Enter") runSearch(); });
     $("#selectAllDocs")?.addEventListener("change", e => { const list = filteredDocs(); if (e.target.checked) list.forEach(d => state.selected.add(d.doc_id)); else state.selected.clear(); renderDocList(); });
     document.addEventListener("change", async (e) => {
+      if (e.target.id === "zeroEnabled") { saveZero({ enabled: e.target.checked }, true); toast(e.target.checked ? "第零章已启用。" : "第零章已关闭。"); return; }
+      const zt = e.target.closest("[data-zero-target]");
+      if (zt) {
+        const set = new Set(zeroTargets());
+        if (zt.checked) set.add(zt.dataset.zeroTarget); else set.delete(zt.dataset.zeroTarget);
+        saveZero({ targets: [...set] }, true); return;
+      }
+      const zf = e.target.closest("[data-zero-field]");
+      if (zf) { saveZero({ [zf.dataset.zeroField]: zf.value }, false); return; }
+      if (e.target.id === "zeroBadgeFile" && e.target.files?.[0]) {
+        try { const data = await resizeImage(e.target.files[0], 800); saveZero({ badge: data }, true); toast("第零章徽章已更新。"); }
+        catch (err) { toast("上传失败：" + err.message, "err"); }
+        return;
+      }
+      if (e.target.id === "zeroWallsFile" && e.target.files?.length) {
+        try {
+          const added = [];
+          for (const file of [...e.target.files].slice(0, 19)) added.push(await resizeImage(file, 900));
+          saveZero({ walls: [...added, ...(zeroData().walls || [])].slice(0, 19) }, true);
+          toast(`第零章已添加 ${added.length} 张插画。`);
+        } catch (err) { toast("上传失败：" + err.message, "err"); }
+        return;
+      }
+      if (e.target.matches("#setUiWallRotate, #setUiWallInterval, #setUiParallax")) {
+        state.ui.wall_rotate = $("#setUiWallRotate")?.checked ?? state.ui.wall_rotate;
+        state.ui.wall_interval = Number($("#setUiWallInterval")?.value) || 18;
+        state.ui.wall_parallax = $("#setUiParallax")?.checked ?? state.ui.wall_parallax;
+        startWallRotation(); startApprRotation(); queueUiSave(); return;
+      }
       const permId = e.target.dataset.entryEdit || e.target.dataset.entryDelete;
       if (permId) {
         const doc = state.docs.find(d => d.doc_id === permId);
@@ -1093,6 +1447,8 @@
       }
     });
     document.addEventListener("input", e => {
+      const zf = e.target.closest("[data-zero-field]");
+      if (zf) { state.zero = { ...zeroData(), [zf.dataset.zeroField]: zf.value, custom: true }; try { localStorage.setItem("linji-zero-v1", JSON.stringify(state.zero)); } catch (_) {} return; }
       if (e.target.matches("#setUiQuoteLines, #setUiQuoteMottos")) {
         state.ui.quote_custom_lines = lines("#setUiQuoteLines"); state.ui.quote_custom_mottos = lines("#setUiQuoteMottos"); queueUiSave();
       }
@@ -1102,7 +1458,18 @@
       }
     });
     document.addEventListener("visibilitychange", () => { if (document.hidden) stopQuoteTimer(); else if (state.ui.quote_enabled) startQuoteTimer(); });
-    document.addEventListener("keydown", e => { if (e.key === "Escape") { const m = $(".modal-root"); if (m) m.remove(); hideBoot(); } });
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") {
+        if (state.apprOpen) { closeAppreciate(); return; }
+        const m = $(".modal-root"); if (m) m.remove(); hideBoot(); return;
+      }
+      if (state.apprOpen) {
+        if (e.key === "ArrowLeft") { e.preventDefault(); apprMove(-1); return; }
+        if (e.key === "ArrowRight") { e.preventDefault(); apprMove(1); return; }
+      }
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable;
+      if (!typing && (e.key === "f" || e.key === "F") && !e.metaKey && !e.ctrlKey) { e.preventDefault(); state.apprOpen ? closeAppreciate() : openAppreciate(); }
+    });
   }
   function hideBoot() { const b = $("#boot"); if (!b) return; b.classList.add("is-off"); document.body.classList.remove("boot-hold"); setTimeout(() => b.style.display = "none", 600); }
   async function resizeImage(file, max = 1600) {
@@ -1147,10 +1514,12 @@
     document.body.dataset.theme = "violet";
     document.body.dataset.crt = "high";
     applyBackgrounds();
+    initParallax();
     await loadSettings();
     if (state.settings?.ui) state.ui = { ...state.ui, ...state.settings.ui };
     state.ui.theme = THEMES.includes(state.ui.theme) ? state.ui.theme : "violet";
     state.ui.text_fx = ["mix", "radio", "pulse", "type", "decode", "scan", "glitch"].includes(state.ui.text_fx) ? state.ui.text_fx : "mix";
+    state.wallVaultTheme = state.ui.theme;
     applyUi();
     renderThemeStrip();
     renderSettings();

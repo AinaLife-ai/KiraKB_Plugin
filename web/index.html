@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#08060d">
 <title>KiraKB // 临极档案 · LINJI ARCHIVE</title>
-<link rel="stylesheet" href="cathode.css?v=50">
+<link rel="stylesheet" href="cathode.css?v=70">
 </head>
 <body class="boot-hold" data-theme="violet" data-crt="high">
 <svg class="svg-defs" aria-hidden="true" focusable="false">
@@ -34,11 +34,11 @@
 <div id="boot" class="boot" aria-hidden="true">
   <div class="boot-static"></div>
   <div class="boot-frame">
-    <div class="boot-kicker">PROJECT // 临极档案 · LINJI ARCHIVE</div>
+    <div class="boot-kicker" id="bootKicker">PROJECT // 临极档案 · LINJI ARCHIVE</div>
     <img class="boot-badge" id="bootBadge" alt="">
     <div class="boot-org" id="bootOrg">CHAPTER 01 // 紫垣档案局</div>
-    <div class="boot-logo">KIRA<span>KB</span></div>
-    <div class="boot-sub">LINJI ARCHIVE · KNOWLEDGE RETRIEVAL · MODEL 07</div>
+    <div class="boot-logo" id="bootLogo">KIRA<span>KB</span></div>
+    <div class="boot-sub" id="bootSub">LINJI ARCHIVE · KNOWLEDGE RETRIEVAL · MODEL 07</div>
     <div class="boot-bar"><i></i></div>
     <div class="boot-status"><span id="bootStatus">ACQUIRING SIGNAL</span><b id="bootPct">00</b></div>
   </div>
@@ -84,7 +84,7 @@
           <div class="signal-meter"><i></i><i></i><i></i><i></i><i></i><span>STABLE</span></div>
         </div>
         <div class="rail-foot">
-          <span>KIRAKB / <b id="pluginVersion">1.4.0</b></span>
+          <span>KIRAKB / <b id="pluginVersion">1.5.0</b></span>
           <button id="quickCrt" type="button" aria-pressed="true"><svg><use href="#i-power"></use></svg><span>CRT</span></button>
         </div>
       </aside>
@@ -92,6 +92,7 @@
       <main class="screen" id="screen">
         <div class="screen-glass" aria-hidden="true"></div>
         <div class="screen-content">
+        <div class="wall-fx" id="wallFx" aria-hidden="true" style="display:none"></div>
           <header class="hud">
             <div class="hud-left">
               <span class="hud-kicker" id="hudKicker">CH 01 // CATALOGUE</span>
@@ -100,6 +101,7 @@
             </div>
             <div class="hud-right">
               <div class="theme-strip" id="themeStrip" role="group" aria-label="配色主题"></div>
+              <button class="hud-btn" id="appreciateBtn" type="button" title="欣赏模式（F）"><svg><use href="#i-eye"></use></svg>欣赏</button>
               <button class="hud-btn" id="quoteToggleBtn" type="button" aria-pressed="true">字幕 <i>ON</i></button>
               <button class="hud-btn" id="settingsBtn" type="button"><svg><use href="#i-sliders"></use></svg>设置</button>
             </div>
@@ -229,6 +231,8 @@
                     <div class="field span-2"><label for="setUiQuoteMottos">自定义格言 <small>每行一条；留空使用内置池</small></label><textarea id="setUiQuoteMottos" rows="2"></textarea></div>
                   </div><div class="panel-head sub-head"><div><span class="mini-label">BACKDROPS / 背景立绘</span><h2>本地保存 · 自动压缩</h2></div><span class="badge">9 SLOTS</span></div><div class="bg-grid" id="cathodeBgGrid"></div></div>
 
+                  <div class="panel span-2 wall-vault-panel"><div class="panel-head wall-vault-head"><div><span class="mini-label">WALLPAPER VAULT / 壁纸轮换</span><h2>挑你想看的那些</h2></div><span class="badge" id="wallVaultCount">0 / 0</span></div><div class="wall-vault-tabs" id="wallVaultTabs"></div><div class="wall-vault" id="wallVault"></div><div class="wall-vault-foot"><span class="hint" id="wallVaultHint">默认全部启用；点缩略图切换。</span><button class="btn small ghost" id="wallAllBtn" type="button">全部启用</button><button class="btn small ghost" id="wallNoneBtn" type="button">全部关闭</button><label class="switch" title="鼠标移动时壁纸轻微跟随"><input id="setUiParallax" type="checkbox"><span></span><b>视点视差</b></label><label class="switch" title="壁纸自动轮换"><input id="setUiWallRotate" type="checkbox"><span></span><b>自动轮换</b></label><span class="field-inline"><input id="setUiWallInterval" type="number" min="5" max="120"><small>秒</small></span></div></div>
+
                   <div class="panel"><div class="panel-head"><div><span class="mini-label">SEARCH / 检索</span><h2>索引参数</h2></div><span class="badge">HOT</span></div><div class="form-grid"><div class="field"><label for="setTopK">默认检索条数</label><input id="setTopK" type="number" min="1" max="20"></div><div class="field"><label for="setChunkSize">分块大小</label><input id="setChunkSize" type="number" min="100" max="8000"></div><div class="field"><label for="setChunkOverlap">分块重叠</label><input id="setChunkOverlap" type="number" min="0" max="7999"></div><div class="field"><label for="setLexicalMin">内容命中门槛</label><input id="setLexicalMin" type="number" min="0" max="20"></div><div class="field switch-field"><label>混合检索</label><label class="switch"><input id="setHybrid" type="checkbox"><span></span><b>BM25 + 向量</b></label></div><div class="field switch-field"><label>停用词过滤</label><label class="switch"><input id="setStopwords" type="checkbox"><span></span><b>BM25</b></label></div><div class="field switch-field"><label>重排序</label><label class="switch"><input id="setRerank" type="checkbox"><span></span><b>默认模型</b></label></div><div class="field switch-field"><label>词法召回</label><label class="switch"><input id="setLexical" type="checkbox"><span></span><b>标题 + 内容</b></label></div><div class="field switch-field"><label>忽略时间因素</label><label class="switch"><input id="setIgnoreTime" type="checkbox"><span></span><b>推荐开启</b></label></div><div class="field switch-field"><label>自动安装依赖</label><label class="switch"><input id="setAutoInstallDeps" type="checkbox"><span></span><b>运行时</b></label></div></div></div>
 
                   <div class="panel"><div class="panel-head"><div><span class="mini-label">ENTRIES / 条目</span><h2>写入与历史</h2></div><span class="badge">HOT</span></div><div class="form-grid"><div class="field"><label for="setTitleMax">标题最大长度</label><input id="setTitleMax" type="number" min="4" max="60"></div><div class="field"><label for="setHistoryKeep">历史保留数</label><input id="setHistoryKeep" type="number" min="1" max="200"></div><div class="field switch-field"><label>只读条目工具</label><label class="switch"><input id="setExtraTools" type="checkbox"><span></span><b>列表 / 读取</b></label></div><div class="field switch-field"><label>编辑后自动同步</label><label class="switch"><input id="setAutoSync" type="checkbox"><span></span><b>其它版本</b></label></div></div></div>
@@ -263,7 +267,13 @@
                   <div class="wiki-lore">
                     <p>十九年前，临极市发生了一场没有被正式命名的「静默事故」。一个街区从地图、账册和新闻里消失，但所有市民都记得自己从哪里回家。为了不再让城市被记忆拖回同一个夜晚，八个协会在档案馆的地下大厅签下《临极协定》：每一方保管一段真相，任何一方都不得独自读完。</p>
                     <p>临极档案因此成为中立地。紫垣负责编号，Zwei 负责封控，刘负责焚烧，绯灯负责让人活下去，七协会负责让死者开口，六协会负责把不该存在的东西推回黑暗，时计局负责确认你还在正确的世界上，Hana 负责让以上所有人都相信彼此。协定第八条只有一句：<b>第零章不存在。</b></p>
+                    <div class="wiki-timeline" id="wikiTimeline"></div>
                   </div>
+                </div>
+                <div class="panel zero-panel" id="zeroPanel">
+                  <div class="panel-head"><div><span class="mini-label">CHAPTER ZERO / 第零章</span><h2>不被承认的那一页</h2></div><span class="badge" id="zeroState">UNWRITTEN</span></div>
+                  <p class="zero-lead">第零章不存在——但你可以把它写下来：上传徽章与插画、写自己的文字，选择它代替哪些配色（含随机色）。</p>
+                  <div class="zero-grid" id="zeroForm"></div>
                 </div>
                 <div class="org-grid" id="orgGrid"></div>
               </div>
@@ -280,13 +290,34 @@
       </main>
       <aside class="side-console" aria-hidden="true"><div class="console-label">CH</div><div class="console-number" id="consoleNumber">01</div><div class="console-knob"><i></i></div><div class="console-slits"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="console-label bottom">VOL</div><div class="console-knob small"><i></i></div></aside>
     </div>
-    <div class="cabinet-foot"><span>ORIGINAL ARCHIVE TERMINAL // LINJI</span><span class="foot-warn">NO SIGNAL LOST</span><span>BUILD 1.4.0</span></div>
+    <div class="cabinet-foot"><span>ORIGINAL ARCHIVE TERMINAL // LINJI</span><span class="foot-warn">NO SIGNAL LOST</span><span>BUILD 1.5.0</span></div>
   </div>
 </div>
+<section class="appreciate" id="appreciate" aria-hidden="true" aria-label="欣赏模式">
+  <div class="appr-art" id="apprArt"></div>
+  <div class="appr-tint"></div><div class="appr-noise"></div>
+  <header class="appr-head">
+    <div><div class="appr-kicker">APPRECIATION MODE / 欣赏模式</div><h2 id="apprTitle">KiraKB</h2><div class="appr-meta" id="apprMeta">—</div></div>
+    <div class="appr-tools">
+      <div class="appr-themes" id="apprThemes"></div>
+      <button id="apprPrev" type="button" title="上一张">←</button>
+      <button id="apprNext" type="button" title="下一张">→</button>
+      <button id="apprClose" type="button" title="退出 (Esc)">关闭 / ESC</button>
+    </div>
+  </header>
+  <div class="appr-caption"><b id="apprCaptionKicker">RECORD / 影像</b><p id="apprCaption">正在接收画面……</p></div>
+  <div class="appr-index" id="apprIndex"></div>
+  <div class="appr-fx" id="apprFx"></div>
+  <footer class="appr-bottom">
+    <div class="ticker-side"><span class="rec-dot"></span><b>NOW TRANSMITTING</b><small id="apprSource">ARCHIVE // PENDING</small></div>
+    <div class="ticker-line"><span class="ticker-prefix" id="apprPrefix">记录</span><span class="ticker-text" id="apprText">正在接收信号……</span><span class="caret"></span></div>
+  </footer>
+</section>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="modalRoot"></div>
 <script src="linji-data.js"></script>
+<script src="linji-expanded.js?v=1"></script>
 <script src="textfx.js?v=40"></script>
-<script src="cathode.js?v=40"></script>
+<script src="cathode.js?v=80"></script>
 </body>
 </html>
