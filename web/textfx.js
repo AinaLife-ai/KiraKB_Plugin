@@ -66,7 +66,7 @@
   function finish(el, effect) {
     el.classList.remove("fx-burst-radio", "fx-burst-pulse", "fx-burst-scan", "fx-decoding");
     if (!conf.idle) return;
-    if (el.matches && el.matches(".hero h1")) {
+    if (el.matches && el.matches(".hero-copy h1, .page-title h1, h1[data-fx]")) {
       // Large Chinese headlines read poorly with RGB ghosting; keep a scan
       // line as the persistent state and reserve radio/pulse for smaller text.
       el.classList.add("fx-idle-scan");
@@ -140,17 +140,12 @@
   }
 
   function replayView(view) {
-    const map = {
-      overview: "view-overview", docs: "view-docs", versions: "view-versions",
-      search: "view-search", access: "view-access", recall: "view-recall",
-      settings: "view-settings", tasks: "view-tasks"
-    };
-    const root = document.getElementById(map[view] || "") || document.querySelector(".view.is-active") || document;
-    root.querySelectorAll(".hero h1, h1[data-fx]").forEach((el, i) => {
+    const root = document.querySelector(`.view[data-view="${view}"]`) || document.querySelector(".view.is-active") || document;
+    root.querySelectorAll(".hero-copy h1, .page-title h1, h1[data-fx]").forEach((el, i) => {
       if (!el.dataset.fx) el.dataset.fx = "mix";
       later(el, () => play(el, el.dataset.fx), i * 60);
     });
-    root.querySelectorAll(".panel-head h2, .version-card h3, .cathode-chapter h2").forEach(el => {
+    root.querySelectorAll(".panel-head h2, .version-model, .version-card h3").forEach(el => {
       el.classList.remove("fx-heading");
       void el.offsetWidth;
       el.classList.add("fx-heading");
@@ -158,11 +153,11 @@
   }
 
   function init() {
-    document.querySelectorAll(".hero h1").forEach(el => {
+    document.querySelectorAll(".hero-copy h1, .page-title h1").forEach(el => {
       if (!el.dataset.fx) el.dataset.fx = "mix";
     });
-    document.querySelectorAll(".panel-head h2, .version-card h3, .cathode-chapter h2").forEach(el => el.classList.add("fx-heading"));
-    replayView("overview");
+    document.querySelectorAll(".panel-head h2, .version-model, .version-card h3").forEach(el => el.classList.add("fx-heading"));
+    replayView("catalog");
   }
 
   /** Short one-shot burst for text that is already visible (ticker). */
@@ -182,16 +177,16 @@
     const root = document.querySelector(".view.is-active");
     if (!root) return;
     const pool = [...root.querySelectorAll(
-      ".hero h1, .panel-head h2, .version-card h3, .stat .num, " +
-      ".doc-row .doc-name, .entry-row .name, .hero .eyebrow, #cathodeQuoteText"
+      ".hero-copy h1, .page-title h1, .panel-head h2, .version-model, " +
+      ".entry-main b, .inspect-body h3, .stat-card b, .chapter-label, .eyebrow, #heroQuote"
     )].filter(el => el.offsetParent !== null && !el.classList.contains("fx-decoding"));
     if (!pool.length) return;
     const el = pool[rand(pool.length)];
-    const effect = el.matches(".stat .num") ? "pulse"
-      : el.matches(".hero .eyebrow") ? "scan"
+    const effect = el.matches(".stat-card b") ? "pulse"
+      : el.matches(".chapter-label, .eyebrow") ? "scan"
       : VARIANTS[rand(VARIANTS.length)];
-    if (el.id === "cathodeQuoteText") {
-      const panel = el.closest(".cathode-quote-card");
+    if (el.id === "heroQuote") {
+      const panel = el.closest(".hero-quote");
       if (panel) {
         panel.classList.add("is-speaking");
         setTimeout(() => panel.classList.remove("is-speaking"), 1500);
