@@ -332,67 +332,6 @@ python3 tests/test_settings.py
 
 ---
 
-## API
-
-侧边栏路径前缀为 `/api/plugin/kiraKB`，独立模式为 `/api`。
-
-| 方法 | 路径 | 用途 |
-|---|---|---|
-| GET / POST | `/kbs` | 列表 / 创建知识库 |
-| DELETE | `/kbs/{kb_id}` | 删除知识库 |
-| GET / PUT | `/kbs/{kb_id}/info` | 知识库信息 |
-| GET / PUT | `/kbs/{kb_id}/permissions` | 知识库权限 |
-| GET / PUT | `/kbs/{kb_id}/recall` | 知识库召回设置 |
-| GET / PUT | `/kbs/{kb_id}/documents/{doc_id}/permissions` | 条目权限 |
-| PUT | `/kbs/{kb_id}/documents/permissions` | 批量条目权限 |
-| GET / PUT | `/kbs/{kb_id}/documents/{doc_id}/recall` | 条目召回设置 |
-| GET / POST | `/kbs/{kb_id}/documents` | 列表 / 上传 |
-| GET / PUT / DELETE | `/kbs/{kb_id}/documents/{doc_id}` | 读取 / 更新（含重命名）/ 删除 |
-| GET | `/kbs/{kb_id}/documents/deleted` | 已删除条目 |
-| POST | `/kbs/{kb_id}/documents/{doc_id}/restore` | 恢复条目 |
-| GET / POST | `/kbs/{kb_id}/versions` | 列表 / 创建版本 |
-| POST | `/kbs/{kb_id}/versions/{version_id}/activate` | 激活版本 |
-| DELETE | `/kbs/{kb_id}/versions/{version_id}` | 删除版本 |
-| GET | `/kbs/{kb_id}/versions/{version_id}/freshness` | 版本新鲜度 |
-| POST | `/kbs/{kb_id}/versions/{version_id}/sync` | 增量同步版本 |
-| POST | `/kbs/{kb_id}/search` | 检索 |
-| GET / PUT | `/settings` | 运行时热设置读写 |
-| GET | `/kbs/{kb_id}/documents/{doc_id}/history` | 条目修订列表 |
-| GET | `/kbs/{kb_id}/documents/{doc_id}/history/{rev_id}` | 读取修订正文 |
-| POST | `/kbs/{kb_id}/documents/{doc_id}/history/{rev_id}/restore` | 回退到指定修订 |
-| GET | `/tasks` | 任务列表 |
-| GET | `/recall/global` | 插件级召回总开关（只读） |
-| GET | `/embedding-models` | 嵌入模型列表 |
-| POST | `/embedding-models/probe` | 探测维度 |
-
----
-
-## 修订历史
-
-每个条目在创建时记录第一版（原始版本），之后每次编辑都会追加一条修订；回退只移动当前指针，不会新增修订。
-
-- **原始版本永久保留**，不受裁剪影响，可随时在前端回退。
-- **其它过程版本**默认保留最近 `entry_history_keep` 份（默认 5），可全局或按知识库调大（1-200）。
-- **回退不占名额**：不会新增修订，也不会把某个不同的备份挤出保留窗口；回退事件记录在目标版本上（前端显示 Restored）。
-- 每条修订记录来源：`system`（初始）、`ai`（聊天工具）、`human`（WebUI）与 `restore`（回退），前端显示对应标记。
-- 条目列表显示 `H{数量}` 与 `AI edited` 徽标；历史面板中可查看任意版本正文、回退到该版本。
-- 旧条目在第一次被编辑时会自动补记「改前内容」为原始版本，因此升级前的条目也能回退到最初内容。
-- 历史只随条目硬删除而清理；软删除与恢复不影响历史。
-
----
-
-## 热设置
-
-WebUI 的 **Settings** 页面可以直接修改并立即生效：
-
-- 检索与条目：默认 top K、分块大小/重叠、标题长度、历史保留数、混合检索、只读工具、自动同步。
-- 被动召回：总开关、模式、门槛、条数、字符预算、超时、去重、多库上限等。
-- 默认权限：新增/编辑/删除默认策略与全局名单。
-
-修改会同步写入插件配置并更新运行时对象，**不需要重载插件**。停用词与重排序也会即时重建检索器（未配置重排模型时会在页面上给出提示）。知识库目录与独立 WebUI 的绑定地址/端口属于结构性配置，页面会注明需要重启。
-
----
-
 ## 数据存储
 
 ```
@@ -470,7 +409,9 @@ data/knowledge_base/
 ## 更新日志
 
 <details>
-<summary>v1.2.0</summary>
+<summary>点击展开更新日志</summary>
+
+### 1.2.0
 
 - 新增细粒度写权限：新增 / 编辑 / 删除三项独立策略，支持知识库默认值与条目级覆盖，支持自定义允许名单。
 - 新增被动召回：三种触发模式，按知识库与条目配置，请求级注入、去重、字符预算与硬超时。
@@ -492,48 +433,36 @@ data/knowledge_base/
 - `off` 策略现在同时阻止 WebUI 的内容写入（此前仅约束 AI）。
 - 更新 WebUI：Lucide 图标、无表情符号、全新视觉与交互。
 
-</details>
 
-<details>
-<summary>v1.1.5</summary>
+### 1.1.5
 
 - 面板「嵌入模型」下拉使用 `model_name` 优先，3.0 下不再显示 UUID。
 
-</details>
 
-<details>
-<summary>v1.1.4</summary>
+### 1.1.4
 
 - 修复创建版本失败时日志无错误信息；维度写入前校验；失败自动回滚。
 - 嵌入模型选择与维度自动探测；每个版本自持模型。
 - 不完整版本可见、可删除、不可激活；自动激活取最新完整版本。
 
-</details>
 
-<details>
-<summary>v1.1.3</summary>
+### 1.1.3
 
 - 修复侧边栏 WebUI 按钮无反应（沙箱 iframe 不支持原生弹窗）。
 - 修复新标签页打开卡死；增加 bridge 初始化超时。
 
-</details>
 
-<details>
-<summary>v1.1.2</summary>
+### 1.1.2
 
 - 混合检索默认关闭；侧边栏 bridge 调用前等待 `ready()`。
 
-</details>
 
-<details>
-<summary>v1.1.1</summary>
+### 1.1.1
 
 - 停用词文件化与开关。
 
-</details>
 
-<details>
-<summary>v1.1.0</summary>
+### 1.1.0
 
 - 侧边栏 WebUI；工具说明优化；白名单权限；配置分节迁移；真实 rerank。
 
