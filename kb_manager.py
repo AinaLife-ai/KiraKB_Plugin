@@ -313,7 +313,8 @@ class KnowledgeBase:
                  stopwords_path: str = None, default_stopwords_path: str = None,
                  vlm_client=None, rerank_client=None,
                  enable_rerank: bool = False, chunk_size: int = 500,
-                 chunk_overlap: int = 50, client_resolver: Callable = None):
+                 chunk_overlap: int = 50, client_resolver: Callable = None,
+                 history_keep: int = 5):
         self.kb_id = kb_id
         self.kb_dir = kb_dir
         self.raw_docs_dir = kb_dir / "raw_docs"
@@ -330,6 +331,7 @@ class KnowledgeBase:
         self.enable_rerank = enable_rerank
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
+        self.history_keep = max(1, min(200, int(history_keep or 5)))
 
         self.info = self._load_info()
         self._current_version_id = self._load_current_version()
@@ -463,11 +465,21 @@ class KnowledgeBase:
 
     def get_document_settings(self, doc_id: str) -> Dict[str, Any]:
         meta = self.read_doc_meta(doc_id)
+        hist = meta.get("history") if isinstance(meta.get("history"), dict) else {}
         return {
             "permissions": perms.normalise_permissions(meta.get("permissions"), for_entry=True),
             "recall": self._normalise_entry_recall(meta.get("recall")),
             "updated_at": float(meta.get("updated_at") or meta.get("created_at") or 0.0),
             "content_hash": meta.get("content_hash") or "",
+            "history": {
+                "count": int(hist.get("count", 0) or 0),
+                "latest_actor": hist.get("latest_actor") or "",
+                "latest_rev": hist.get("latest_rev") or "",
+                "original_rev": hist.get("original_rev") or "",
+                "edited": bool(hist.get("original_hash") and hist.get("latest_hash")
+                               and hist.get("original_hash") != hist.get("latest_hash")),
+                "ai_edited": bool(hist.get("ai_edited")),
+            },
         }
 
     @staticmethod
@@ -479,6 +491,185 @@ class KnowledgeBase:
             enabled = None
         keywords = [str(k).strip() for k in (raw.get("keywords") or []) if str(k).strip()]
         return {"enabled": enabled, "keywords": keywords}
+
+    # ------------------------------------------------------------------
+    # Revision history (original is permanent, recent states are pruned)
+    # ------------------------------------------------------------------
+    def get_history_keep(self) -> int:
+        value = self.info.get("history_keep")
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            value = 0
+        if value <= 0:
+            value = self.history_keep
+        return max(1, min(200, value))
+
+    async def set_history_keep(self, value: Any) -> int:
+        async with self._meta_lock:
+            if value is None or value == "":
+                self.info.pop("history_keep", None)
+            else:
+                try:
+                    number = int(value)
+                except (TypeError, ValueError):
+                    raise ValueError("history_keep must be an integer")
+                self.info["history_keep"] = max(1, min(200, number))
+            self._save_info()
+            return self.get_history_keep()
+
+    def _history_dir(self, doc_id: str) -> Path:
+        return self.raw_docs_dir / f"{doc_id}.history"
+
+    def _history_files(self, doc_id: str) -> List[Path]:
+        folder = self._history_dir(doc_id)
+        if not folder.exists():
+            return []
+        return sorted(folder.glob("rev_*.json"), key=lambda p: p.name)
+
+    @staticmethod
+    def _rev_id(seq: int) -> str:
+        return f"rev_{seq:06d}"
+
+    def _history_summary(self, doc_id: str) -> Dict[str, Any]:
+        meta = self.read_doc_meta(doc_id)
+        hist = meta.get("history")
+        if not isinstance(hist, dict):
+            return {}
+        return hist
+
+    def _record_revision(self, doc_id: str, content: str, actor: str,
+                         source: str, original: bool = False,
+                         restored_from: Optional[str] = None) -> Dict[str, Any]:
+        meta = self.read_doc_meta(doc_id)
+        hist = meta.get("history") if isinstance(meta.get("history"), dict) else {}
+        seq = int(hist.get("seq", 0) or 0) + 1
+        rev_id = self._rev_id(seq)
+        digest = content_hash(content)
+        folder = self._history_dir(doc_id)
+        folder.mkdir(parents=True, exist_ok=True)
+        record = {
+            "rev_id": rev_id,
+            "seq": seq,
+            "created_at": now_ts(),
+            "content": content,
+            "content_hash": digest,
+            "size": len(content or ""),
+            "actor": actor or "system",
+            "source": source or "edit",
+            "restored_from": restored_from,
+        }
+        (folder / f"{rev_id}.json").write_text(
+            json.dumps(record, ensure_ascii=False), encoding="utf-8"
+        )
+        original_rev = hist.get("original_rev")
+        if original or not original_rev:
+            original_rev = rev_id
+        hist = {
+            "count": len(self._history_files(doc_id)),
+            "seq": seq,
+            "original_rev": original_rev,
+            "latest_rev": rev_id,
+            "latest_actor": record["actor"],
+            "original_hash": hist.get("original_hash") or digest,
+            "latest_hash": digest,
+            "ai_edited": bool(hist.get("ai_edited")) or (actor == "ai"),
+            "updated_at": record["created_at"],
+        }
+        meta["history"] = hist
+        self.write_doc_meta(doc_id, meta)
+        return hist
+
+    def _archive_original(self, doc_id: str) -> None:
+        """Ensure a legacy document gets an original revision before its first edit."""
+        if self._history_files(doc_id):
+            return
+        path = self._doc_file(doc_id)
+        if not path.exists():
+            return
+        try:
+            old = path.read_text(encoding="utf-8")
+        except Exception:
+            return
+        self._record_revision(doc_id, old, actor="system", source="create", original=True)
+        # Backfill the pre-edit hash/time so the summary reflects the archived state.
+        meta = self.read_doc_meta(doc_id)
+        hist = meta.get("history") if isinstance(meta.get("history"), dict) else {}
+        hist["original_hash"] = content_hash(old)
+        hist["latest_hash"] = content_hash(old)
+        hist["latest_actor"] = "system"
+        meta["history"] = hist
+        self.write_doc_meta(doc_id, meta)
+
+    def _prune_history(self, doc_id: str) -> None:
+        files = self._history_files(doc_id)
+        keep = self.get_history_keep()
+        if len(files) <= keep + 1:
+            return
+        hist = self._history_summary(doc_id)
+        original_rev = hist.get("original_rev")
+        latest_rev = hist.get("latest_rev")
+        keep_names = {p.name for p in files[-keep:]}
+        if original_rev:
+            keep_names.add(f"{original_rev}.json")
+        if latest_rev:
+            keep_names.add(f"{latest_rev}.json")
+        for path in files:
+            if path.name not in keep_names:
+                try:
+                    path.unlink()
+                except Exception:
+                    pass
+        meta = self.read_doc_meta(doc_id)
+        if isinstance(meta.get("history"), dict):
+            meta["history"]["count"] = len(self._history_files(doc_id))
+            self.write_doc_meta(doc_id, meta)
+
+    def list_history(self, doc_id: str) -> List[Dict[str, Any]]:
+        hist = self._history_summary(doc_id)
+        rows = []
+        for path in reversed(self._history_files(doc_id)):
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            rev_id = data.get("rev_id") or path.stem
+            rows.append({
+                "rev_id": rev_id,
+                "seq": data.get("seq", 0),
+                "created_at": data.get("created_at", 0),
+                "size": data.get("size", len(data.get("content") or "")),
+                "actor": data.get("actor", "system"),
+                "source": data.get("source", "edit"),
+                "restored_from": data.get("restored_from"),
+                "content_hash": data.get("content_hash"),
+                "is_original": rev_id == hist.get("original_rev"),
+                "is_current": rev_id == hist.get("latest_rev"),
+            })
+        return rows
+
+    def get_revision(self, doc_id: str, rev_id: str) -> Optional[Dict[str, Any]]:
+        if not re.match(r"^rev_\d{6}$", str(rev_id or "")):
+            return None
+        path = self._history_dir(doc_id) / f"{rev_id}.json"
+        if not path.exists():
+            return None
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else None
+        except Exception:
+            return None
+
+    async def restore_revision(self, doc_id: str, rev_id: str,
+                               actor: str = "human") -> Optional[str]:
+        record = self.get_revision(doc_id, rev_id)
+        if record is None:
+            return None
+        content = record.get("content") or ""
+        ok = await self.update_raw_document(
+            doc_id, content, actor=actor, source="restore", restored_from=rev_id
+        )
+        return content if ok else None
 
     async def update_document_settings(self, doc_id: str, patch: Dict[str, Any]) -> Dict[str, Any]:
         async with self._meta_lock:
@@ -539,6 +730,22 @@ class KnowledgeBase:
                     meta.get("permissions"), for_entry=True
                 ),
                 "recall": self._normalise_entry_recall(meta.get("recall")),
+                "history": {
+                    "count": int((meta.get("history") or {}).get("count", 0) or 0)
+                    if isinstance(meta.get("history"), dict) else 0,
+                    "latest_actor": (meta.get("history") or {}).get("latest_actor", "")
+                    if isinstance(meta.get("history"), dict) else "",
+                    "edited": bool(
+                        isinstance(meta.get("history"), dict)
+                        and meta["history"].get("original_hash")
+                        and meta["history"].get("latest_hash")
+                        and meta["history"]["original_hash"] != meta["history"]["latest_hash"]
+                    ),
+                    "ai_edited": bool(
+                        isinstance(meta.get("history"), dict)
+                        and meta["history"].get("ai_edited")
+                    ),
+                },
             })
         docs.sort(key=lambda d: (-(d.get("updated_at") or 0), d.get("name") or ""))
         return docs
@@ -574,7 +781,8 @@ class KnowledgeBase:
             return None
         return doc_path.read_text(encoding="utf-8")
 
-    async def add_raw_document(self, content: str, original_name: str = None) -> str:
+    async def add_raw_document(self, content: str, original_name: str = None,
+                               actor: str = "human") -> str:
         doc_id = str(uuid.uuid4())[:8]
         self._doc_file(doc_id).write_text(content, encoding="utf-8")
         timestamp = now_ts()
@@ -586,13 +794,18 @@ class KnowledgeBase:
             "content_hash": content_hash(content),
         }
         self.write_doc_meta(doc_id, meta)
+        self._record_revision(doc_id, content, actor=actor, source="create", original=True)
         return doc_id
 
     async def update_raw_document(self, doc_id: str, new_content: str,
-                                  original_name: Optional[str] = None) -> bool:
+                                  original_name: Optional[str] = None,
+                                  actor: str = "human", source: str = "edit",
+                                  restored_from: Optional[str] = None) -> bool:
         doc_path = self._doc_file(doc_id)
         if not doc_path.exists():
             return False
+        # Legacy documents get an archived original before their first edit.
+        self._archive_original(doc_id)
         doc_path.write_text(new_content, encoding="utf-8")
         meta = self.read_doc_meta(doc_id)
         meta["updated_at"] = now_ts()
@@ -600,6 +813,11 @@ class KnowledgeBase:
         if original_name:
             meta["original_name"] = original_name
         self.write_doc_meta(doc_id, meta)
+        self._record_revision(
+            doc_id, new_content, actor=actor, source=source,
+            restored_from=restored_from,
+        )
+        self._prune_history(doc_id)
         return True
 
     async def delete_raw_document(self, doc_id: str, soft: bool = True) -> bool:
@@ -615,6 +833,10 @@ class KnowledgeBase:
             doc_path.unlink()
             try:
                 self._meta_path(doc_id).unlink()
+            except Exception:
+                pass
+            try:
+                await asyncio.to_thread(shutil.rmtree, self._history_dir(doc_id), True)
             except Exception:
                 pass
             self._meta_cache.pop(doc_id, None)
@@ -938,7 +1160,7 @@ class KnowledgeBaseManager:
                  vlm_client=None, rerank_client=None, enable_rerank: bool = False,
                  chunk_size: int = 500, chunk_overlap: int = 50,
                  client_resolver: Callable = None, model_lister: Callable = None,
-                 enable_hybrid: bool = False):
+                 enable_hybrid: bool = False, history_keep: int = 5):
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self.embedding_client_getter = embedding_client_getter
@@ -954,6 +1176,7 @@ class KnowledgeBaseManager:
         # Single source of truth for "hybrid on?" - the sidebar, the standalone
         # server and the bot tools all read this value.
         self.enable_hybrid = bool(enable_hybrid)
+        self.history_keep = max(1, min(200, int(history_keep or 5)))
         self.kbs: Dict[str, KnowledgeBase] = {}
 
     async def load_existing_kbs(self):
@@ -977,6 +1200,7 @@ class KnowledgeBaseManager:
             self.vlm_client, self.rerank_client, self.enable_rerank,
             self.chunk_size, self.chunk_overlap,
             client_resolver=self.client_resolver,
+            history_keep=self.history_keep,
         )
 
     async def create_kb(self, kb_id: str) -> KnowledgeBase:

@@ -1,19 +1,59 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="dark">
+<html lang="zh-CN" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>try{if(localStorage.getItem("kirakb-theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 <title>KiraKB — Knowledge Archive</title>
 <style>
 :root{
-  --ink:#07080a; --ink-2:#0b0d11; --ink-3:#11141a; --paper:#f3f0e8;
-  --muted:#8c919b; --faint:#5b606a;
-  --line:rgba(243,240,232,.10); --line-2:rgba(243,240,232,.18);
-  --acid:#d9ff43; --violet:#7c5cff; --cyan:#5eead4; --danger:#ff5c5c;
+  /* default: day mode, lilac white (the pre-1.2 palette family) */
+  --ink:#f7f4ff; --ink-2:#ffffff; --ink-3:#efe9ff; --paper:#241c3d;
+  --muted:#6f6889; --faint:#9a93b0;
+  --line:rgba(84,62,150,.12); --line-2:rgba(84,62,150,.22);
+  --acid:#7c5cff; --violet:#a78bfa; --cyan:#0f9b8e; --danger:#e11d48;
+  --ok:#0f9b8e; --warn:#b26a00; --info:#6d4aff; --bad:#d61f4a;
+  --card-grad:linear-gradient(180deg,#ffffff,#fbf9ff);
+  --hover:rgba(124,92,255,.07);
+  --rail-bg:rgba(255,255,255,.80);
+  --top-bg:rgba(249,246,255,.86);
+  --sheet-bg:linear-gradient(180deg,#ffffff,#fbf9ff);
+  --toast-bg:#ffffff;
+  --backdrop:rgba(45,32,80,.38);
+  --track:rgba(84,62,150,.16);
+  --progress-bg:rgba(84,62,150,.10);
+  --shadow:0 24px 70px rgba(80,50,150,.16);
+  --glow:radial-gradient(circle,rgba(124,92,255,.12),rgba(240,171,252,.08) 45%,transparent 70%);
+  --glow-opacity:.8; --grain-opacity:.035; --grain-blend:multiply; --aurora-opacity:.22;
+  --accent-soft:rgba(124,92,255,.07);
+  --accent-line:rgba(124,92,255,.32);
+  --accent-line-strong:rgba(124,92,255,.48);
   --radius:22px; --radius-sm:14px;
   --display:"Instrument Serif","Bodoni MT","Times New Roman","Songti SC","Noto Serif SC",serif;
   --sans:"Inter","SF Pro Text","Segoe UI","PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
   --mono:"SF Mono","JetBrains Mono","Cascadia Code",ui-monospace,Menlo,monospace;
+}
+html[data-theme="dark"]{
+  --ink:#07080a; --ink-2:#0b0d11; --ink-3:#11141a; --paper:#f3f0e8;
+  --muted:#8c919b; --faint:#5b606a;
+  --line:rgba(243,240,232,.10); --line-2:rgba(243,240,232,.18);
+  --acid:#d9ff43; --violet:#7c5cff; --cyan:#5eead4; --danger:#ff5c5c;
+  --ok:#5eead4; --warn:#ffb35c; --info:#b3a2ff; --bad:#ff5c5c;
+  --card-grad:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.008));
+  --hover:rgba(243,240,232,.05);
+  --rail-bg:rgba(7,8,10,.72);
+  --top-bg:rgba(7,8,10,.78);
+  --sheet-bg:linear-gradient(180deg,#0e1116,#0a0c10);
+  --toast-bg:#0f1217;
+  --backdrop:rgba(3,4,6,.66);
+  --track:rgba(243,240,232,.14);
+  --progress-bg:rgba(243,240,232,.08);
+  --shadow:0 40px 120px rgba(0,0,0,.6);
+  --glow:radial-gradient(circle,rgba(217,255,67,.08),rgba(124,92,255,.05) 40%,transparent 68%);
+  --glow-opacity:.55; --grain-opacity:.05; --grain-blend:overlay; --aurora-opacity:.38;
+  --accent-soft:rgba(217,255,67,.05);
+  --accent-line:rgba(217,255,67,.30);
+  --accent-line-strong:rgba(217,255,67,.45);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -30,18 +70,18 @@ img{max-width:100%}
 
 /* ---------- atmosphere ---------- */
 .aurora{position:fixed;inset:0;z-index:-3;pointer-events:none;overflow:hidden}
-.aurora i{position:absolute;display:block;border-radius:50%;filter:blur(90px);opacity:.38}
+.aurora i{position:absolute;display:block;border-radius:50%;filter:blur(90px);opacity:var(--aurora-opacity)}
 .aurora i:nth-child(1){width:52vw;height:52vw;left:-12vw;top:-18vw;background:radial-gradient(circle,#2a2f7a,transparent 65%)}
-.aurora i:nth-child(2){width:44vw;height:44vw;right:-10vw;top:6vh;background:radial-gradient(circle,#0f4d4a,transparent 68%);opacity:.28}
-.aurora i:nth-child(3){width:38vw;height:38vw;left:28vw;bottom:-18vw;background:radial-gradient(circle,#4a1f5e,transparent 66%);opacity:.24}
+.aurora i:nth-child(2){width:44vw;height:44vw;right:-10vw;top:6vh;background:radial-gradient(circle,#0f4d4a,transparent 68%);opacity:calc(var(--aurora-opacity) * .74)}
+.aurora i:nth-child(3){width:38vw;height:38vw;left:28vw;bottom:-18vw;background:radial-gradient(circle,#4a1f5e,transparent 66%);opacity:calc(var(--aurora-opacity) * .63)}
 .grain{
-  position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:var(--grain-opacity);mix-blend-mode:var(--grain-blend);
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/></svg>");
 }
 .cursor-glow{
   position:fixed;left:0;top:0;width:520px;height:520px;z-index:-1;pointer-events:none;
-  transform:translate3d(-50%,-50%,0);opacity:.55;
-  background:radial-gradient(circle,rgba(217,255,67,.08),rgba(124,92,255,.05) 40%,transparent 68%);
+  transform:translate3d(-50%,-50%,0);opacity:var(--glow-opacity);
+  background:var(--glow);
 }
 .scroll-progress{position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,var(--acid),var(--cyan));z-index:60;transition:width .12s linear}
 
@@ -51,7 +91,7 @@ img{max-width:100%}
   position:fixed;left:0;top:0;bottom:0;width:88px;z-index:40;
   display:flex;flex-direction:column;align-items:center;gap:8px;
   padding:22px 0;border-right:1px solid var(--line);
-  background:rgba(7,8,10,.72);backdrop-filter:blur(18px);
+  background:var(--rail-bg);backdrop-filter:blur(18px);
 }
 .brand{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:26px;user-select:none}
 .brand .mark{font-family:var(--display);font-size:34px;line-height:.9;letter-spacing:-.04em}
@@ -61,7 +101,7 @@ img{max-width:100%}
   position:relative;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;
   color:var(--muted);transition:color .2s,background .2s,transform .2s;
 }
-.nav button:hover{color:var(--paper);background:rgba(243,240,232,.06);transform:translateY(-1px)}
+.nav button:hover{color:var(--paper);background:var(--hover);transform:translateY(-1px)}
 .nav button.is-active{color:var(--ink);background:var(--acid)}
 .nav button.is-active::after{
   content:"";position:absolute;left:-21px;width:3px;height:18px;border-radius:3px;background:var(--acid);
@@ -73,13 +113,15 @@ img{max-width:100%}
   white-space:nowrap;opacity:0;pointer-events:none;transition:.18s;color:var(--paper);
 }
 .nav button:hover span.tip{opacity:1;transform:translateY(-50%) translateX(0)}
-.rail-foot{margin-top:auto;font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--faint);writing-mode:vertical-rl}
+.theme-toggle{margin-top:auto;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:var(--muted);border:1px solid var(--line);transition:.2s;background:var(--ink-2)}
+.theme-toggle:hover{color:var(--paper);border-color:var(--line-2);transform:translateY(-1px)}
+.rail-foot{margin-top:14px;font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--faint);writing-mode:vertical-rl}
 
 .main{margin-left:88px;width:calc(100% - 88px);max-width:1560px;padding:0 44px 90px}
 .topbar{
   position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:18px;
   height:84px;border-bottom:1px solid var(--line);
-  background:rgba(7,8,10,.78);backdrop-filter:blur(18px);
+  background:var(--top-bg);backdrop-filter:blur(18px);
 }
 .topbar .left{display:flex;align-items:center;gap:14px;min-width:0}
 .kb-select-wrap{position:relative}
@@ -107,13 +149,13 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
 .btn.danger:hover{background:var(--danger);border-color:var(--danger);color:var(--ink)}
 #confirmOk.danger{background:var(--danger);border-color:var(--danger);color:var(--ink)}
 .btn.ghost{border-color:transparent;color:var(--muted)}
-.btn.ghost:hover{color:var(--paper);background:rgba(243,240,232,.06)}
+.btn.ghost:hover{color:var(--paper);background:var(--hover)}
 .btn[disabled]{opacity:.45;pointer-events:none}
 .icon-btn{
   width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
   border:1px solid transparent;color:var(--muted);transition:.18s;
 }
-.icon-btn:hover{color:var(--paper);background:rgba(243,240,232,.07);border-color:var(--line)}
+.icon-btn:hover{color:var(--paper);background:var(--hover);border-color:var(--line)}
 .icon-btn.danger:hover{color:var(--danger)}
 .icon-btn.acid:hover{color:var(--acid)}
 
@@ -134,15 +176,15 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
 .hero-meta b{color:var(--paper);font-weight:500}
 
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:34px}
-.stat{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.008));padding:26px 24px;min-height:150px;display:flex;flex-direction:column;justify-content:space-between;transition:background .3s}
-.stat:hover{background:rgba(255,255,255,.05)}
+.stat{background:var(--card-grad);padding:26px 24px;min-height:150px;display:flex;flex-direction:column;justify-content:space-between;transition:background .3s}
+.stat:hover{background:var(--hover)}
 .stat .num{font-family:var(--display);font-size:clamp(42px,5vw,72px);line-height:.9;letter-spacing:-.03em}
 .stat .num small{font-size:18px;color:var(--muted);font-family:var(--mono);letter-spacing:0;margin-left:6px}
 .stat .label{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 .stat .sub{font-size:12px;color:var(--faint);margin-top:8px}
 
 .grid-2{display:grid;grid-template-columns:1.45fr 1fr;gap:22px;align-items:start}
-.panel{border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.006));overflow:hidden}
+.panel{border:1px solid var(--line);border-radius:var(--radius);background:var(--card-grad);overflow:hidden}
 .panel-head{display:flex;align-items:center;gap:12px;padding:20px 24px;border-bottom:1px solid var(--line)}
 .panel-head h2{font-size:14px;font-weight:500;letter-spacing:.02em}
 .panel-head .count{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.12em}
@@ -162,7 +204,7 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
   margin:18px 24px 6px;border:1px dashed var(--line-2);border-radius:16px;padding:20px 22px;
   display:flex;align-items:center;gap:14px;color:var(--muted);transition:.2s;cursor:pointer;
 }
-.dropzone:hover,.dropzone.is-drag{border-color:var(--acid);background:rgba(217,255,67,.04);color:var(--paper)}
+.dropzone:hover,.dropzone.is-drag{border-color:var(--acid);background:var(--accent-soft);color:var(--paper)}
 .dropzone .dz-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;border:1px solid var(--line);color:var(--acid)}
 .dropzone b{display:block;color:var(--paper);font-weight:500;font-size:13px}
 .dropzone span{font-size:12px}
@@ -172,17 +214,17 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
   padding:14px 14px;border-radius:14px;transition:background .18s;
 }
 .doc-row + .doc-row{border-top:1px solid rgba(243,240,232,.06)}
-.doc-row:hover{background:rgba(243,240,232,.035)}
+.doc-row:hover{background:var(--hover)}
 .doc-name{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .doc-meta{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.06em;margin-top:3px}
 .badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted)}
 .badge .dot{width:5px;height:5px;border-radius:50%;background:currentColor}
-.badge.acid{color:var(--acid);border-color:rgba(217,255,67,.35)}
-.badge.violet{color:#b3a2ff;border-color:rgba(124,92,255,.4)}
-.badge.cyan{color:var(--cyan);border-color:rgba(94,234,212,.35)}
-.badge.warn{color:#ffb35c;border-color:rgba(255,179,92,.35)}
-.badge.danger{color:var(--danger);border-color:rgba(255,92,92,.35)}
+.badge.acid{color:var(--acid);border-color:var(--accent-line)}
+.badge.violet{color:var(--info);border-color:rgba(124,92,255,.4)}
+.badge.cyan{color:var(--ok);border-color:rgba(94,234,212,.35)}
+.badge.warn{color:var(--warn);border-color:rgba(255,179,92,.35)}
+.badge.danger{color:var(--bad);border-color:rgba(255,92,92,.35)}
 .row-actions{display:flex;gap:2px;opacity:.35;transition:opacity .18s}
 .doc-row:hover .row-actions,.doc-row:focus-within .row-actions{opacity:1}
 .check{display:grid;place-items:center}
@@ -191,7 +233,7 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
 .check input:checked::after{content:"";display:block;width:4px;height:8px;margin:1px auto 0;border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(42deg)}
 .bulkbar{
   display:none;align-items:center;gap:12px;padding:12px 20px;margin:8px 10px 2px;
-  border:1px solid rgba(217,255,67,.3);border-radius:14px;background:rgba(217,255,67,.05);
+  border:1px solid var(--accent-line);border-radius:14px;background:var(--accent-soft);
   font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
 }
 .bulkbar.is-on{display:flex}
@@ -201,10 +243,10 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
 .version-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:18px}
 .version-card{
   border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px;
-  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.006));transition:.22s;position:relative;overflow:hidden;
+  background:var(--card-grad);transition:.22s;position:relative;overflow:hidden;
 }
 .version-card:hover{border-color:var(--line-2);transform:translateY(-2px)}
-.version-card.is-active{border-color:rgba(217,255,67,.45)}
+.version-card.is-active{border-color:var(--accent-line-strong)}
 .version-card.is-active::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:var(--acid)}
 .version-card h3{font-family:var(--display);font-size:26px;font-weight:400;letter-spacing:-.02em;line-height:1.1}
 .v-meta{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.08em;display:flex;flex-direction:column;gap:4px}
@@ -216,11 +258,11 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
 .search-big input{flex:1;background:transparent;border:none;font-family:var(--display);font-size:clamp(30px,4vw,54px);letter-spacing:-.03em;color:var(--paper)}
 .search-big input::placeholder{color:var(--faint)}
 .search-big input:focus{outline:none}
-.result{padding:18px 20px;border:1px solid var(--line);border-radius:16px;margin-bottom:12px;background:rgba(255,255,255,.02)}
+.result{padding:18px 20px;border:1px solid var(--line);border-radius:16px;margin-bottom:12px;background:var(--card-grad)}
 .result-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
 .result-head .name{font-weight:500}
 .result-head .score{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--acid)}
-.score-bar{height:2px;background:rgba(243,240,232,.08);border-radius:2px;margin-bottom:12px;overflow:hidden}
+.score-bar{height:2px;background:var(--progress-bg);border-radius:2px;margin-bottom:12px;overflow:hidden}
 .score-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acid),var(--cyan))}
 .result p{white-space:pre-wrap;color:var(--muted);font-size:13px;line-height:1.65;max-height:260px;overflow:auto}
 
@@ -246,44 +288,44 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
 .form-grid .wide{grid-column:1/-1}
 .switch{position:relative;display:inline-flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
 .switch input{position:absolute;opacity:0;width:0;height:0}
-.switch .track{width:46px;height:26px;border-radius:999px;background:rgba(243,240,232,.14);border:1px solid var(--line-2);position:relative;transition:.22s}
+.switch .track{width:46px;height:26px;border-radius:999px;background:var(--track);border:1px solid var(--line-2);position:relative;transition:.22s}
 .switch .track::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--paper);transition:.22s}
 .switch input:checked + .track{background:var(--acid);border-color:var(--acid)}
 .switch input:checked + .track::after{transform:translateX(20px);background:var(--ink)}
 .switch .txt{font-size:12px;color:var(--muted)}
 .switch input:checked ~ .txt{color:var(--paper)}
-.settings-row{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:16px 24px;border-top:1px solid rgba(243,240,232,.06)}
+.settings-row{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:16px 24px;border-top:1px solid var(--line)}
 .settings-row .info b{display:block;font-weight:500;font-size:13px}
 .settings-row .info span{font-size:11.5px;color:var(--faint)}
 .entry-list{padding:6px 10px 10px}
 .entry-row{display:grid;grid-template-columns:minmax(0,1fr) 150px 200px;gap:12px;align-items:center;padding:12px 14px;border-radius:12px}
-.entry-row:hover{background:rgba(243,240,232,.03)}
-.entry-row + .entry-row{border-top:1px solid rgba(243,240,232,.05)}
+.entry-row:hover{background:var(--hover)}
+.entry-row + .entry-row{border-top:1px solid var(--line)}
 .entry-row .name{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .entry-row .kw{display:flex;gap:8px}
 .entry-row .kw input{flex:1;background:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:11px}
 
 /* tasks */
-.task{padding:16px 20px;border-bottom:1px solid rgba(243,240,232,.06)}
+.task{padding:16px 20px;border-bottom:1px solid var(--line)}
 .task-head{display:flex;align-items:center;gap:10px}
 .task-head .name{font-size:13px;font-weight:500}
 .task-head .st{margin-left:auto;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line-2)}
 .task-head .st.running{color:var(--acid);border-color:rgba(217,255,67,.35)}
-.task-head .st.completed{color:var(--cyan);border-color:rgba(94,234,212,.35)}
+.task-head .st.completed{color:var(--ok);border-color:rgba(94,234,212,.35)}
 .task-head .st.failed{color:var(--danger);border-color:rgba(255,92,92,.35)}
-.progress{height:3px;background:rgba(243,240,232,.08);border-radius:3px;margin-top:10px;overflow:hidden}
+.progress{height:3px;background:var(--progress-bg);border-radius:3px;margin-top:10px;overflow:hidden}
 .progress i{display:block;height:100%;background:linear-gradient(90deg,var(--acid),var(--cyan));transition:width .4s ease}
 .task .msg{font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:8px}
 
 /* modal */
 .modal{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:24px;visibility:hidden;opacity:0;transition:opacity .22s,visibility .22s}
 .modal.is-open{visibility:visible;opacity:1}
-.modal .backdrop{position:absolute;inset:0;background:rgba(3,4,6,.66);backdrop-filter:blur(12px)}
+.modal .backdrop{position:absolute;inset:0;background:var(--backdrop);backdrop-filter:blur(12px)}
 .modal .sheet{
   position:relative;width:min(760px,100%);max-height:86vh;overflow:auto;
-  background:linear-gradient(180deg,#0e1116,#0a0c10);border:1px solid var(--line-2);border-radius:26px;
+  background:var(--sheet-bg);border:1px solid var(--line-2);border-radius:26px;
   padding:28px;transform:translateY(18px) scale(.985);transition:transform .28s cubic-bezier(.2,.7,.2,1);
-  box-shadow:0 40px 120px rgba(0,0,0,.6);
+  box-shadow:var(--shadow);
 }
 .modal.is-open .sheet{transform:none}
 .modal.small .sheet{width:min(480px,100%)}
@@ -303,7 +345,7 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
 .toasts{position:fixed;right:22px;bottom:22px;z-index:120;display:flex;flex-direction:column;gap:8px;max-width:min(420px,calc(100vw - 44px))}
 .toast{
   display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:12px;
-  background:#0f1217;border:1px solid var(--line-2);box-shadow:0 18px 50px rgba(0,0,0,.5);
+  background:var(--toast-bg);border:1px solid var(--line-2);box-shadow:var(--shadow);
   font-size:12.5px;animation:toastIn .28s cubic-bezier(.2,.7,.2,1) both;
 }
 .toast.ok{border-color:rgba(217,255,67,.35)}
@@ -381,10 +423,14 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
       <button type="button" data-action="nav" data-view="recall" aria-label="Recall">
         <span data-icon="radar" data-size="19"></span><span class="tip">Recall</span>
       </button>
+      <button type="button" data-action="nav" data-view="settings" aria-label="Settings">
+        <span data-icon="settings-2" data-size="19"></span><span class="tip">Settings</span>
+      </button>
       <button type="button" data-action="nav" data-view="tasks" aria-label="Tasks">
         <span data-icon="activity" data-size="19"></span><span class="tip">Tasks</span>
       </button>
     </nav>
+    <button type="button" class="theme-toggle" id="themeToggle" data-action="toggle-theme" aria-label="Toggle light and dark theme" title="Toggle theme"></button>
     <div class="rail-foot">KIRAKB / 1.2</div>
   </aside>
 
@@ -645,6 +691,100 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
       </div>
     </section>
 
+    <!-- SETTINGS -->
+    <section class="view" id="view-settings">
+      <div class="hero" style="padding-bottom:26px">
+        <div class="eyebrow">Archive / runtime settings</div>
+        <h1 style="font-size:clamp(42px,6vw,84px)">Settings</h1>
+        <p>Everything on this page applies immediately and is written back to the plugin config. Storage paths and the standalone server need a restart.</p>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px">
+        <div class="panel-head">
+          <span data-icon="search" data-size="16"></span>
+          <h2>Search and entries</h2>
+          <span class="count">hot applied</span>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Default top K</label><input id="setTopK" type="number" min="1" max="20"></div>
+          <div class="field"><label>Chunk size</label><input id="setChunkSize" type="number" min="100" max="8000"></div>
+          <div class="field"><label>Chunk overlap</label><input id="setChunkOverlap" type="number" min="0" max="7999"></div>
+          <div class="field"><label>Entry title max chars</label><input id="setTitleMax" type="number" min="4" max="60"></div>
+          <div class="field"><label>History keep (intermediate)</label><input id="setHistoryKeep" type="number" min="1" max="200"></div>
+          <div class="field"><label>Hybrid search</label>
+            <label class="switch"><input type="checkbox" id="setHybrid"><span class="track"></span><span class="txt">BM25 + vector</span></label>
+          </div>
+          <div class="field"><label>Read-only entry tools</label>
+            <label class="switch"><input type="checkbox" id="setExtraTools"><span class="track"></span><span class="txt">list / get</span></label>
+          </div>
+          <div class="field"><label>Auto sync other versions</label>
+            <label class="switch"><input type="checkbox" id="setAutoSync"><span class="track"></span><span class="txt">After edit</span></label>
+          </div>
+          <div class="field"><label>Stopwords / rerank</label><span class="faint" style="font-size:11px;padding-top:8px">Requires plugin reload</span></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px">
+        <div class="panel-head">
+          <span data-icon="radar" data-size="16"></span>
+          <h2>Passive recall</h2>
+          <span class="count">master switch + tuning</span>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Master switch</label>
+            <label class="switch"><input type="checkbox" id="setRecallEnabled"><span class="track"></span><span class="txt">Enabled</span></label>
+          </div>
+          <div class="field"><label>Mode</label>
+            <select class="select" id="setRecallMode">
+              <option value="hybrid">hybrid</option>
+              <option value="mention">mention</option>
+              <option value="semantic">semantic</option>
+            </select>
+          </div>
+          <div class="field"><label>Top K</label><input id="setRecallTopK" type="number" min="1" max="10"></div>
+          <div class="field"><label>Min score (cosine)</label><input id="setRecallMin" type="number" min="0" max="1" step="0.01"></div>
+          <div class="field"><label>Strong score (no lexical hit)</label><input id="setRecallStrong" type="number" min="0" max="1" step="0.01"></div>
+          <div class="field"><label>Max chars</label><input id="setRecallChars" type="number" min="100" max="8000"></div>
+          <div class="field"><label>Timeout (ms)</label><input id="setRecallTimeout" type="number" min="200" max="10000"></div>
+          <div class="field"><label>Dedupe turns</label><input id="setRecallDedupe" type="number" min="0" max="20"></div>
+          <div class="field"><label>Max KBs per turn</label><input id="setRecallMaxKbs" type="number" min="1" max="20"></div>
+          <div class="field"><label>Min query chars</label><input id="setRecallMinQuery" type="number" min="1" max="32"></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px">
+        <div class="panel-head">
+          <span data-icon="shield-check" data-size="16"></span>
+          <h2>Default permissions</h2>
+          <span class="count">applies to knowledge bases without explicit policy</span>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Add</label><select class="select" id="setAddPolicy"></select></div>
+          <div class="field"><label>Edit</label><select class="select" id="setEditPolicy"></select></div>
+          <div class="field"><label>Delete</label><select class="select" id="setDeletePolicy"></select></div>
+          <div class="field wide"><label>Global allow list (one user id per line)</label><textarea id="setOwnerWhitelist" rows="3"></textarea></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span data-icon="alert-triangle" data-size="16"></span>
+          <h2>Requires restart</h2>
+          <span class="count">read only here</span>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Knowledge base directory</label><input id="setKbDir" type="text" disabled></div>
+          <div class="field"><label>Standalone host</label><input id="setWebHost" type="text" disabled></div>
+          <div class="field"><label>Standalone port</label><input id="setWebPort" type="number" disabled></div>
+        </div>
+        <div class="panel-foot">
+          <button type="button" class="btn solid" data-action="save-settings">
+            <span data-icon="save" data-size="14"></span><span>Apply settings</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
     <!-- TASKS -->
     <section class="view" id="view-tasks">
       <div class="hero" style="padding-bottom:26px">
@@ -691,6 +831,7 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
     <div class="form-grid">
       <div class="field wide"><label>Display name</label><input id="kbInfoName" type="text"></div>
       <div class="field wide"><label>Description</label><textarea id="kbInfoDesc" rows="4"></textarea></div>
+      <div class="field"><label>History keep (intermediate revisions)</label><input id="kbInfoHistoryKeep" type="number" min="1" max="200"></div>
     </div>
     <div class="modal-foot">
       <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalKbInfo">Cancel</button>
@@ -772,6 +913,29 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
   </div>
 </div>
 
+<div class="modal" id="modalHistory" aria-hidden="true">
+  <div class="backdrop" data-action="close-modal" data-modal="modalHistory"></div>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div><h3 id="historyTitle">History</h3><p id="historyMeta"></p></div>
+      <button type="button" class="icon-btn" data-action="close-modal" data-modal="modalHistory"><span data-icon="x" data-size="16"></span></button>
+    </div>
+    <div id="historyPanel">
+      <div id="historyList"></div>
+    </div>
+    <div id="historyViewer" class="hidden">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <button type="button" class="btn ghost" data-action="history-back"><span data-icon="arrow-left" data-size="13"></span><span>Back</span></button>
+        <span id="historyViewMeta" class="mono faint"></span>
+      </div>
+      <pre id="historyContent" class="doc-text" style="white-space:pre-wrap;max-height:48vh;overflow:auto;resize:none"></pre>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalHistory">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal small" id="modalBulk" aria-hidden="true">
   <div class="backdrop" data-action="close-modal" data-modal="modalBulk"></div>
   <div class="sheet" role="dialog" aria-modal="true">
@@ -793,6 +957,7 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
 const ICONS = {
   "activity": "<path d=\"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2\" />",
   "alert-triangle": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\" /> <path d=\"M12 9v4\" /> <path d=\"M12 17h.01\" />",
+  "arrow-left": "<path d=\"m12 19-7-7 7-7\" /> <path d=\"M19 12H5\" />",
   "arrow-right": "<path d=\"M5 12h14\" /> <path d=\"m12 5 7 7-7 7\" />",
   "arrow-up-right": "<path d=\"M7 7h10v10\" /> <path d=\"M7 17 17 7\" />",
   "book-open": "<path d=\"M12 5v16\" /> <path d=\"M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z\" />",
@@ -807,7 +972,9 @@ const ICONS = {
   "external-link": "<path d=\"M15 3h6v6\" /> <path d=\"M10 14 21 3\" /> <path d=\"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6\" />",
   "eye-off": "<path d=\"M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49\" /> <path d=\"M14.084 14.158a3 3 0 0 1-4.242-4.242\" /> <path d=\"M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143\" /> <path d=\"m2 2 20 20\" />",
   "eye": "<path d=\"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0\" /> <circle cx=\"12\" cy=\"12\" r=\"3\" />",
+  "git-branch": "<path d=\"M15 6a9 9 0 0 0-9 9V3\" /> <circle cx=\"18\" cy=\"6\" r=\"3\" /> <circle cx=\"6\" cy=\"18\" r=\"3\" />",
   "hard-drive": "<path d=\"M10 16h.01\" /> <path d=\"M2.212 11.577a2 2 0 0 0-.212.896V18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5.527a2 2 0 0 0-.212-.896L18.55 5.11A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\" /> <path d=\"M21.946 12.013H2.054\" /> <path d=\"M6 16h.01\" />",
+  "history": "<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\" /> <path d=\"M3 3v5h5\" /> <path d=\"M12 7v5l4 2\" />",
   "info": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 16v-4\" /> <path d=\"M12 8h.01\" />",
   "key-round": "<path d=\"M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z\" /> <circle cx=\"16.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\" />",
   "layers-3": "<path d=\"M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z\" /> <path d=\"M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12\" /> <path d=\"M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17\" />",
@@ -815,6 +982,7 @@ const ICONS = {
   "list-checks": "<path d=\"M13 5h8\" /> <path d=\"M13 12h8\" /> <path d=\"M13 19h8\" /> <path d=\"m3 17 2 2 4-4\" /> <path d=\"m3 7 2 2 4-4\" />",
   "lock-keyhole": "<circle cx=\"12\" cy=\"16\" r=\"1\" /> <rect x=\"3\" y=\"10\" width=\"18\" height=\"12\" rx=\"2\" /> <path d=\"M7 10V7a5 5 0 0 1 10 0v3\" />",
   "lock": "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\" /> <path d=\"M7 11V7a5 5 0 0 1 10 0v4\" />",
+  "moon": "<path d=\"M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401\" />",
   "more-horizontal": "<circle cx=\"12\" cy=\"12\" r=\"1\" /> <circle cx=\"19\" cy=\"12\" r=\"1\" /> <circle cx=\"5\" cy=\"12\" r=\"1\" />",
   "pencil-line": "<path d=\"M13 21h8\" /> <path d=\"m15 5 4 4\" /> <path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\" />",
   "plus": "<path d=\"M5 12h14\" /> <path d=\"M12 5v14\" />",
@@ -829,6 +997,7 @@ const ICONS = {
   "sliders-horizontal": "<path d=\"M10 5H3\" /> <path d=\"M12 19H3\" /> <path d=\"M14 3v4\" /> <path d=\"M16 17v4\" /> <path d=\"M21 12h-9\" /> <path d=\"M21 19h-5\" /> <path d=\"M21 5h-7\" /> <path d=\"M8 10v4\" /> <path d=\"M8 12H3\" />",
   "sparkles": "<path d=\"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z\" /> <path d=\"M20 2v4\" /> <path d=\"M22 4h-4\" /> <circle cx=\"4\" cy=\"20\" r=\"2\" />",
   "square-stack": "<path d=\"M4 10c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2\" /> <path d=\"M10 16c-1.1 0-2-.9-2-2v-4c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2\" /> <rect width=\"8\" height=\"8\" x=\"14\" y=\"14\" rx=\"2\" />",
+  "sun": "<circle cx=\"12\" cy=\"12\" r=\"4\" /> <path d=\"M12 2v2\" /> <path d=\"M12 20v2\" /> <path d=\"m4.93 4.93 1.41 1.41\" /> <path d=\"m17.66 17.66 1.41 1.41\" /> <path d=\"M2 12h2\" /> <path d=\"M20 12h2\" /> <path d=\"m6.34 17.66-1.41 1.41\" /> <path d=\"m19.07 4.93-1.41 1.41\" />",
   "target": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <circle cx=\"12\" cy=\"12\" r=\"6\" /> <circle cx=\"12\" cy=\"12\" r=\"2\" />",
   "trash-2": "<path d=\"M10 11v6\" /> <path d=\"M14 11v6\" /> <path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6\" /> <path d=\"M3 6h18\" /> <path d=\"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\" />",
   "unlock-keyhole": "<circle cx=\"12\" cy=\"16\" r=\"1\" /> <rect width=\"18\" height=\"12\" x=\"3\" y=\"10\" rx=\"2\" /> <path d=\"M7 10V7a5 5 0 0 1 9.33-2.5\" />",
@@ -864,8 +1033,19 @@ const state = {
   entryDoc: null, bulkMode: null,
   defaults: { add: "open", edit: "open", delete: "whitelist" },
   kbPolicy: { add: "open", edit: "open", delete: "whitelist", allow_users: [] },
-  busy: false, taskTimer: null
+  busy: false, taskTimer: null, settings: null, historyDoc: null, historyList: []
 };
+
+/* ---------- theme (day mode is the default; choice persists) ---------- */
+const THEME_KEY = "kirakb-theme";
+function applyTheme(theme) {
+  const value = theme === "dark" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", value);
+  try { localStorage.setItem(THEME_KEY, value); } catch (e) { /* private mode */ }
+  const btn = document.getElementById("themeToggle");
+  if (btn) btn.innerHTML = icon(value === "dark" ? "sun" : "moon", 18);
+}
+applyTheme((() => { try { return localStorage.getItem(THEME_KEY) || "light"; } catch (e) { return "light"; } })());
 
 /* ---------- bootstrap / api ---------- */
 const isSidebarMode = typeof window.PluginPageContext !== "undefined"
@@ -1186,9 +1366,12 @@ function renderDocs() {
           ${del !== edit ? policyBadge(del) : ""}
           ${d.recall && d.recall.enabled === true ? badge("Recall on", "acid") : ""}
           ${d.recall && d.recall.enabled === false ? badge("Recall off", "") : ""}
+          ${d.history && d.history.count > 1 ? badge("H" + d.history.count, "violet") : ""}
+          ${d.history && d.history.ai_edited ? badge("AI edited", "warn") : ""}
         </div>
         <div class="row-actions">
           <button type="button" class="icon-btn" title="Read / edit" data-action="edit-doc" data-id="${esc(d.doc_id)}">${icon("pencil-line", 15)}</button>
+          <button type="button" class="icon-btn" title="History" data-action="history" data-id="${esc(d.doc_id)}">${icon("history", 15)}</button>
           <button type="button" class="icon-btn acid" title="Settings" data-action="entry-settings" data-id="${esc(d.doc_id)}">${icon("sliders-horizontal", 15)}</button>
           <button type="button" class="icon-btn danger" title="Delete" data-action="delete-doc" data-id="${esc(d.doc_id)}">${icon("trash-2", 15)}</button>
         </div>
@@ -1395,6 +1578,7 @@ function switchView(view) {
   }
   if (view === "tasks") { loadTasks().then(renderTasks); startTaskPolling(); }
   else stopTaskPolling();
+  if (view === "settings") { loadSettings().then(renderSettings); }
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1428,6 +1612,7 @@ async function openKbInfo() {
   if (!kb) { toast("Create a knowledge base first.", "err"); return; }
   $("#kbInfoName").value = kb.display_name || "";
   $("#kbInfoDesc").value = kb.description || "";
+  $("#kbInfoHistoryKeep").value = kb.history_keep || 5;
   openModal("modalKbInfo");
 }
 
@@ -1439,7 +1624,8 @@ async function saveKbInfo() {
       method: "PUT",
       body: JSON.stringify({
         display_name: $("#kbInfoName").value.trim() || kb.kb_id,
-        description: $("#kbInfoDesc").value.trim()
+        description: $("#kbInfoDesc").value.trim(),
+        history_keep: Number($("#kbInfoHistoryKeep").value) || null
       })
     });
     closeModal("modalKbInfo");
@@ -1778,6 +1964,187 @@ async function applyBulk() {
   } catch (e) { toast("Apply failed: " + e.message, "err"); }
 }
 
+/* ---------- runtime settings ---------- */
+async function loadSettings() {
+  try {
+    state.settings = await api("/settings");
+  } catch (e) {
+    state.settings = null;
+  }
+}
+
+function fillPolicySelect(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = POLICY_OPTIONS_SCOPE.map(o =>
+    `<option value="${o[0]}" ${o[0] === value ? "selected" : ""}>${o[1]}</option>`).join("");
+}
+
+function renderSettings() {
+  const cfg = state.settings;
+  if (!cfg) return;
+  const val = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined && v !== null) el.value = v; };
+  const chk = (id, v) => { const el = document.getElementById(id); if (el) el.checked = !!v; };
+  const search = cfg.search || {};
+  val("setTopK", search.default_top_k);
+  val("setChunkSize", search.chunk_size);
+  val("setChunkOverlap", search.chunk_overlap);
+  chk("setHybrid", search.enable_hybrid_search);
+  const entries = cfg.entries || {};
+  val("setTitleMax", entries.entry_title_max_chars);
+  val("setHistoryKeep", entries.entry_history_keep);
+  chk("setExtraTools", entries.extra_tools_enabled);
+  chk("setAutoSync", entries.auto_sync_versions);
+  const perm = cfg.permission || {};
+  fillPolicySelect("setAddPolicy", perm.default_add_policy || "open");
+  fillPolicySelect("setEditPolicy", perm.default_edit_policy || "open");
+  fillPolicySelect("setDeletePolicy", perm.default_delete_policy || "whitelist");
+  const owner = document.getElementById("setOwnerWhitelist");
+  if (owner) owner.value = (perm.owner_whitelist || []).join("\n");
+  const recall = cfg.recall || {};
+  chk("setRecallEnabled", recall.enabled);
+  val("setRecallMode", recall.mode || "hybrid");
+  val("setRecallTopK", recall.top_k);
+  val("setRecallMin", recall.min_score);
+  val("setRecallStrong", recall.strong_score);
+  val("setRecallChars", recall.max_chars);
+  val("setRecallTimeout", recall.timeout_ms);
+  val("setRecallDedupe", recall.dedupe_turns);
+  val("setRecallMaxKbs", recall.max_kbs);
+  val("setRecallMinQuery", recall.min_query_chars);
+  const restart = cfg.restart || {};
+  val("setKbDir", restart.knowledge_base_dir);
+  val("setWebHost", restart.webui_host);
+  val("setWebPort", restart.webui_port);
+}
+
+async function saveSettings() {
+  const num = id => {
+    const el = document.getElementById(id);
+    if (!el || el.value === "") return null;
+    return Number(el.value);
+  };
+  const payload = {
+    search: {
+      enable_hybrid_search: document.getElementById("setHybrid").checked,
+      default_top_k: num("setTopK"),
+      chunk_size: num("setChunkSize"),
+      chunk_overlap: num("setChunkOverlap")
+    },
+    entries: {
+      entry_title_max_chars: num("setTitleMax"),
+      entry_history_keep: num("setHistoryKeep"),
+      extra_tools_enabled: document.getElementById("setExtraTools").checked,
+      auto_sync_versions: document.getElementById("setAutoSync").checked
+    },
+    permission: {
+      owner_whitelist: document.getElementById("setOwnerWhitelist").value.split(/\n+/).map(v => v.trim()).filter(Boolean),
+      default_add_policy: document.getElementById("setAddPolicy").value,
+      default_edit_policy: document.getElementById("setEditPolicy").value,
+      default_delete_policy: document.getElementById("setDeletePolicy").value
+    },
+    recall: {
+      recall_enabled: document.getElementById("setRecallEnabled").checked,
+      recall_mode: document.getElementById("setRecallMode").value,
+      recall_top_k: num("setRecallTopK"),
+      recall_min_score: num("setRecallMin"),
+      recall_strong_score: num("setRecallStrong"),
+      recall_max_chars: num("setRecallChars"),
+      recall_timeout_ms: num("setRecallTimeout"),
+      recall_dedupe_turns: num("setRecallDedupe"),
+      recall_max_kbs: num("setRecallMaxKbs"),
+      recall_min_query_chars: num("setRecallMinQuery")
+    }
+  };
+  try {
+    const res = await api("/settings", { method: "PUT", body: JSON.stringify(payload) });
+    state.settings = res.settings;
+    renderSettings();
+    await refresh({ quiet: true });
+    renderAll();
+    if (res.warnings && res.warnings.length) toast(res.warnings.join(" "), "err");
+    else toast("Settings applied.");
+  } catch (e) { toast("Settings failed: " + e.message, "err"); }
+}
+
+/* ---------- revision history ---------- */
+async function openHistory(doc) {
+  if (!doc) return;
+  state.historyDoc = doc.doc_id;
+  $("#historyTitle").textContent = doc.name || "History";
+  $("#historyMeta").textContent = "Loading…";
+  $("#historyList").innerHTML = "";
+  $("#historyPanel").classList.remove("hidden");
+  $("#historyViewer").classList.add("hidden");
+  openModal("modalHistory");
+  try {
+    const data = await api(`/kbs/${encodeURIComponent(state.current)}/documents/${doc.doc_id}/history`);
+    state.historyList = data.revisions || [];
+    renderHistory(data);
+  } catch (e) {
+    $("#historyMeta").textContent = "";
+    $("#historyList").innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+  }
+}
+
+function renderHistory(data) {
+  const rows = data.revisions || [];
+  $("#historyMeta").textContent =
+    `${rows.length} revisions · original is permanent · keeping the latest ${data.keep}`;
+  $("#historyList").innerHTML = rows.length
+    ? rows.map((r, i) => `
+      <div class="doc-row" style="grid-template-columns:36px minmax(0,1fr) auto auto">
+        <span class="mono faint">${String(i + 1).padStart(2, "0")}</span>
+        <div>
+          <div class="doc-name">${fmtTime(r.created_at)}</div>
+          <div class="doc-meta">${r.size} chars · ${r.actor === "ai" ? "AI" : r.actor === "human" ? "Human" : "System"} · ${esc(r.source)}${r.restored_from ? " · from " + esc(r.restored_from) : ""}</div>
+        </div>
+        <div class="badges">
+          ${r.is_original ? badge("Original", "acid") : ""}
+          ${r.is_current ? badge("Current", "cyan") : ""}
+          ${r.actor === "ai" ? badge("AI", "violet") : ""}
+          ${r.actor === "human" && !r.is_original ? badge("Human", "") : ""}
+        </div>
+        <div class="row-actions" style="opacity:1">
+          <button type="button" class="icon-btn" title="View" data-action="history-view" data-id="${esc(r.rev_id)}">${icon("eye", 15)}</button>
+          ${!r.is_current ? `<button type="button" class="icon-btn acid" title="Restore this revision" data-action="history-restore" data-id="${esc(r.rev_id)}">${icon("rotate-ccw", 15)}</button>` : ""}
+        </div>
+      </div>`).join("")
+    : `<div class="empty"><div class="big">No history</div>The original is archived on the first edit.</div>`;
+  hydrateIcons($("#historyList"));
+  settleReveals();
+}
+
+async function viewRevision(revId) {
+  if (!state.historyDoc || !revId) return;
+  try {
+    const data = await api(`/kbs/${encodeURIComponent(state.current)}/documents/${state.historyDoc}/history/${revId}`);
+    $("#historyViewMeta").textContent = `${revId} · ${fmtTime(data.created_at)} · ${data.actor}`;
+    $("#historyContent").textContent = data.content || "";
+    $("#historyPanel").classList.add("hidden");
+    $("#historyViewer").classList.remove("hidden");
+  } catch (e) { toast("Read failed: " + e.message, "err"); }
+}
+
+function historyBack() {
+  $("#historyViewer").classList.add("hidden");
+  $("#historyPanel").classList.remove("hidden");
+}
+
+async function restoreRevision(revId) {
+  if (!state.historyDoc || !revId) return;
+  const ok = await askConfirm("Restore revision", "Replace the current content with this revision? The change is recorded as a new revision.", "Restore");
+  if (!ok) return;
+  try {
+    await api(`/kbs/${encodeURIComponent(state.current)}/documents/${state.historyDoc}/history/${revId}/restore`, {
+      method: "POST", body: "{}"
+    });
+    closeModal("modalHistory");
+    await refresh();
+    toast("Revision restored and re-indexed.");
+  } catch (e) { toast("Restore failed: " + e.message, "err"); }
+}
+
 /* ---------- task polling ---------- */
 function startTaskPolling() {
   if (state.taskTimer) return;
@@ -1805,6 +2172,7 @@ document.addEventListener("click", async (event) => {
   try {
     switch (action) {
       case "nav": switchView(el.dataset.view); break;
+      case "toggle-theme": applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark"); break;
       case "close-modal": closeModal(el.dataset.modal); break;
       case "create-kb": await createKb(); break;
       case "edit-kb": await openKbInfo(); break;
@@ -1826,6 +2194,11 @@ document.addEventListener("click", async (event) => {
       case "delete-doc": await deleteDoc(id); break;
       case "entry-settings": openEntrySettings(state.docs.find(d => d.doc_id === id)); break;
       case "save-entry-settings": await saveEntrySettings(); break;
+      case "save-settings": await saveSettings(); break;
+      case "history": await openHistory(state.docs.find(d => d.doc_id === id)); break;
+      case "history-view": await viewRevision(id); break;
+      case "history-restore": await restoreRevision(id); break;
+      case "history-back": historyBack(); break;
       case "save-kb-perms": await saveKbPerms(); break;
       case "save-kb-recall": await saveKbRecall(); break;
       case "save-entry-recall": await saveEntryRecall(id); break;

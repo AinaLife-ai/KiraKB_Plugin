@@ -15,6 +15,9 @@
 - **细粒度写权限**：新增、编辑、删除三项操作可分别设置为「任何人 / 名单用户 / 仅人工 / 冻结」，支持知识库默认值与单条目覆盖。
 - **被动召回**：当聊天内容提到某个知识库条目时，自动把相关片段注入当前回合；可按知识库启用，也可按条目强制开启或排除。
 - **版本一致性**：编辑条目后激活版本立即重建，其它版本标记待同步；恢复条目会同步回写所有可用版本。
+- **修订历史**：每个条目的最初版本永久保留，过程版本默认保留最近 5 份（可调），前端可查看与一键回退，并标记 AI / Human 来源。
+- **热设置**：Settings 页面可即时修改检索、召回、默认权限等设置，写入配置且无需重载插件。
+- **白天与深色主题**：默认紫白白天模式，可切换深色并记忆选择；图标全部为内联 Lucide，无表情符号。
 - **零配置启动**：自动使用 KiraAI 的默认嵌入模型与视觉模型。
 
 ---
@@ -84,6 +87,8 @@ KiraKB/
     ├── test_permissions.py # 权限矩阵与工具层校验（27 项）
     ├── test_recall.py      # 被动召回与注入形态（34 项）
     ├── test_upgrade.py     # 显示名、版本新鲜度、恢复、口径统一（26 项）
+    ├── test_history.py     # 修订历史、原始版本保留、裁剪、回退（27 项）
+    ├── test_settings.py    # 热设置、持久化、非法值回退（25 项）
     ├── stub_core.py        # 无 KiraAI 运行时的 core 桩
     └── reverse_validation.py
 ```
@@ -95,9 +100,11 @@ python3 tests/run_tests.py
 python3 tests/test_permissions.py
 python3 tests/test_recall.py
 python3 tests/test_upgrade.py
+python3 tests/test_history.py
+python3 tests/test_settings.py
 ```
 
-全部通过后分别输出 `42/42`、`27/27`、`34/34`、`26/26`。测试使用桩 `core` 包，不需要 KiraAI 本体。
+全部通过后分别输出 `42/42`、`27/27`、`34/34`、`26/26`、`27/27`、`25/25`。测试使用桩 `core` 包，不需要 KiraAI 本体。
 
 ---
 
@@ -119,6 +126,7 @@ python3 tests/test_upgrade.py
 | `entry_title_max_chars` | AI 生成标题的最大长度 | 20 |
 | `extra_tools_enabled` | 注册只读条目工具 | true |
 | `auto_sync_versions` | 编辑后自动同步其它版本 | false |
+| `entry_history_keep` | 每个条目保留的最近修订数（最初版本永久保留） | 5 |
 
 ### WebUI 设置
 
@@ -306,7 +314,7 @@ python3 tests/test_upgrade.py
 
 ## WebUI
 
-侧边栏页面分为七个视图：
+侧边栏页面默认使用白天模式（紫白配色），右上角可切换深色主题，选择会保存在浏览器本地。页面分为八个视图：
 
 - **Overview**：条目数、版本数、激活维度、召回状态、最近条目与版本。
 - **Entries**：上传、过滤、编辑、重命名、删除、批量设置权限；已删除条目可恢复。
@@ -314,6 +322,7 @@ python3 tests/test_upgrade.py
 - **Search**：检索测试，展示条目名、分块序号与相关度。
 - **Access**：知识库策略矩阵、允许名单、条目级覆盖。
 - **Recall**：知识库召回开关与参数、条目三态与关键词。
+- **Settings**：热设置（检索、条目、召回、默认权限）。
 - **Tasks**：后台任务进度。
 
 界面使用 Lucide 图标，不依赖外部图标 CDN；所有弹窗为页面内实现，适配 KiraAI 的沙箱 iframe（不使用原生 `alert` / `confirm` / `prompt`）。
@@ -344,10 +353,39 @@ python3 tests/test_upgrade.py
 | GET | `/kbs/{kb_id}/versions/{version_id}/freshness` | 版本新鲜度 |
 | POST | `/kbs/{kb_id}/versions/{version_id}/sync` | 增量同步版本 |
 | POST | `/kbs/{kb_id}/search` | 检索 |
+| GET / PUT | `/settings` | 运行时热设置读写 |
+| GET | `/kbs/{kb_id}/documents/{doc_id}/history` | 条目修订列表 |
+| GET | `/kbs/{kb_id}/documents/{doc_id}/history/{rev_id}` | 读取修订正文 |
+| POST | `/kbs/{kb_id}/documents/{doc_id}/history/{rev_id}/restore` | 回退到指定修订 |
 | GET | `/tasks` | 任务列表 |
 | GET | `/recall/global` | 插件级召回总开关（只读） |
 | GET | `/embedding-models` | 嵌入模型列表 |
 | POST | `/embedding-models/probe` | 探测维度 |
+
+---
+
+## 修订历史
+
+每个条目在创建时记录第一版（原始版本），之后每次编辑、回退都会追加一条修订。
+
+- **原始版本永久保留**，不受裁剪影响，可随时在前端回退。
+- **其它过程版本**默认保留最近 `entry_history_keep` 份（默认 5），可全局或按知识库调大（1-200）。
+- 每条修订记录来源：`system`（初始）、`ai`（聊天工具）、`human`（WebUI）与 `restore`（回退），前端显示对应标记。
+- 条目列表显示 `H{数量}` 与 `AI edited` 徽标；历史面板中可查看任意版本正文、回退到该版本。
+- 旧条目在第一次被编辑时会自动补记「改前内容」为原始版本，因此升级前的条目也能回退到最初内容。
+- 历史只随条目硬删除而清理；软删除与恢复不影响历史。
+
+---
+
+## 热设置
+
+WebUI 的 **Settings** 页面可以直接修改并立即生效：
+
+- 检索与条目：默认 top K、分块大小/重叠、标题长度、历史保留数、混合检索、只读工具、自动同步。
+- 被动召回：总开关、模式、门槛、条数、字符预算、超时、去重、多库上限等。
+- 默认权限：新增/编辑/删除默认策略与全局名单。
+
+修改会同步写入插件配置并更新运行时对象，**不需要重载插件**。停用词、重排序、知识库目录与独立 WebUI 端口属于结构性配置，页面会注明需要重载或重启。
 
 ---
 
@@ -358,7 +396,10 @@ data/knowledge_base/
 └── kiraai_docs/
     ├── raw_docs/
     │   ├── abc123.txt          # 原始内容（按内部 ID 命名）
-    │   └── abc123.meta.json    # 名称、时间、哈希、权限、召回设置
+    │   ├── abc123.meta.json    # 名称、时间、哈希、权限、召回、历史摘要
+    │   └── abc123.history/     # 修订历史（原始版本 + 最近 N 份）
+    │       ├── rev_000001.json
+    │       └── ...
     ├── versions/
     │   └── BAAI_bge-m3_1734567890/
     │       ├── vectors/        # FAISS 索引 + SQLite 元数据
@@ -438,6 +479,11 @@ data/knowledge_base/
 - 恢复条目写回所有可用版本；编辑后其它版本标记待同步，并支持增量同步。
 - 标题长度可配置；空标题不再产生固定「知识条目」导致互相覆盖。
 - 同名软删除条目改为恢复而不是新建。
+- 新增条目修订历史：原始版本永久保留，过程版本默认保留最近 5 份（可调），前端可查看与回退。
+- 前端显示 `H{n}` 与 `AI edited` 标记，历史面板标注 Original / Current / AI / Human。
+- WebUI 默认白天模式（紫白配色），支持深色主题切换并记忆选择。
+- 新增 Settings 页面：检索、条目、召回、默认权限均可热改并持久化，无需重载插件。
+- `off` 策略现在同时阻止 WebUI 的内容写入（此前仅约束 AI）。
 - 更新 WebUI：Lucide 图标、无表情符号、全新视觉与交互。
 
 ### 1.1.5

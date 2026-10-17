@@ -69,6 +69,14 @@
                 "type": "switch",
                 "default": false,
                 "hint": "编辑条目后，除激活版本外，是否立即把改动同步到其它可用版本。关闭时其它版本会标记为待同步，可在面板一键同步。"
+            },
+            "entry_history_keep": {
+                "name": "条目历史保留数",
+                "type": "integer",
+                "default": 5,
+                "minimum": 1,
+                "maximum": 200,
+                "hint": "每个条目除最初版本外，保留最近多少个可回退版本。最初版本永久保留。"
             }
         }
     },

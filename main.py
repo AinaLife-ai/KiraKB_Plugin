@@ -18,7 +18,8 @@ from core.utils.path_utils import get_data_path, get_config_path
 from .kb_manager import KnowledgeBaseManager, EmbeddingDimensionError
 from . import api_handlers as api
 from . import permissions as perms
-from .recall import RecallEngine, message_text, batch_user_ids, render_block
+from .recall import (RecallEngine, message_text, batch_user_ids, render_block,
+                     clamp_int, clamp_float)
 
 
 def _json(data, status: int = 200):
@@ -90,6 +91,7 @@ class KiraKBPlugin(BasePlugin):
         self.entry_title_max_chars = max(4, min(60, int(sec_basic.get("entry_title_max_chars", 20))))
         self.extra_tools_enabled = bool(sec_basic.get("extra_tools_enabled", True))
         self.auto_sync_versions = bool(sec_basic.get("auto_sync_versions", False))
+        self.history_keep = max(1, min(200, int(sec_basic.get("entry_history_keep", 5))))
 
         self.enable_webui = bool(sec_webui.get("enable_webui", False))
         self.webui_port = int(sec_webui.get("webui_port", 19122))
@@ -293,6 +295,7 @@ class KiraKBPlugin(BasePlugin):
             client_resolver=resolve_embedding_client,
             model_lister=list_embedding_models,
             enable_hybrid=self.enable_hybrid,
+            history_keep=self.history_keep,
         )
 
         await self.kb_manager.load_existing_kbs()
@@ -302,8 +305,11 @@ class KiraKBPlugin(BasePlugin):
             kb_provider=lambda: self.kb_manager.kbs if self.kb_manager else {},
             logger=logger,
         )
-        # Expose the read-only global switch to the WebUI (sidebar and standalone).
+        # Expose read-only runtime settings to the WebUI (sidebar and standalone).
         self.kb_manager.recall_global = dict(self.recall_config)
+        self.kb_manager.default_policies = dict(self.default_policies)
+        self.kb_manager.settings_getter = self._settings_snapshot
+        self.kb_manager.settings_setter = self._apply_settings
 
         self._register_extra_tools()
 
@@ -324,15 +330,7 @@ class KiraKBPlugin(BasePlugin):
         if self._webui_server:
             await self._webui_server.stop()
             self._webui_server = None
-        if self._extra_tools_registered:
-            tool_mgr = getattr(self.ctx, "tool_mgr", None)
-            if tool_mgr is not None:
-                for spec in _EXTRA_TOOLS:
-                    try:
-                        tool_mgr.unregister_tool(spec["name"])
-                    except Exception:
-                        pass
-            self._extra_tools_registered = False
+        self._unregister_extra_tools()
         if self.kb_manager:
             await self.kb_manager.close_all()
         for t in list(self._bg_tasks):
@@ -363,6 +361,196 @@ class KiraKBPlugin(BasePlugin):
             except Exception as exc:  # noqa: BLE001
                 logger.warning(f"[kiraKB] Failed to register tool {spec['name']}: {exc}")
         self._extra_tools_registered = True
+
+    def _unregister_extra_tools(self) -> None:
+        if not self._extra_tools_registered:
+            return
+        tool_mgr = getattr(self.ctx, "tool_mgr", None)
+        if tool_mgr is not None:
+            for spec in _EXTRA_TOOLS:
+                try:
+                    tool_mgr.unregister_tool(spec["name"])
+                except Exception:
+                    pass
+        self._extra_tools_registered = False
+
+    def _sync_extra_tools(self) -> None:
+        if self.extra_tools_enabled:
+            self._register_extra_tools()
+        else:
+            self._unregister_extra_tools()
+
+    # ------------------------------------------------------------------
+    # Runtime settings (hot apply, no plugin reload)
+    # ------------------------------------------------------------------
+    def _settings_snapshot(self) -> dict:
+        return {
+            "search": {
+                "enable_hybrid_search": self.enable_hybrid,
+                "default_top_k": self.default_top_k,
+                "chunk_size": self.chunk_size,
+                "chunk_overlap": self.chunk_overlap,
+                "enable_stopwords": self.enable_stopwords,
+                "enable_rerank": self.enable_rerank,
+            },
+            "entries": {
+                "entry_title_max_chars": self.entry_title_max_chars,
+                "extra_tools_enabled": self.extra_tools_enabled,
+                "auto_sync_versions": self.auto_sync_versions,
+                "entry_history_keep": self.history_keep,
+            },
+            "permission": {
+                "owner_whitelist": list(self.owner_whitelist),
+                "default_add_policy": self.default_policies["add"],
+                "default_edit_policy": self.default_policies["edit"],
+                "default_delete_policy": self.default_policies["delete"],
+            },
+            "recall": dict(self.recall_config),
+            "restart": {
+                "knowledge_base_dir": self.kb_base_dir,
+                "enable_webui": self.enable_webui,
+                "webui_host": self.webui_host,
+                "webui_port": self.webui_port,
+            },
+        }
+
+    def _apply_settings(self, payload: dict) -> dict:
+        """Apply WebUI settings to memory and the plugin config file.
+
+        Only non-structural settings are hot. Stopwords/rerank and the storage
+        or standalone-server options need a plugin reload, and are reported as
+        warnings instead of being silently ignored.
+        """
+        if not isinstance(payload, dict):
+            raise ValueError("settings payload must be an object")
+        warnings = []
+        search = payload.get("search") or {}
+        entries = payload.get("entries") or {}
+        permission = payload.get("permission") or {}
+        recall = payload.get("recall") or {}
+
+        if "enable_hybrid_search" in search:
+            self.enable_hybrid = bool(search.get("enable_hybrid_search"))
+            if self.kb_manager:
+                self.kb_manager.enable_hybrid = self.enable_hybrid
+        if "default_top_k" in search:
+            self.default_top_k = clamp_int(search.get("default_top_k"), self.default_top_k, 1, 20)
+        chunk_size = clamp_int(search.get("chunk_size"), self.chunk_size, 100, 8000)
+        chunk_overlap = clamp_int(search.get("chunk_overlap"), self.chunk_overlap, 0, max(0, chunk_size - 1))
+        if chunk_overlap >= chunk_size:
+            chunk_overlap = max(0, chunk_size // 5)
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
+        if self.kb_manager:
+            self.kb_manager.chunk_size = chunk_size
+            self.kb_manager.chunk_overlap = chunk_overlap
+            for kb in self.kb_manager.kbs.values():
+                kb.chunk_size = chunk_size
+                kb.chunk_overlap = chunk_overlap
+        for key in ("enable_stopwords", "enable_rerank"):
+            if key in search and bool(search.get(key)) != bool(getattr(self, key)):
+                warnings.append(f"{key} 修改后需要重载插件才会生效。")
+
+        if "entry_title_max_chars" in entries:
+            self.entry_title_max_chars = clamp_int(
+                entries.get("entry_title_max_chars"), self.entry_title_max_chars, 4, 60
+            )
+        if "auto_sync_versions" in entries:
+            self.auto_sync_versions = bool(entries.get("auto_sync_versions"))
+        if "entry_history_keep" in entries:
+            self.history_keep = clamp_int(
+                entries.get("entry_history_keep"), self.history_keep, 1, 200
+            )
+            if self.kb_manager:
+                self.kb_manager.history_keep = self.history_keep
+                for kb in self.kb_manager.kbs.values():
+                    kb.history_keep = self.history_keep
+        if "extra_tools_enabled" in entries:
+            enabled = bool(entries.get("extra_tools_enabled"))
+            if enabled != self.extra_tools_enabled:
+                self.extra_tools_enabled = enabled
+                self._sync_extra_tools()
+
+        if "owner_whitelist" in permission:
+            self.owner_whitelist = perms.normalise_users(permission.get("owner_whitelist"))
+        for key, op in (("default_add_policy", "add"),
+                        ("default_edit_policy", "edit"),
+                        ("default_delete_policy", "delete")):
+            if key in permission:
+                value = perms.normalise_policy(permission.get(key), default=None)
+                if value:
+                    self.default_policies[op] = value
+        if self.kb_manager:
+            self.kb_manager.default_policies = dict(self.default_policies)
+
+        mode = str(recall.get("recall_mode", self.recall_config.get("mode", "hybrid"))).lower()
+        if mode not in ("mention", "semantic", "hybrid"):
+            mode = "hybrid"
+        self.recall_config.update({
+            "enabled": bool(recall.get("recall_enabled", self.recall_config.get("enabled", False))),
+            "mode": mode,
+            "top_k": clamp_int(recall.get("recall_top_k"), self.recall_config.get("top_k", 3), 1, 10),
+            "min_score": clamp_float(recall.get("recall_min_score"), self.recall_config.get("min_score", 0.35)),
+            "strong_score": clamp_float(recall.get("recall_strong_score"), self.recall_config.get("strong_score", 0.60)),
+            "max_chars": clamp_int(recall.get("recall_max_chars"), self.recall_config.get("max_chars", 1200), 100, 8000),
+            "timeout_ms": clamp_int(recall.get("recall_timeout_ms"), self.recall_config.get("timeout_ms", 1500), 200, 10000),
+            "dedupe_turns": clamp_int(recall.get("recall_dedupe_turns"), self.recall_config.get("dedupe_turns", 2), 0, 20),
+            "max_kbs": clamp_int(recall.get("recall_max_kbs"), self.recall_config.get("max_kbs", 3), 1, 20),
+            "min_query_chars": clamp_int(recall.get("recall_min_query_chars"), self.recall_config.get("min_query_chars", 2), 1, 32),
+        })
+        if self.kb_manager:
+            self.kb_manager.recall_global = dict(self.recall_config)
+
+        self._persist_settings()
+        return {"ok": True, "settings": self._settings_snapshot(), "warnings": warnings}
+
+    def _persist_settings(self) -> None:
+        try:
+            cfg = {}
+            if self.config_path.exists():
+                cfg = json.loads(self.config_path.read_text(encoding="utf-8"))
+            if not isinstance(cfg, dict):
+                cfg = {}
+            basic = cfg.setdefault("section_basic", {})
+            basic.update({
+                "enable_hybrid_search": self.enable_hybrid,
+                "default_top_k": self.default_top_k,
+                "chunk_size": self.chunk_size,
+                "chunk_overlap": self.chunk_overlap,
+                "entry_title_max_chars": self.entry_title_max_chars,
+                "extra_tools_enabled": self.extra_tools_enabled,
+                "auto_sync_versions": self.auto_sync_versions,
+                "entry_history_keep": self.history_keep,
+            })
+            perm = cfg.setdefault("section_permission", {})
+            perm.update({
+                "owner_whitelist": list(self.owner_whitelist),
+                "default_add_policy": self.default_policies["add"],
+                "default_edit_policy": self.default_policies["edit"],
+                "default_delete_policy": self.default_policies["delete"],
+            })
+            rec = cfg.setdefault("section_recall", {})
+            rec.update({
+                "recall_enabled": self.recall_config.get("enabled", False),
+                "recall_mode": self.recall_config.get("mode", "hybrid"),
+                "recall_top_k": self.recall_config.get("top_k", 3),
+                "recall_min_score": self.recall_config.get("min_score", 0.35),
+                "recall_strong_score": self.recall_config.get("strong_score", 0.60),
+                "recall_max_chars": self.recall_config.get("max_chars", 1200),
+                "recall_timeout_ms": self.recall_config.get("timeout_ms", 1500),
+                "recall_dedupe_turns": self.recall_config.get("dedupe_turns", 2),
+                "recall_max_kbs": self.recall_config.get("max_kbs", 3),
+                "recall_min_query_chars": self.recall_config.get("min_query_chars", 2),
+            })
+            self.config_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = self.config_path.with_suffix(".tmp")
+            tmp.write_text(json.dumps(cfg, ensure_ascii=False, indent=4), encoding="utf-8")
+            tmp.replace(self.config_path)
+            plugin_mgr = getattr(self.ctx, "plugin_mgr", None)
+            if plugin_mgr is not None and hasattr(plugin_mgr, "plugin_configs"):
+                plugin_mgr.plugin_configs[self.config_path.stem] = cfg
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(f"[kiraKB] Failed to persist settings: {exc}")
 
     # ------------------------------------------------------------------
     # Permission helpers
@@ -653,7 +841,7 @@ class KiraKBPlugin(BasePlugin):
             if not allowed:
                 return self._deny_message("edit", kb, target, reason)
             doc_id = target["doc_id"]
-            await kb.update_raw_document(doc_id, content)
+            await kb.update_raw_document(doc_id, content, actor="ai")
             if target.get("deleted"):
                 ok, detail = await kb.restore_document(doc_id)
                 if not ok:
@@ -689,7 +877,7 @@ class KiraKBPlugin(BasePlugin):
         if not allowed:
             return self._deny_message("add", kb, None, reason)
 
-        doc_id = await kb.add_raw_document(content, name)
+        doc_id = await kb.add_raw_document(content, name, actor="ai")
         active_ver = kb.active_version
         if not active_ver:
             return "文档已保存，但知识库没有激活版本，无法向量化。请先在 WebUI 创建版本。"
@@ -819,6 +1007,17 @@ class KiraKBPlugin(BasePlugin):
         return f"【{doc['name']}】\n{content}"
 
     # ==================== Model selection / dimension probing ====================
+
+    @register.api(method="GET", path="/settings", auth=True, summary="Get runtime settings")
+    async def api_get_settings(self):
+        data, status = api.get_settings(self.kb_manager)
+        return _json(data, status)
+
+    @register.api(method="PUT", path="/settings", auth=True, summary="Update runtime settings")
+    async def api_update_settings(self, request: Request):
+        body = await request.json()
+        data, status = api.update_settings(self.kb_manager, body)
+        return _json(data, status)
 
     @register.api(method="GET", path="/embedding-models", auth=True, summary="List embedding models")
     async def api_embedding_models(self):
@@ -999,6 +1198,23 @@ class KiraKBPlugin(BasePlugin):
     @register.api(method="POST", path="/kbs/{kb_id}/documents/{doc_id}/restore", auth=True, summary="Restore document")
     async def api_restore_document(self, kb_id: str, doc_id: str):
         data, status = await api.restore_document(self.kb_manager, kb_id, doc_id)
+        return _json(data, status)
+
+    # ---- Revision history ----
+
+    @register.api(method="GET", path="/kbs/{kb_id}/documents/{doc_id}/history", auth=True, summary="List entry revisions")
+    async def api_list_history(self, kb_id: str, doc_id: str):
+        data, status = await api.list_history(self.kb_manager, kb_id, doc_id)
+        return _json(data, status)
+
+    @register.api(method="GET", path="/kbs/{kb_id}/documents/{doc_id}/history/{rev_id}", auth=True, summary="Read entry revision")
+    async def api_get_history_revision(self, kb_id: str, doc_id: str, rev_id: str):
+        data, status = await api.get_history_revision(self.kb_manager, kb_id, doc_id, rev_id)
+        return _json(data, status)
+
+    @register.api(method="POST", path="/kbs/{kb_id}/documents/{doc_id}/history/{rev_id}/restore", auth=True, summary="Restore entry revision")
+    async def api_restore_history_revision(self, kb_id: str, doc_id: str, rev_id: str):
+        data, status = await api.restore_history_revision(self.kb_manager, kb_id, doc_id, rev_id)
         return _json(data, status)
 
     # ---- Search ----

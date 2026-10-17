@@ -46,6 +46,37 @@ def _decorate_results(kb, results):
     return out
 
 
+def _human_write_allowed(mgr, kb, entry, op: str):
+    """The WebUI is the human operator, but a frozen policy blocks it too."""
+    defaults = getattr(mgr, "default_policies", None) or perms.DEFAULT_POLICIES
+    return perms.decide(
+        op=op,
+        actor=perms.ACTOR_HUMAN,
+        entry_perms=(entry or {}).get("permissions") if entry else None,
+        kb_perms=kb.get_permissions(),
+        defaults=defaults,
+    )
+
+
+# ========== Runtime settings (hot apply) ==========
+
+def get_settings(mgr):
+    getter = getattr(mgr, "settings_getter", None)
+    if not callable(getter):
+        return {"error": "settings unavailable"}, 503
+    return getter(), 200
+
+
+def update_settings(mgr, body: dict):
+    setter = getattr(mgr, "settings_setter", None)
+    if not callable(setter):
+        return {"error": "settings unavailable"}, 503
+    try:
+        return setter(body or {}), 200
+    except ValueError as exc:
+        return {"error": str(exc)}, 400
+
+
 # ========== Knowledge base management ==========
 
 def list_kbs(mgr):
@@ -60,6 +91,7 @@ def list_kbs(mgr):
             "active_version": kb._current_version_id,
             "permissions": kb.get_permissions(),
             "recall": kb.get_recall_settings(),
+            "history_keep": kb.get_history_keep(),
         })
     return kbs, 200
 
@@ -96,6 +128,7 @@ async def get_kb_info(mgr, kb_id: str):
         "entry_count": len(kb.list_documents(include_deleted=False)),
         "permissions": kb.get_permissions(),
         "recall": kb.get_recall_settings(),
+        "history_keep": kb.get_history_keep(),
     }, 200
 
 
@@ -107,6 +140,11 @@ async def update_kb_info(mgr, kb_id: str, body: dict):
         kb.info["display_name"] = body["display_name"]
     if "description" in body:
         kb.info["description"] = body["description"]
+    if "history_keep" in body:
+        try:
+            await kb.set_history_keep(body.get("history_keep"))
+        except ValueError as exc:
+            return {"error": str(exc)}, 400
     kb._save_info()
     return {"ok": True}, 200
 
@@ -343,6 +381,12 @@ async def restore_document(mgr, kb_id: str, doc_id: str):
     kb = await mgr.get_kb(kb_id)
     if not kb:
         return {"error": "KB not found"}, 404
+    doc = kb.find_document(doc_id, include_deleted=True)
+    if not doc:
+        return {"error": "Document not found"}, 404
+    allowed, reason, _ = _human_write_allowed(mgr, kb, doc, "delete")
+    if not allowed:
+        return {"error": reason}, 403
     ok, detail = await kb.restore_document(doc_id)
     if not ok:
         return {"error": detail.get("error") or "Restore failed", "detail": detail}, 500
@@ -381,6 +425,9 @@ async def update_document(mgr, kb_id: str, doc_id: str, body: dict):
     doc = kb.find_document(doc_id, include_deleted=True)
     if doc and doc.get("deleted"):
         return {"error": "条目已删除，请先恢复后再编辑。"}, 400
+    allowed, reason, _ = _human_write_allowed(mgr, kb, doc, "edit")
+    if not allowed:
+        return {"error": reason}, 403
     success = await kb.update_raw_document(doc_id, new_content, original_name=new_name)
     if not success:
         return {"error": "Document not found"}, 404
@@ -396,6 +443,12 @@ async def delete_document(mgr, kb_id: str, doc_id: str):
     kb = await mgr.get_kb(kb_id)
     if not kb:
         return {"error": "KB not found"}, 404
+    doc = kb.find_document(doc_id, include_deleted=True)
+    if not doc:
+        return {"error": "Document not found"}, 404
+    allowed, reason, _ = _human_write_allowed(mgr, kb, doc, "delete")
+    if not allowed:
+        return {"error": reason}, 403
     success = await kb.delete_raw_document(doc_id, soft=True)
     if not success:
         return {"error": "Document not found"}, 404
@@ -406,6 +459,10 @@ async def upload_document(mgr, kb_id: str, filename: str, content: bytes):
     kb = await mgr.get_kb(kb_id)
     if not kb:
         return {"error": "KB not found"}, 404
+
+    allowed, reason, _ = _human_write_allowed(mgr, kb, None, "add")
+    if not allowed:
+        return {"error": reason}, 403
 
     filename = filename or "upload.txt"
     suffix = Path(filename).suffix.lower()
@@ -439,6 +496,53 @@ async def upload_document(mgr, kb_id: str, filename: str, content: bytes):
     if active_ver:
         await kb._vectorize_document(active_ver, doc_id, text)
     return {"ok": True, "doc_id": doc_id}, 200
+
+
+# ========== Revision history ==========
+
+async def list_history(mgr, kb_id: str, doc_id: str):
+    kb = await mgr.get_kb(kb_id)
+    if not kb:
+        return {"error": "KB not found"}, 404
+    doc = kb.find_document(doc_id, include_deleted=True)
+    if not doc:
+        return {"error": "Document not found"}, 404
+    return {
+        "doc_id": doc_id,
+        "name": doc.get("name"),
+        "keep": kb.get_history_keep(),
+        "revisions": kb.list_history(doc_id),
+    }, 200
+
+
+async def get_history_revision(mgr, kb_id: str, doc_id: str, rev_id: str):
+    kb = await mgr.get_kb(kb_id)
+    if not kb:
+        return {"error": "KB not found"}, 404
+    record = kb.get_revision(doc_id, rev_id)
+    if not record:
+        return {"error": "Revision not found"}, 404
+    return record, 200
+
+
+async def restore_history_revision(mgr, kb_id: str, doc_id: str, rev_id: str):
+    kb = await mgr.get_kb(kb_id)
+    if not kb:
+        return {"error": "KB not found"}, 404
+    doc = kb.find_document(doc_id, include_deleted=True)
+    if not doc or doc.get("deleted"):
+        return {"error": "条目不存在或已删除，请先恢复。"}, 400
+    allowed, reason, _ = _human_write_allowed(mgr, kb, doc, "edit")
+    if not allowed:
+        return {"error": reason}, 403
+    content = await kb.restore_revision(doc_id, rev_id, actor="human")
+    if content is None:
+        return {"error": "Revision not found"}, 404
+    active = kb.active_version
+    if active:
+        await active.delete_document(doc_id)
+        await kb._vectorize_document(active, doc_id, content)
+    return {"ok": True, "rev_id": rev_id}, 200
 
 
 # ========== Search ==========

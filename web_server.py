@@ -88,6 +88,19 @@ async def api_update_kb_info(request: Request) -> JSONResponse:
     return _json(data, status)
 
 
+# ========== Runtime settings ==========
+
+async def api_get_settings(request: Request) -> JSONResponse:
+    data, status = api.get_settings(_get_mgr(request))
+    return _json(data, status)
+
+
+async def api_update_settings(request: Request) -> JSONResponse:
+    body = await request.json()
+    data, status = api.update_settings(_get_mgr(request), body)
+    return _json(data, status)
+
+
 # ========== Permissions ==========
 
 async def api_get_kb_permissions(request: Request) -> JSONResponse:
@@ -236,6 +249,29 @@ async def api_restore_document(request: Request) -> JSONResponse:
     return _json(data, status)
 
 
+async def api_list_history(request: Request) -> JSONResponse:
+    data, status = await api.list_history(
+        _get_mgr(request), request.path_params["kb_id"], request.path_params["doc_id"]
+    )
+    return _json(data, status)
+
+
+async def api_get_history_revision(request: Request) -> JSONResponse:
+    data, status = await api.get_history_revision(
+        _get_mgr(request), request.path_params["kb_id"],
+        request.path_params["doc_id"], request.path_params["rev_id"]
+    )
+    return _json(data, status)
+
+
+async def api_restore_history_revision(request: Request) -> JSONResponse:
+    data, status = await api.restore_history_revision(
+        _get_mgr(request), request.path_params["kb_id"],
+        request.path_params["doc_id"], request.path_params["rev_id"]
+    )
+    return _json(data, status)
+
+
 async def api_get_document(request: Request) -> JSONResponse:
     data, status = await api.get_document(
         _get_mgr(request), request.path_params["kb_id"], request.path_params["doc_id"]
@@ -297,6 +333,9 @@ def create_app(kb_manager, token: str = "", default_embedding_uuid: Optional[str
     routes = [
         Route("/", serve_index, methods=["GET"]),
         Route("/favicon.ico", favicon, methods=["GET"]),
+        # Runtime settings
+        Route("/api/settings", api_get_settings, methods=["GET"]),
+        Route("/api/settings", api_update_settings, methods=["PUT"]),
         # Knowledge base
         Route("/api/kbs", api_list_kbs, methods=["GET"]),
         Route("/api/kbs", api_create_kb, methods=["POST"]),
@@ -330,6 +369,9 @@ def create_app(kb_manager, token: str = "", default_embedding_uuid: Optional[str
         Route("/api/kbs/{kb_id}/documents/{doc_id}", api_update_document, methods=["PUT"]),
         Route("/api/kbs/{kb_id}/documents/{doc_id}", api_delete_document, methods=["DELETE"]),
         Route("/api/kbs/{kb_id}/documents/{doc_id}/restore", api_restore_document, methods=["POST"]),
+        Route("/api/kbs/{kb_id}/documents/{doc_id}/history", api_list_history, methods=["GET"]),
+        Route("/api/kbs/{kb_id}/documents/{doc_id}/history/{rev_id}", api_get_history_revision, methods=["GET"]),
+        Route("/api/kbs/{kb_id}/documents/{doc_id}/history/{rev_id}/restore", api_restore_history_revision, methods=["POST"]),
         # Search
         Route("/api/kbs/{kb_id}/search", api_search, methods=["POST"]),
         # Embedding models / dimension probing
