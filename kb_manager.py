@@ -1250,16 +1250,20 @@ class KnowledgeBase:
             return {"missing": [], "stale": []}
         mapping = version.load_mapping()
         stored = version.doc_hashes()
-        legacy = not stored
         missing, stale = [], []
         for doc in self.list_documents(include_deleted=False):
             doc_id = doc["doc_id"]
             if doc_id not in mapping or not mapping[doc_id]:
                 missing.append({"doc_id": doc_id, "name": doc["name"]})
-            elif not legacy:
-                if stored.get(doc_id) != doc.get("content_hash"):
+                continue
+            stored_hash = stored.get(doc_id)
+            if stored_hash:
+                if stored_hash != doc.get("content_hash"):
                     stale.append({"doc_id": doc_id, "name": doc["name"]})
             elif float(doc.get("updated_at") or 0) > float(version.created_at or 0) + 1:
+                # Legacy/partial hash maps: docs without a stored hash fall back
+                # to timestamps. Treating them as stale would make syncing one
+                # legacy entry display every other entry as pending.
                 stale.append({"doc_id": doc_id, "name": doc["name"]})
         return {"missing": missing, "stale": stale}
 
