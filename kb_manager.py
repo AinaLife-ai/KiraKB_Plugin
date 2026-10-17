@@ -925,7 +925,14 @@ class KnowledgeBase:
             doc_id, chunk_list, embeddings, flush=flush,
             save_mapping=save_mapping, mapping_sink=mapping_sink
         )
-        version.set_doc_hash(doc_id, content_hash(content), save=save_hash)
+        digest = content_hash(content)
+        version.set_doc_hash(doc_id, digest, save=save_hash)
+        # Keep metadata in sync when a version is built/synced from an older
+        # entry that predates content_hash. Do not touch updated_at.
+        meta = self.read_doc_meta(doc_id)
+        if meta.get("content_hash") != digest:
+            meta["content_hash"] = digest
+            self.write_doc_meta(doc_id, meta)
         return len(chunks)
 
     async def restore_document(self, doc_id: str,
@@ -980,7 +987,35 @@ class KnowledgeBase:
     # ------------------------------------------------------------------
     # Versions
     # ------------------------------------------------------------------
+    def _backfill_content_hashes(self) -> int:
+        """Backfill hashes for entries created before v1.2.
+
+        Older metadata files have no ``content_hash``. Without this, any version
+        that *does* have a ``doc_hashes.json`` compares its stored hash with an
+        empty string and reports every entry as stale after an upgrade.
+        """
+        if not self.raw_docs_dir.exists():
+            return 0
+        filled = 0
+        for doc_path in self.raw_docs_dir.glob("*.txt"):
+            doc_id = doc_path.stem
+            meta = self.read_doc_meta(doc_id)
+            if meta.get("content_hash"):
+                continue
+            try:
+                text = doc_path.read_text(encoding="utf-8")
+            except Exception:
+                continue
+            meta["content_hash"] = content_hash(text)
+            self.write_doc_meta(doc_id, meta)
+            filled += 1
+        if filled:
+            logger.info(f"Backfilled content hashes for {filled} entries in {self.kb_id}")
+        return filled
+
     async def load_versions(self):
+        # Repair pre-v1.2 metadata once, before the WebUI asks for freshness.
+        await asyncio.to_thread(self._backfill_content_hashes)
         if not self.versions_dir.exists():
             return
         for ver_dir in self.versions_dir.iterdir():

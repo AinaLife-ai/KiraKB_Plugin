@@ -36,9 +36,7 @@ class Fixed:
 ROOT = Path("/tmp/kirakb_upgrade_test")
 
 
-def make_mgr():
-    shutil.rmtree(ROOT, ignore_errors=True)
-    ROOT.mkdir(parents=True)
+def build_mgr(root):
     client = Fixed()
 
     async def getter():
@@ -48,10 +46,15 @@ def make_mgr():
         return client
 
     return km_mod.KnowledgeBaseManager(
-        base_dir=str(ROOT), embedding_client_getter=getter,
+        base_dir=str(root), embedding_client_getter=getter,
         chunk_size=80, chunk_overlap=10,
         client_resolver=resolver, enable_hybrid=False,
     )
+
+def make_mgr():
+    shutil.rmtree(ROOT, ignore_errors=True)
+    ROOT.mkdir(parents=True)
+    return build_mgr(ROOT)
 
 
 async def main_async():
@@ -78,6 +81,33 @@ async def main_async():
     await kb.update_raw_document(doc_a, "安装指南已更新。")
     fresh = kb.version_staleness(v1)
     check("更新条目被标为过期", [d["doc_id"] for d in fresh["stale"]] == [doc_a], str(fresh["stale"]))
+
+    print("\nU2b 旧元数据哈希回填（升级后全部待同步）")
+    meta_b = kb.read_doc_meta(doc_b)
+    meta_b.pop("content_hash", None)
+    kb.write_doc_meta(doc_b, meta_b)
+    fresh = kb.version_staleness(v1)
+    check("缺 meta 哈希时被误报过期", any(d["doc_id"] == doc_b for d in fresh["stale"]), str(fresh["stale"]))
+    filled = kb._backfill_content_hashes()
+    check("回填至少 1 条", filled >= 1, str(filled))
+    fresh = kb.version_staleness(v1)
+    check("回填后 doc_b 恢复干净", all(d["doc_id"] != doc_b for d in fresh["stale"]), str(fresh["stale"]))
+    check("回填后 meta 有哈希", bool(kb.read_doc_meta(doc_b).get("content_hash")), str(kb.read_doc_meta(doc_b)))
+
+    print("\nU2c 重载时自动回填（模拟升级重启）")
+    meta_b = kb.read_doc_meta(doc_b)
+    meta_b.pop("content_hash", None)
+    kb.write_doc_meta(doc_b, meta_b)
+    mgr2 = build_mgr(ROOT)
+    await mgr2.load_existing_kbs()
+    kb2 = mgr2.kbs["demo"]
+    reloaded = kb2.version_staleness(v1)
+    check("重载后 doc_b 不再待同步",
+          all(d["doc_id"] != doc_b for d in reloaded["stale"]), str(reloaded["stale"]))
+    check("重载后 meta 哈希已回填",
+          bool(kb2.read_doc_meta(doc_b).get("content_hash")), str(kb2.read_doc_meta(doc_b)))
+    # Keep the original in-memory KB's cache consistent with the reloaded one.
+    kb.write_doc_meta(doc_b, kb2.read_doc_meta(doc_b))
 
     print("\nU3  增量同步")
     result = await kb.sync_version(v1)
