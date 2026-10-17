@@ -231,6 +231,24 @@ async def main_async():
     check("激活版本仍最新",
           all(d["doc_id"] != doc_c for d in fresh_v2["stale"]), str(fresh_v2["stale"]))
 
+    print("\nU10 旧版本部分哈希同步不误伤其它条目")
+    v_legacy = await kb.create_version("legacy", 8, None, None)
+    legacy = kb._versions[v_legacy]
+    legacy._hashes = {}
+    hash_file = legacy.path / "doc_hashes.json"
+    if hash_file.exists():
+        hash_file.unlink()
+    meta_b = kb.read_doc_meta(doc_b)
+    meta_b["updated_at"] = legacy.created_at + 10
+    kb.write_doc_meta(doc_b, meta_b)
+    fresh = kb.version_staleness(v_legacy)
+    check("legacy 版本仅一条过期",
+          [d["doc_id"] for d in fresh["stale"]] == [doc_b], str(fresh["stale"]))
+    await kb.sync_version(v_legacy, [doc_b])
+    fresh = kb.version_staleness(v_legacy)
+    check("同步后未误伤其它条目", not fresh["stale"], str(fresh["stale"]))
+    check("已同步条目写回版本哈希", doc_b in legacy.doc_hashes(), str(legacy.doc_hashes()))
+
     await mgr.close_all()
     await reloaded.close_all()
 
