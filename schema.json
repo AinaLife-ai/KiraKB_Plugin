@@ -36,7 +36,7 @@
                 "name": "启用混合检索（BM25 + 向量）",
                 "type": "switch",
                 "default": false,
-                "hint": "是否启用 BM25 关键词检索与向量检索的融合。默认关闭（纯向量检索更准）。"
+                "hint": "是否启用 BM25 关键词检索与向量检索的融合。默认关闭（纯向量检索更准）。此开关同时作用于聊天工具与 WebUI 检索测试。"
             },
             "enable_stopwords": {
                 "name": "启用停用词过滤",
@@ -49,6 +49,26 @@
                 "type": "switch",
                 "default": false,
                 "hint": "是否对检索结果进行重排序。重排序模型将使用 KiraAI 默认配置。"
+            },
+            "entry_title_max_chars": {
+                "name": "条目标题最大长度",
+                "type": "integer",
+                "default": 20,
+                "minimum": 4,
+                "maximum": 60,
+                "hint": "AI 生成条目标题时的截断长度。标题只用于展示，条目文件按内部 ID 存储，修改此值不会影响已有条目。"
+            },
+            "extra_tools_enabled": {
+                "name": "启用只读条目工具",
+                "type": "switch",
+                "default": true,
+                "hint": "注册 knowledge_list_entries 与 knowledge_get_entry 两个只读工具。关闭可减少工具提示词占用。"
+            },
+            "auto_sync_versions": {
+                "name": "编辑后自动同步其它版本",
+                "type": "switch",
+                "default": false,
+                "hint": "编辑条目后，除激活版本外，是否立即把改动同步到其它可用版本。关闭时其它版本会标记为待同步，可在面板一键同步。"
             }
         }
     },
@@ -91,10 +111,115 @@
         "collapsed": false,
         "fields": {
             "owner_whitelist": {
-                "name": "白名单（可删改知识库的用户 ID）",
+                "name": "全局用户名单",
                 "type": "list",
                 "default": [],
-                "hint": "填写允许删除/修改知识条目的用户 ID（如 QQ 号）。留空则不硬限制，由 LLM 人设判断。"
+                "hint": "允许修改知识的用户 ID（如 QQ 号）。条目或知识库选择“名单用户”且未单独填写名单时使用此列表。留空表示不限制。"
+            },
+            "default_add_policy": {
+                "name": "默认新增策略",
+                "type": "string",
+                "default": "open",
+                "options": ["open", "whitelist", "admin", "off"],
+                "hint": "open=任何人；whitelist=仅名单用户；admin=仅人工（WebUI）；off=冻结。知识库或条目单独设置后以其为准。默认 open 与旧版本行为一致。"
+            },
+            "default_edit_policy": {
+                "name": "默认编辑策略",
+                "type": "string",
+                "default": "open",
+                "options": ["open", "whitelist", "admin", "off"],
+                "hint": "编辑已有条目的默认策略。含义同上。默认 open 与旧版本行为一致。"
+            },
+            "default_delete_policy": {
+                "name": "默认删除策略",
+                "type": "string",
+                "default": "whitelist",
+                "options": ["open", "whitelist", "admin", "off"],
+                "hint": "删除条目的默认策略。含义同上。默认 whitelist 与旧版本行为一致（名单为空时不限制）。"
+            }
+        }
+    },
+    "section_recall": {
+        "type": "section",
+        "name": "被动召回",
+        "collapsed": true,
+        "fields": {
+            "recall_enabled": {
+                "name": "启用被动召回",
+                "type": "switch",
+                "default": false,
+                "hint": "总开关。开启后，仅对在各自知识库设置中启用了召回的知识库生效。默认关闭，不改变现有行为。"
+            },
+            "recall_mode": {
+                "name": "触发模式",
+                "type": "string",
+                "default": "hybrid",
+                "options": ["hybrid", "mention", "semantic"],
+                "hint": "hybrid=条目名或关键词命中时优先检索该条目，否则对较长消息做语义检索；mention=仅有词面命中时检索；semantic=每轮都做语义检索。"
+            },
+            "recall_top_k": {
+                "name": "每轮召回条数",
+                "type": "integer",
+                "default": 3,
+                "minimum": 1,
+                "maximum": 10,
+                "hint": "每次最多注入多少个文档块。"
+            },
+            "recall_min_score": {
+                "name": "相似度门槛",
+                "type": "float",
+                "default": 0.35,
+                "minimum": 0,
+                "maximum": 1,
+                "hint": "余弦相似度门槛（0-1）。不同嵌入模型的基线差异较大，建议先在面板里用检索测试观察分数再调整。"
+            },
+            "recall_strong_score": {
+                "name": "语义检索强门槛",
+                "type": "float",
+                "default": 0.6,
+                "minimum": 0,
+                "maximum": 1,
+                "hint": "没有词面命中时，语义检索需要达到的更高门槛，用于减少无关注入。"
+            },
+            "recall_max_chars": {
+                "name": "注入字符上限",
+                "type": "integer",
+                "default": 1200,
+                "minimum": 100,
+                "maximum": 8000,
+                "hint": "单轮注入内容的最大字符数，超出按相关度截断。"
+            },
+            "recall_timeout_ms": {
+                "name": "召回超时（毫秒）",
+                "type": "integer",
+                "default": 1500,
+                "minimum": 200,
+                "maximum": 10000,
+                "hint": "超过此时间直接跳过本轮召回，绝不拖慢回复。"
+            },
+            "recall_dedupe_turns": {
+                "name": "去重回合数",
+                "type": "integer",
+                "default": 2,
+                "minimum": 0,
+                "maximum": 20,
+                "hint": "同一片段在多少回合内不重复注入。0 表示每轮都允许重复。"
+            },
+            "recall_max_kbs": {
+                "name": "单轮最多检索知识库数",
+                "type": "integer",
+                "default": 3,
+                "minimum": 1,
+                "maximum": 20,
+                "hint": "一轮对话最多检索多少个已启用召回的知识库。"
+            },
+            "recall_min_query_chars": {
+                "name": "触发最小消息长度",
+                "type": "integer",
+                "default": 2,
+                "minimum": 1,
+                "maximum": 32,
+                "hint": "太短的消息（如“嗯”“好”）不触发召回。"
             }
         }
     }
