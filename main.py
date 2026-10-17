@@ -457,9 +457,12 @@ class KiraKBPlugin(BasePlugin):
             self.recall_config["lexical_enabled"] = self.enable_lexical_search
             if self.kb_manager:
                 self.kb_manager.lexical_enabled = self.enable_lexical_search
-        if "lexical_min_score" in search:
+        lexical_value = search.get(
+            "lexical_min_score", recall.get("lexical_min_score")
+        )
+        if lexical_value is not None:
             self.lexical_min_score = clamp_int(
-                search.get("lexical_min_score"), self.lexical_min_score, 0, 20
+                lexical_value, self.lexical_min_score, 0, 20
             )
             self.recall_config["lexical_min_score"] = self.lexical_min_score
             if self.kb_manager:

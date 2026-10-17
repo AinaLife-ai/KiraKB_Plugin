@@ -96,7 +96,9 @@ async def main_async():
     print("\nS2  应用热设置")
     result = await plugin._apply_settings({
         "search": {"enable_hybrid_search": True, "default_top_k": 9,
-                   "chunk_size": 700, "chunk_overlap": 120},
+                   "chunk_size": 700, "chunk_overlap": 120,
+                   "enable_lexical_search": False, "ignore_time": False,
+                   "lexical_min_score": 7, "auto_install_dependencies": False},
         "entries": {"entry_title_max_chars": 32, "entry_history_keep": 8,
                     "extra_tools_enabled": False, "auto_sync_versions": True},
         "permission": {"owner_whitelist": ["1", "2"],
@@ -112,6 +114,11 @@ async def main_async():
     check("应用成功", result["ok"] is True, str(result.get("warnings")))
     check("混合检索生效", plugin.enable_hybrid and plugin.kb_manager.enable_hybrid)
     check("默认 top_k", plugin.default_top_k == 9, str(plugin.default_top_k))
+    check("词法开关热更新", plugin.enable_lexical_search is False
+          and plugin.kb_manager.lexical_enabled is False)
+    check("忽略时间热更新", plugin.ignore_time is False
+          and plugin.recall_config["ignore_time"] is False)
+    check("内容门槛热更新", plugin.lexical_min_score == 7, str(plugin.lexical_min_score))
     check("KB 分块参数同步", plugin.kb_manager.kbs["test"].chunk_size == 700,
           str(plugin.kb_manager.kbs["test"].chunk_size))
     check("标题长度", plugin.entry_title_max_chars == 32)

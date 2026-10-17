@@ -39,6 +39,8 @@ class DocumentParser:
             return await DocumentParser._parse_text(file_path)
         elif ext in [".docx", ".xlsx", ".pptx"]:
             global MARKITDOWN_AVAILABLE, MarkItDown
+            if ext == ".xlsx":
+                await ensure_optional("openpyxl", "openpyxl")
             if not MARKITDOWN_AVAILABLE:
                 if await ensure_optional("markitdown", "markitdown"):
                     try:
