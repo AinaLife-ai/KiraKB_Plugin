@@ -2108,13 +2108,14 @@ function renderHistory(data) {
         <span class="mono faint">${String(i + 1).padStart(2, "0")}</span>
         <div>
           <div class="doc-name">${fmtTime(r.created_at)}</div>
-          <div class="doc-meta">${r.size} chars · ${r.actor === "ai" ? "AI" : r.actor === "human" ? "Human" : "System"} · ${esc(r.source)}${r.restored_from ? " · from " + esc(r.restored_from) : ""}</div>
+          <div class="doc-meta">${r.size} chars · ${r.actor === "ai" ? "AI" : r.actor === "human" ? "Human" : "System"} · ${esc(r.source)}${r.restored_from ? " · from " + esc(r.restored_from) : ""}${r.last_restored_at ? " · restored " + fmtTime(r.last_restored_at) : ""}</div>
         </div>
         <div class="badges">
           ${r.is_original ? badge("Original", "acid") : ""}
           ${r.is_current ? badge("Current", "cyan") : ""}
           ${r.actor === "ai" ? badge("AI", "violet") : ""}
           ${r.actor === "human" && !r.is_original ? badge("Human", "") : ""}
+          ${r.last_restored_at ? badge("Restored", "warn") : ""}
         </div>
         <div class="row-actions" style="opacity:1">
           <button type="button" class="icon-btn" title="View" data-action="history-view" data-id="${esc(r.rev_id)}">${icon("eye", 15)}</button>
@@ -2144,7 +2145,7 @@ function historyBack() {
 
 async function restoreRevision(revId) {
   if (!state.historyDoc || !revId) return;
-  const ok = await askConfirm("Restore revision", "Replace the current content with this revision? The change is recorded as a new revision.", "Restore");
+  const ok = await askConfirm("Restore revision", "Move the current pointer to this revision? No new revision is added and no backup slot is consumed.", "Restore");
   if (!ok) return;
   try {
     await api(`/kbs/${encodeURIComponent(state.current)}/documents/${state.historyDoc}/history/${revId}/restore`, {

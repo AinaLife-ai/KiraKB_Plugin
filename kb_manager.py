@@ -476,8 +476,11 @@ class KnowledgeBase:
                 "latest_actor": hist.get("latest_actor") or "",
                 "latest_rev": hist.get("latest_rev") or "",
                 "original_rev": hist.get("original_rev") or "",
-                "edited": bool(hist.get("original_hash") and hist.get("latest_hash")
-                               and hist.get("original_hash") != hist.get("latest_hash")),
+                "edited": bool(
+                    hist.get("original_hash")
+                    and (hist.get("current_hash") or hist.get("latest_hash"))
+                    and hist.get("original_hash") != (hist.get("current_hash") or hist.get("latest_hash"))
+                ),
                 "ai_edited": bool(hist.get("ai_edited")),
             },
         }
@@ -570,9 +573,11 @@ class KnowledgeBase:
             "seq": seq,
             "original_rev": original_rev,
             "latest_rev": rev_id,
+            "current_rev": rev_id,
             "latest_actor": record["actor"],
             "original_hash": hist.get("original_hash") or digest,
             "latest_hash": digest,
+            "current_hash": digest,
             "ai_edited": bool(hist.get("ai_edited")) or (actor == "ai" and source != "create"),
             "updated_at": record["created_at"],
         }
@@ -597,6 +602,8 @@ class KnowledgeBase:
         hist = meta.get("history") if isinstance(meta.get("history"), dict) else {}
         hist["original_hash"] = content_hash(old)
         hist["latest_hash"] = content_hash(old)
+        hist["current_hash"] = content_hash(old)
+        hist["current_rev"] = hist.get("original_rev")
         hist["latest_actor"] = "system"
         meta["history"] = hist
         self.write_doc_meta(doc_id, meta)
@@ -609,11 +616,14 @@ class KnowledgeBase:
         hist = self._history_summary(doc_id)
         original_rev = hist.get("original_rev")
         latest_rev = hist.get("latest_rev")
+        current_rev = hist.get("current_rev")
         keep_names = {p.name for p in files[-keep:]}
         if original_rev:
             keep_names.add(f"{original_rev}.json")
         if latest_rev:
             keep_names.add(f"{latest_rev}.json")
+        if current_rev:
+            keep_names.add(f"{current_rev}.json")
         for path in files:
             if path.name not in keep_names:
                 try:
@@ -643,8 +653,11 @@ class KnowledgeBase:
                 "source": data.get("source", "edit"),
                 "restored_from": data.get("restored_from"),
                 "content_hash": data.get("content_hash"),
+                "last_restored_at": data.get("last_restored_at"),
+                "last_restored_by": data.get("last_restored_by"),
+                "restore_count": data.get("restore_count", 0),
                 "is_original": rev_id == hist.get("original_rev"),
-                "is_current": rev_id == hist.get("latest_rev"),
+                "is_current": rev_id == (hist.get("current_rev") or hist.get("latest_rev")),
             })
         return rows
 
@@ -660,16 +673,45 @@ class KnowledgeBase:
         except Exception:
             return None
 
+    def _revision_path(self, doc_id: str, rev_id: str) -> Path:
+        return self._history_dir(doc_id) / f"{rev_id}.json"
+
     async def restore_revision(self, doc_id: str, rev_id: str,
                                actor: str = "human") -> Optional[str]:
+        """Point the entry at an existing revision without creating a new one.
+
+        A restore used to append a duplicate revision, which could evict a
+        distinct backup from the retention window. Moving ``current_rev`` keeps
+        the full history intact and never consumes a recent-edit slot.
+        """
         record = self.get_revision(doc_id, rev_id)
         if record is None:
             return None
+        doc_path = self._doc_file(doc_id)
+        if not doc_path.exists():
+            return None
         content = record.get("content") or ""
-        ok = await self.update_raw_document(
-            doc_id, content, actor=actor, source="restore", restored_from=rev_id
+        digest = content_hash(content)
+        doc_path.write_text(content, encoding="utf-8")
+
+        stamp = now_ts()
+        meta = self.read_doc_meta(doc_id)
+        meta["updated_at"] = stamp
+        meta["content_hash"] = digest
+        hist = meta.get("history") if isinstance(meta.get("history"), dict) else {}
+        hist["current_rev"] = rev_id
+        hist["current_hash"] = digest
+        hist["last_restore"] = {"rev_id": rev_id, "at": stamp, "actor": actor}
+        meta["history"] = hist
+        self.write_doc_meta(doc_id, meta)
+
+        record["last_restored_at"] = stamp
+        record["last_restored_by"] = actor
+        record["restore_count"] = int(record.get("restore_count", 0) or 0) + 1
+        self._revision_path(doc_id, rev_id).write_text(
+            json.dumps(record, ensure_ascii=False), encoding="utf-8"
         )
-        return content if ok else None
+        return content
 
     async def update_document_settings(self, doc_id: str, patch: Dict[str, Any]) -> Dict[str, Any]:
         async with self._meta_lock:
@@ -738,8 +780,9 @@ class KnowledgeBase:
                     "edited": bool(
                         isinstance(meta.get("history"), dict)
                         and meta["history"].get("original_hash")
-                        and meta["history"].get("latest_hash")
-                        and meta["history"]["original_hash"] != meta["history"]["latest_hash"]
+                        and (meta["history"].get("current_hash") or meta["history"].get("latest_hash"))
+                        and meta["history"]["original_hash"]
+                        != (meta["history"].get("current_hash") or meta["history"].get("latest_hash"))
                     ),
                     "ai_edited": bool(
                         isinstance(meta.get("history"), dict)

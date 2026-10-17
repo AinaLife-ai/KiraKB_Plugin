@@ -73,15 +73,21 @@ async def main_async():
     ai_doc = await kb.add_raw_document("AI 创建的内容", "AI 条目", actor="ai")
     check("AI 创建不算编辑", kb.get_document_settings(ai_doc)["history"]["ai_edited"] is False)
 
-    print("\nH3  回退到最初版本")
+    print("\nH3  回退到最初版本（不新增、不挤占备份）")
+    before = len(kb.list_history(doc_id))
     content = await kb.restore_revision(doc_id, original_rev, actor="human")
     check("回退内容正确", content == "原始内容", str(content))
     check("当前内容已替换", (await kb.get_raw_document(doc_id)) == "原始内容")
     rows = kb.list_history(doc_id)
-    check("回退也记一条版本", len(rows) == 4, str(len(rows)))
-    check("回退来源标记", rows[0]["source"] == "restore" and rows[0]["restored_from"] == original_rev,
-          str(rows[0]))
+    check("回退不新增修订", len(rows) == before, f"{before}->{len(rows)}")
+    current = [r for r in rows if r["is_current"]]
+    check("当前指针移到目标版本", len(current) == 1 and current[0]["rev_id"] == original_rev,
+          str(current))
+    check("回退事件被记录", current and current[0]["last_restored_at"] and current[0]["restore_count"] == 1,
+          str(current[0] if current else None))
     check("原始版本永久保留", any(r["rev_id"] == original_rev for r in rows))
+    check("内容回到原始后 edited=false", kb.get_document_settings(doc_id)["history"]["edited"] is False)
+    check("AI 编辑标记仍保留", kb.get_document_settings(doc_id)["history"]["ai_edited"] is True)
 
     print("\nH4  裁剪保留最近 N 份")
     await kb.set_history_keep(2)
@@ -112,8 +118,11 @@ async def main_async():
     rev = data["revisions"][-1]["rev_id"]
     data, status = await api.get_history_revision(mgr, "demo", doc_id, rev)
     check("读取历史 API", status == 200 and data.get("content"), str(status))
+    before = len(kb.list_history(doc_id))
     data, status = await api.restore_history_revision(mgr, "demo", doc_id, rev)
     check("回退 API", status == 200 and data.get("ok"), str(data))
+    check("API 回退不新增修订", len(kb.list_history(doc_id)) == before,
+          f"{before}->{len(kb.list_history(doc_id))}")
 
     await kb.set_permissions({"edit": "off"})
     data, status = await api.update_document(mgr, "demo", doc_id, {"content": "冻结后编辑"})
