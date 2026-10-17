@@ -97,7 +97,7 @@ async def api_get_settings(request: Request) -> JSONResponse:
 
 async def api_update_settings(request: Request) -> JSONResponse:
     body = await request.json()
-    data, status = api.update_settings(_get_mgr(request), body)
+    data, status = await api.update_settings(_get_mgr(request), body)
     return _json(data, status)
 
 

@@ -729,6 +729,16 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
           <div class="field"><label>重排序</label>
             <label class="switch"><input type="checkbox" id="setRerank"><span class="track"></span><span class="txt">默认模型</span></label>
           </div>
+          <div class="field"><label>词法召回</label>
+            <label class="switch"><input type="checkbox" id="setLexical"><span class="track"></span><span class="txt">标题 + 内容</span></label>
+          </div>
+          <div class="field"><label>忽略时间因素</label>
+            <label class="switch"><input type="checkbox" id="setIgnoreTime"><span class="track"></span><span class="txt">推荐开启</span></label>
+          </div>
+          <div class="field"><label>自动安装依赖</label>
+            <label class="switch"><input type="checkbox" id="setAutoInstallDeps"><span class="track"></span><span class="txt">可选依赖</span></label>
+          </div>
+          <div class="field"><label>内容命中门槛</label><input id="setLexicalMin" type="number" min="0" max="20"></div>
         </div>
       </div>
 
@@ -776,14 +786,18 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
 
       <div class="panel">
         <div class="panel-head">
-          <span data-icon="alert-triangle" data-size="16"></span>
-          <h2>需要重启</h2>
-          <span class="count">此处只读</span>
+          <span data-icon="hard-drive" data-size="16"></span>
+          <h2>存储与独立 WebUI</h2>
+          <span class="count">热切换</span>
         </div>
         <div class="form-grid">
-          <div class="field"><label>知识库目录</label><input id="setKbDir" type="text" disabled></div>
-          <div class="field"><label>独立服务地址</label><input id="setWebHost" type="text" disabled></div>
-          <div class="field"><label>独立服务端口</label><input id="setWebPort" type="number" disabled></div>
+          <div class="field wide"><label>知识库目录</label><input id="setKbDir" type="text" placeholder="留空 = data/knowledge_base"><span class="faint" style="font-size:11px">切换后立即生效；旧目录不会自动迁移。</span></div>
+          <div class="field"><label>启用独立 WebUI</label>
+            <label class="switch"><input type="checkbox" id="setEnableWebui"><span class="track"></span><span class="txt">热启动</span></label>
+          </div>
+          <div class="field"><label>绑定地址</label><input id="setWebHost" type="text" placeholder="127.0.0.1"></div>
+          <div class="field"><label>端口</label><input id="setWebPort" type="number" min="0" max="65535"></div>
+          <div class="field wide"><label>访问令牌（留空无认证）</label><input id="setWebToken" type="text"></div>
         </div>
         <div class="panel-foot">
           <button type="button" class="btn solid" data-action="save-settings">
@@ -1999,6 +2013,10 @@ function renderSettings() {
   chk("setHybrid", search.enable_hybrid_search);
   chk("setStopwords", search.enable_stopwords);
   chk("setRerank", search.enable_rerank);
+  chk("setLexical", search.enable_lexical_search);
+  chk("setIgnoreTime", search.ignore_time);
+  chk("setAutoInstallDeps", search.auto_install_dependencies);
+  val("setLexicalMin", search.lexical_min_score);
   const entries = cfg.entries || {};
   val("setTitleMax", entries.entry_title_max_chars);
   val("setHistoryKeep", entries.entry_history_keep);
@@ -2021,10 +2039,13 @@ function renderSettings() {
   val("setRecallDedupe", recall.dedupe_turns);
   val("setRecallMaxKbs", recall.max_kbs);
   val("setRecallMinQuery", recall.min_query_chars);
-  const restart = cfg.restart || {};
-  val("setKbDir", restart.knowledge_base_dir);
-  val("setWebHost", restart.webui_host);
-  val("setWebPort", restart.webui_port);
+  const storage = cfg.storage || {};
+  val("setKbDir", storage.knowledge_base_dir);
+  const webui = cfg.webui || {};
+  chk("setEnableWebui", webui.enable_webui);
+  val("setWebHost", webui.webui_host);
+  val("setWebPort", webui.webui_port);
+  val("setWebToken", webui.webui_token);
 }
 
 async function saveSettings() {
@@ -2033,6 +2054,17 @@ async function saveSettings() {
     if (!el || el.value === "") return null;
     return Number(el.value);
   };
+  const oldDir = (state.settings && state.settings.storage
+    && state.settings.storage.knowledge_base_dir) || "";
+  const newDir = document.getElementById("setKbDir").value.trim();
+  if (newDir && newDir !== oldDir) {
+    const ok = await askConfirm(
+      "切换知识库目录",
+      "会立即切换到新目录，旧目录不会自动迁移。确定？",
+      "切换"
+    );
+    if (!ok) return;
+  }
   const payload = {
     search: {
       enable_hybrid_search: document.getElementById("setHybrid").checked,
@@ -2040,7 +2072,11 @@ async function saveSettings() {
       chunk_size: num("setChunkSize"),
       chunk_overlap: num("setChunkOverlap"),
       enable_stopwords: document.getElementById("setStopwords").checked,
-      enable_rerank: document.getElementById("setRerank").checked
+      enable_rerank: document.getElementById("setRerank").checked,
+      enable_lexical_search: document.getElementById("setLexical").checked,
+      ignore_time: document.getElementById("setIgnoreTime").checked,
+      auto_install_dependencies: document.getElementById("setAutoInstallDeps").checked,
+      lexical_min_score: num("setLexicalMin")
     },
     entries: {
       entry_title_max_chars: num("setTitleMax"),
@@ -2065,6 +2101,15 @@ async function saveSettings() {
       recall_dedupe_turns: num("setRecallDedupe"),
       recall_max_kbs: num("setRecallMaxKbs"),
       recall_min_query_chars: num("setRecallMinQuery")
+    },
+    storage: {
+      knowledge_base_dir: newDir
+    },
+    webui: {
+      enable_webui: document.getElementById("setEnableWebui").checked,
+      webui_host: document.getElementById("setWebHost").value.trim(),
+      webui_port: num("setWebPort"),
+      webui_token: document.getElementById("setWebToken").value
     }
   };
   try {

@@ -253,6 +253,8 @@ async def tool_tests():
     check("读取条目全文", "ZXQ" in got, got[:60])
     bases = await plugin.list_knowledge_bases(evt_u1)
     check("知识库列表含条目数", "个条目" in bases, bases[:80])
+    hits, err, note = await plugin._search_one_kb(kb, "ZXQ", 5)
+    check("工具词法内容命中", any("ZXQ" in h.get("content", "") for h in hits), str(err))
 
     await plugin.terminate()
 

@@ -7,11 +7,12 @@ import shutil
 import time
 import uuid
 from pathlib import Path
-from typing import Optional, List, Dict, Any, Callable, Awaitable, Tuple
+from typing import Optional, List, Dict, Any, Callable, Awaitable, Tuple, Set
 
 from .vector_store import VectorStore
 from .chunking import RecursiveCharacterChunker
 from .retriever import HybridRetriever
+from .lexical import LexicalIndex, tokenize, score_token_sets
 from . import permissions as perms
 from .recall import normalise_config as normalise_recall_config
 from core.logging_manager import get_logger
@@ -321,6 +322,10 @@ class KnowledgeBase:
         self.versions_dir = kb_dir / "versions"
         self.raw_docs_dir.mkdir(parents=True, exist_ok=True)
         self.versions_dir.mkdir(parents=True, exist_ok=True)
+        self.lexical = LexicalIndex(
+            kb_dir / "lexical.db", self.raw_docs_dir,
+            (stopwords_path, default_stopwords_path), logger,
+        )
 
         self.embedding_client_getter = embedding_client_getter
         self.client_resolver = client_resolver
@@ -704,6 +709,9 @@ class KnowledgeBase:
         hist["last_restore"] = {"rev_id": rev_id, "at": stamp, "actor": actor}
         meta["history"] = hist
         self.write_doc_meta(doc_id, meta)
+        await self.lexical.upsert(
+            doc_id, meta.get("original_name") or doc_id, content, stamp
+        )
 
         record["last_restored_at"] = stamp
         record["last_restored_by"] = actor
@@ -838,6 +846,7 @@ class KnowledgeBase:
         }
         self.write_doc_meta(doc_id, meta)
         self._record_revision(doc_id, content, actor=actor, source="create", original=True)
+        await self.lexical.upsert(doc_id, meta["original_name"], content, timestamp)
         return doc_id
 
     async def update_raw_document(self, doc_id: str, new_content: str,
@@ -856,6 +865,10 @@ class KnowledgeBase:
         if original_name:
             meta["original_name"] = original_name
         self.write_doc_meta(doc_id, meta)
+        await self.lexical.upsert(
+            doc_id, meta.get("original_name") or doc_id,
+            new_content, meta.get("updated_at") or now_ts(),
+        )
         self._record_revision(
             doc_id, new_content, actor=actor, source=source,
             restored_from=restored_from,
@@ -885,6 +898,7 @@ class KnowledgeBase:
             self._meta_cache.pop(doc_id, None)
         for ver in self._versions.values():
             await ver.delete_document(doc_id)
+        await self.lexical.delete(doc_id)
         return True
 
     async def _vectorize_document(self, version: KnowledgeBaseVersion, doc_id: str,
@@ -937,6 +951,9 @@ class KnowledgeBase:
         meta["updated_at"] = now_ts()
         meta["content_hash"] = content_hash(content)
         self.write_doc_meta(doc_id, meta)
+        await self.lexical.upsert(
+            doc_id, meta.get("original_name") or doc_id, content, meta["updated_at"]
+        )
 
         targets = [
             v for v in self._versions.values()
@@ -1142,6 +1159,47 @@ class KnowledgeBase:
         return True
 
     # ------------------------------------------------------------------
+    # Lexical recall helpers
+    # ------------------------------------------------------------------
+    async def lexical_search(self, query: str, *,
+                             allowed_ids: Optional[Set[str]] = None,
+                             min_content_score: int = 2,
+                             limit: int = 20,
+                             ignore_time: bool = True) -> List[Dict[str, Any]]:
+        return await self.lexical.search(
+            query, allowed_ids=allowed_ids, min_content_score=min_content_score,
+            limit=limit, ignore_time=ignore_time,
+        )
+
+    def lexical_tokens(self, text: str) -> Set[str]:
+        return tokenize(text, self.lexical.stopwords)
+
+    def lexical_score(self, query_tokens: Set[str], text: str) -> int:
+        return score_token_sets(query_tokens, self.lexical_tokens(text))
+
+    async def get_entry_chunks(self, doc_id: str, limit: int = 8) -> List[Dict[str, Any]]:
+        """Chunks for lexical recall: active version first, raw fallback second."""
+        active = self.active_version
+        if active is not None and active.status == "ready":
+            try:
+                rows = await active.get_document_chunks(doc_id, limit=limit)
+                if rows:
+                    return rows
+            except Exception:
+                pass
+        content = await self.get_raw_document(doc_id)
+        if not content:
+            return []
+        chunker = RecursiveCharacterChunker(
+            chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap
+        )
+        chunks = chunker.split_text(content)
+        return [
+            {"content": text, "metadata": {"doc_id": doc_id, "chunk_index": i}}
+            for i, text in enumerate(chunks[:max(1, limit)])
+        ]
+
+    # ------------------------------------------------------------------
     # Version freshness / incremental sync
     # ------------------------------------------------------------------
     def version_staleness(self, version_id: str) -> Dict[str, Any]:
@@ -1219,6 +1277,9 @@ class KnowledgeBaseManager:
         # Single source of truth for "hybrid on?" - the sidebar, the standalone
         # server and the bot tools all read this value.
         self.enable_hybrid = bool(enable_hybrid)
+        self.lexical_enabled = True
+        self.lexical_min_score = 2
+        self.ignore_time = True
         self.history_keep = max(1, min(200, int(history_keep or 5)))
         self.kbs: Dict[str, KnowledgeBase] = {}
 
@@ -1233,6 +1294,7 @@ class KnowledgeBaseManager:
                 continue
             kb = self._build_kb(kb_id, subdir)
             await kb.load_versions()
+            await kb.lexical.ensure_ready()
             self.kbs[kb_id] = kb
             logger.info(f"Loaded knowledge base: {kb_id}")
 
@@ -1257,6 +1319,7 @@ class KnowledgeBaseManager:
         kb.info = {"display_name": kb_id, "description": ""}
         kb._save_info()
         await kb.load_versions()
+        await kb.lexical.ensure_ready()
         self.kbs[kb_id] = kb
         return kb
 

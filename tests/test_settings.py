@@ -90,11 +90,11 @@ async def main_async():
 
     print("\nS1  快照")
     snap = plugin._settings_snapshot()
-    check("包含分区", all(k in snap for k in ("search", "entries", "permission", "recall", "restart")), str(snap.keys()))
+    check("包含分区", all(k in snap for k in ("search", "entries", "permission", "recall", "storage", "webui")), str(snap.keys()))
     check("默认历史保留 5", snap["entries"]["entry_history_keep"] == 5, str(snap["entries"]))
 
     print("\nS2  应用热设置")
-    result = plugin._apply_settings({
+    result = await plugin._apply_settings({
         "search": {"enable_hybrid_search": True, "default_top_k": 9,
                    "chunk_size": 700, "chunk_overlap": 120},
         "entries": {"entry_title_max_chars": 32, "entry_history_keep": 8,
@@ -127,18 +127,18 @@ async def main_async():
     check("管理器召回快照同步", plugin.kb_manager.recall_global["enabled"] is True)
 
     print("\nS2b 停用词与重排热切换")
-    plugin._apply_settings({"search": {"enable_stopwords": True}})
+    await plugin._apply_settings({"search": {"enable_stopwords": True}})
     check("停用词开关生效", plugin.enable_stopwords is True)
     check("检索器已刷新", plugin.kb_manager.kbs["test"].stopwords_path is not None,
           str(plugin.kb_manager.kbs["test"].stopwords_path))
-    result = plugin._apply_settings({"search": {"enable_rerank": True}})
+    result = await plugin._apply_settings({"search": {"enable_rerank": True}})
     check("无重排模型时不启用", plugin.enable_rerank is False, str(plugin.enable_rerank))
     check("返回可读警告", bool(result.get("warnings")), str(result.get("warnings")))
 
     print("\nS3  只读工具热开关")
     check("关闭后不再注册", "knowledge_list_entries" not in plugin.ctx.tool_mgr.tools
           and "knowledge_get_entry" not in plugin.ctx.tool_mgr.tools)
-    plugin._apply_settings({"entries": {"extra_tools_enabled": True}})
+    await plugin._apply_settings({"entries": {"extra_tools_enabled": True}})
     check("开启后重新注册", "knowledge_list_entries" in plugin.ctx.tool_mgr.tools
           and "knowledge_get_entry" in plugin.ctx.tool_mgr.tools)
 
@@ -153,17 +153,114 @@ async def main_async():
           str(saved["section_recall"]))
 
     print("\nS5  非法值回退")
-    plugin._apply_settings({"recall": {"recall_mode": "nope"}})
+    await plugin._apply_settings({"recall": {"recall_mode": "nope"}})
     check("非法模式回退 hybrid", plugin.recall_config["mode"] == "hybrid")
-    plugin._apply_settings({"search": {"chunk_size": 8000, "chunk_overlap": 9999}})
+    await plugin._apply_settings({"search": {"chunk_size": 8000, "chunk_overlap": 9999}})
     check("重叠被钳制", plugin.chunk_overlap < plugin.chunk_size,
           f"{plugin.chunk_overlap}/{plugin.chunk_size}")
 
     print("\nS6  API 往返")
     data, status = api.get_settings(plugin.kb_manager)
     check("GET settings", status == 200 and data["recall"]["mode"] == "hybrid", str(status))
-    data, status = api.update_settings(plugin.kb_manager, {"recall": {"recall_top_k": 6}})
+    data, status = await api.update_settings(plugin.kb_manager, {"recall": {"recall_top_k": 6}})
     check("PUT settings", status == 200 and data["settings"]["recall"]["top_k"] == 6, str(status))
+
+    print("\nS7  存储目录与独立 WebUI 热切换")
+    old_dir = plugin.kb_base_dir
+    new_dir = str(ROOT / "kb_hot")
+    res = await plugin._apply_settings({"storage": {"knowledge_base_dir": new_dir}})
+    check("存储目录切换成功", not res.get("warnings") and plugin.kb_base_dir == new_dir,
+          str(res.get("warnings")))
+    check("管理器指向新目录", str(plugin.kb_manager.base_dir) == new_dir,
+          str(plugin.kb_manager.base_dir))
+    check("新目录已加载（空）", plugin.kb_manager.kbs == {}, str(plugin.kb_manager.kbs))
+    res = await plugin._apply_settings({"storage": {"knowledge_base_dir": old_dir}})
+    check("切回原目录成功", "test" in plugin.kb_manager.kbs, str(plugin.kb_manager.kbs.keys()))
+    res = await plugin._apply_settings({"webui": {
+        "enable_webui": True, "webui_host": "127.0.0.1",
+        "webui_port": 0, "webui_token": "hot-token",
+    }})
+    check("WebUI 开关热更新", plugin.enable_webui is True and plugin.webui_token == "hot-token",
+          str(res.get("warnings")))
+    check("端口 0 不启动服务", plugin._webui_server is None)
+    await plugin._apply_settings({"webui": {"enable_webui": False}})
+    check("WebUI 可热关闭", plugin.enable_webui is False and plugin._webui_server is None)
+
+    port = 19124
+    res = await plugin._apply_settings({"webui": {
+        "enable_webui": True, "webui_host": "127.0.0.1",
+        "webui_port": port, "webui_token": "hot-token",
+    }})
+    await asyncio.sleep(1.2)
+    server = plugin._webui_server
+    check(
+        "独立 WebUI 热启动",
+        server is not None and server._task is not None and not server._task.done(),
+        str(res.get("warnings")),
+    )
+    await plugin._apply_settings({"webui": {"enable_webui": False}})
+    await asyncio.sleep(0.4)
+    check("独立 WebUI 热停止", plugin._webui_server is None)
+
+    print("\nS8  配置覆盖：schema ↔ 快照 ↔ 前端控件")
+    snapshot = plugin._settings_snapshot()
+    mapping = {
+        ("section_basic", "knowledge_base_dir"): ("storage", "knowledge_base_dir"),
+        ("section_basic", "chunk_size"): ("search", "chunk_size"),
+        ("section_basic", "chunk_overlap"): ("search", "chunk_overlap"),
+        ("section_basic", "default_top_k"): ("search", "default_top_k"),
+        ("section_basic", "enable_hybrid_search"): ("search", "enable_hybrid_search"),
+        ("section_basic", "enable_stopwords"): ("search", "enable_stopwords"),
+        ("section_basic", "enable_rerank"): ("search", "enable_rerank"),
+        ("section_basic", "entry_title_max_chars"): ("entries", "entry_title_max_chars"),
+        ("section_basic", "extra_tools_enabled"): ("entries", "extra_tools_enabled"),
+        ("section_basic", "auto_sync_versions"): ("entries", "auto_sync_versions"),
+        ("section_basic", "entry_history_keep"): ("entries", "entry_history_keep"),
+        ("section_basic", "enable_lexical_search"): ("search", "enable_lexical_search"),
+        ("section_basic", "ignore_time"): ("search", "ignore_time"),
+        ("section_basic", "auto_install_dependencies"): ("search", "auto_install_dependencies"),
+        ("section_webui", "enable_webui"): ("webui", "enable_webui"),
+        ("section_webui", "webui_port"): ("webui", "webui_port"),
+        ("section_webui", "webui_host"): ("webui", "webui_host"),
+        ("section_webui", "webui_token"): ("webui", "webui_token"),
+        ("section_permission", "owner_whitelist"): ("permission", "owner_whitelist"),
+        ("section_permission", "default_add_policy"): ("permission", "default_add_policy"),
+        ("section_permission", "default_edit_policy"): ("permission", "default_edit_policy"),
+        ("section_permission", "default_delete_policy"): ("permission", "default_delete_policy"),
+        ("section_recall", "recall_enabled"): ("recall", "enabled"),
+        ("section_recall", "recall_mode"): ("recall", "mode"),
+        ("section_recall", "recall_top_k"): ("recall", "top_k"),
+        ("section_recall", "recall_min_score"): ("recall", "min_score"),
+        ("section_recall", "recall_strong_score"): ("recall", "strong_score"),
+        ("section_recall", "recall_max_chars"): ("recall", "max_chars"),
+        ("section_recall", "recall_timeout_ms"): ("recall", "timeout_ms"),
+        ("section_recall", "recall_dedupe_turns"): ("recall", "dedupe_turns"),
+        ("section_recall", "recall_max_kbs"): ("recall", "max_kbs"),
+        ("section_recall", "recall_min_query_chars"): ("recall", "min_query_chars"),
+        ("section_recall", "lexical_min_score"): ("search", "lexical_min_score"),
+    }
+    plugin_dir = Path(__file__).resolve().parent.parent
+    schema = json.loads((plugin_dir / "schema.json").read_text(encoding="utf-8"))
+    missing = []
+    for section, spec in schema.items():
+        for key in (spec.get("fields") or {}):
+            path = mapping.get((section, key))
+            if not path or path[0] not in snapshot or path[1] not in snapshot[path[0]]:
+                missing.append(f"{section}.{key}")
+    check("每个 schema 字段都有运行时快照", not missing, str(missing))
+    html = (plugin_dir / "web" / "index.html").read_text(encoding="utf-8")
+    ids = [
+        "setKbDir", "setChunkSize", "setChunkOverlap", "setTopK", "setHybrid",
+        "setStopwords", "setRerank", "setTitleMax", "setExtraTools", "setAutoSync",
+        "setHistoryKeep", "setLexical", "setIgnoreTime", "setAutoInstallDeps",
+        "setEnableWebui", "setWebHost", "setWebPort", "setWebToken",
+        "setAddPolicy", "setEditPolicy", "setDeletePolicy", "setOwnerWhitelist",
+        "setRecallEnabled", "setRecallMode", "setRecallTopK", "setRecallMin",
+        "setRecallStrong", "setRecallChars", "setRecallTimeout", "setRecallDedupe",
+        "setRecallMaxKbs", "setRecallMinQuery", "setLexicalMin",
+    ]
+    missing_ids = [i for i in ids if f'id="{i}"' not in html]
+    check("每个配置都有前端控件", not missing_ids, str(missing_ids))
 
     await plugin.terminate()
 

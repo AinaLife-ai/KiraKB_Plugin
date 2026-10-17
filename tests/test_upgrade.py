@@ -66,7 +66,7 @@ async def main_async():
     data, status = await api.search(mgr, "demo", {"query": "安装指南"})
     check("检索成功", status == 200 and isinstance(data, list), str(status))
     names = {row["doc_name"] for row in data}
-    check("返回显示名而非 doc_id", names == {"安装指南", "部署手册"}, str(names))
+    check("返回显示名而非 doc_id", names == {"安装指南"}, str(names))
     check("每条结果都带 doc_id", all(row.get("doc_id") for row in data), str(data))
 
     print("\nU2  版本新鲜度")
@@ -115,10 +115,10 @@ async def main_async():
         return await original(query, top_k=top_k, enable_hybrid=enable_hybrid)
 
     active.search = spy
-    await api.search(mgr, "demo", {"query": "安装"})
+    await api.search(mgr, "demo", {"query": "完全无关的词"})
     check("面板检索遵循插件配置(False)", seen.get("enable_hybrid") is False, str(seen))
     mgr.enable_hybrid = True
-    await api.search(mgr, "demo", {"query": "安装"})
+    await api.search(mgr, "demo", {"query": "完全无关的词"})
     check("配置切换后生效(True)", seen.get("enable_hybrid") is True, str(seen))
 
     print("\nU7  条目设置持久化")

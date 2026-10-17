@@ -18,6 +18,7 @@ from core.utils.path_utils import get_data_path, get_config_path
 from .kb_manager import KnowledgeBaseManager, EmbeddingDimensionError
 from . import api_handlers as api
 from . import permissions as perms
+from . import dependencies
 from .recall import (RecallEngine, message_text, batch_user_ids, render_block,
                      clamp_int, clamp_float)
 
@@ -86,6 +87,10 @@ class KiraKBPlugin(BasePlugin):
         self.extra_tools_enabled = bool(sec_basic.get("extra_tools_enabled", True))
         self.auto_sync_versions = bool(sec_basic.get("auto_sync_versions", False))
         self.history_keep = max(1, min(200, int(sec_basic.get("entry_history_keep", 5))))
+        self.enable_lexical_search = bool(sec_basic.get("enable_lexical_search", True))
+        self.ignore_time = bool(sec_basic.get("ignore_time", True))
+        self.auto_install_dependencies = bool(sec_basic.get("auto_install_dependencies", True))
+        self.lexical_min_score = max(0, min(20, int(sec_recall.get("lexical_min_score", 2))))
 
         self.enable_webui = bool(sec_webui.get("enable_webui", False))
         self.webui_port = int(sec_webui.get("webui_port", 19122))
@@ -110,6 +115,9 @@ class KiraKBPlugin(BasePlugin):
             "dedupe_turns": sec_recall.get("recall_dedupe_turns", 2),
             "max_kbs": sec_recall.get("recall_max_kbs", 3),
             "min_query_chars": sec_recall.get("recall_min_query_chars", 2),
+            "lexical_enabled": self.enable_lexical_search,
+            "lexical_min_score": self.lexical_min_score,
+            "ignore_time": self.ignore_time,
         }
 
         self.kb_manager: Optional[KnowledgeBaseManager] = None
@@ -198,6 +206,30 @@ class KiraKBPlugin(BasePlugin):
         except Exception:
             return default
 
+    def _create_manager(self, base_dir: Optional[str] = None) -> KnowledgeBaseManager:
+        stopwords_path = self.data_dir / "stopwords.txt"
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        if not stopwords_path.exists():
+            stopwords_path.touch()
+        default_stopwords_path = Path(__file__).parent / "stopwords_default.txt"
+        sw_path = str(stopwords_path) if (self.enable_stopwords and stopwords_path.exists()) else None
+        dsw_path = str(default_stopwords_path) if (self.enable_stopwords and default_stopwords_path.exists()) else None
+        return KnowledgeBaseManager(
+            base_dir=base_dir or self.kb_base_dir,
+            embedding_client_getter=self._embedding_client_getter,
+            stopwords_path=sw_path,
+            default_stopwords_path=dsw_path,
+            vlm_client=self._vlm_client,
+            rerank_client=self._rerank_client,
+            enable_rerank=self.enable_rerank,
+            chunk_size=self.chunk_size,
+            chunk_overlap=self.chunk_overlap,
+            client_resolver=self._resolve_embedding_client,
+            model_lister=self._model_lister,
+            enable_hybrid=self.enable_hybrid,
+            history_keep=self.history_keep,
+        )
+
     async def initialize(self):
         embedding_client = None
         try:
@@ -267,30 +299,14 @@ class KiraKBPlugin(BasePlugin):
                 return None
             return client
 
-        stopwords_path = self.data_dir / "stopwords.txt"
-        self.data_dir.mkdir(parents=True, exist_ok=True)
-        if not stopwords_path.exists():
-            stopwords_path.touch()
-        default_stopwords_path = Path(__file__).parent / "stopwords_default.txt"
+        self._embedding_client = embedding_client
+        self._vlm_client = vlm_client
+        self._rerank_client = rerank_client
+        self._embedding_client_getter = get_embedding_client
+        self._model_lister = list_embedding_models
+        self._resolve_embedding_client = resolve_embedding_client
 
-        sw_path = str(stopwords_path) if (self.enable_stopwords and stopwords_path.exists()) else None
-        dsw_path = str(default_stopwords_path) if (self.enable_stopwords and default_stopwords_path.exists()) else None
-
-        self.kb_manager = KnowledgeBaseManager(
-            base_dir=self.kb_base_dir,
-            embedding_client_getter=get_embedding_client,
-            stopwords_path=sw_path,
-            default_stopwords_path=dsw_path,
-            vlm_client=vlm_client,
-            rerank_client=rerank_client,
-            enable_rerank=self.enable_rerank,
-            chunk_size=self.chunk_size,
-            chunk_overlap=self.chunk_overlap,
-            client_resolver=resolve_embedding_client,
-            model_lister=list_embedding_models,
-            enable_hybrid=self.enable_hybrid,
-            history_keep=self.history_keep,
-        )
+        self.kb_manager = self._create_manager()
 
         await self.kb_manager.load_existing_kbs()
 
@@ -299,11 +315,13 @@ class KiraKBPlugin(BasePlugin):
             kb_provider=lambda: self.kb_manager.kbs if self.kb_manager else {},
             logger=logger,
         )
-        # Expose read-only runtime settings to the WebUI (sidebar and standalone).
-        self.kb_manager.recall_global = dict(self.recall_config)
-        self.kb_manager.default_policies = dict(self.default_policies)
-        self.kb_manager.settings_getter = self._settings_snapshot
-        self.kb_manager.settings_setter = self._apply_settings
+        # Expose runtime settings to the WebUI (sidebar and standalone).
+        self._attach_manager(self.kb_manager)
+        dependencies.configure(
+            self.auto_install_dependencies,
+            self._config_value("network.pypi_mirror"),
+        )
+        self._spawn_task(dependencies.preflight(logger))
 
         self._register_extra_tools()
 
@@ -386,6 +404,10 @@ class KiraKBPlugin(BasePlugin):
                 "chunk_overlap": self.chunk_overlap,
                 "enable_stopwords": self.enable_stopwords,
                 "enable_rerank": self.enable_rerank,
+                "enable_lexical_search": self.enable_lexical_search,
+                "lexical_min_score": self.lexical_min_score,
+                "ignore_time": self.ignore_time,
+                "auto_install_dependencies": self.auto_install_dependencies,
             },
             "entries": {
                 "entry_title_max_chars": self.entry_title_max_chars,
@@ -400,20 +422,23 @@ class KiraKBPlugin(BasePlugin):
                 "default_delete_policy": self.default_policies["delete"],
             },
             "recall": dict(self.recall_config),
-            "restart": {
+            "storage": {
                 "knowledge_base_dir": self.kb_base_dir,
+            },
+            "webui": {
                 "enable_webui": self.enable_webui,
                 "webui_host": self.webui_host,
                 "webui_port": self.webui_port,
+                "webui_token": self.webui_token,
             },
         }
 
-    def _apply_settings(self, payload: dict) -> dict:
-        """Apply WebUI settings to memory and the plugin config file.
+    async def _apply_settings(self, payload: dict) -> dict:
+        """Apply every schema setting to memory and the plugin config file.
 
-        Only non-structural settings are hot. Stopwords/rerank and the storage
-        or standalone-server options need a plugin reload, and are reported as
-        warnings instead of being silently ignored.
+        All settings are hot. Changing the storage directory re-creates the
+        manager from the new path (existing files are not moved); changing the
+        standalone WebUI options restarts its server.
         """
         if not isinstance(payload, dict):
             raise ValueError("settings payload must be an object")
@@ -427,6 +452,29 @@ class KiraKBPlugin(BasePlugin):
             self.enable_hybrid = bool(search.get("enable_hybrid_search"))
             if self.kb_manager:
                 self.kb_manager.enable_hybrid = self.enable_hybrid
+        if "enable_lexical_search" in search:
+            self.enable_lexical_search = bool(search.get("enable_lexical_search"))
+            self.recall_config["lexical_enabled"] = self.enable_lexical_search
+            if self.kb_manager:
+                self.kb_manager.lexical_enabled = self.enable_lexical_search
+        if "lexical_min_score" in search:
+            self.lexical_min_score = clamp_int(
+                search.get("lexical_min_score"), self.lexical_min_score, 0, 20
+            )
+            self.recall_config["lexical_min_score"] = self.lexical_min_score
+            if self.kb_manager:
+                self.kb_manager.lexical_min_score = self.lexical_min_score
+        if "ignore_time" in search:
+            self.ignore_time = bool(search.get("ignore_time"))
+            self.recall_config["ignore_time"] = self.ignore_time
+            if self.kb_manager:
+                self.kb_manager.ignore_time = self.ignore_time
+        if "auto_install_dependencies" in search:
+            self.auto_install_dependencies = bool(search.get("auto_install_dependencies"))
+            dependencies.configure(
+                self.auto_install_dependencies,
+                self._config_value("network.pypi_mirror"),
+            )
         if "default_top_k" in search:
             self.default_top_k = clamp_int(search.get("default_top_k"), self.default_top_k, 1, 20)
         chunk_size = clamp_int(search.get("chunk_size"), self.chunk_size, 100, 8000)
@@ -518,8 +566,106 @@ class KiraKBPlugin(BasePlugin):
         if self.kb_manager:
             self.kb_manager.recall_global = dict(self.recall_config)
 
+        storage = payload.get("storage") or {}
+        webui = payload.get("webui") or {}
+        webui_changed = False
+        dir_changed = False
+        if "enable_webui" in webui:
+            value = bool(webui.get("enable_webui"))
+            webui_changed = webui_changed or value != self.enable_webui
+            self.enable_webui = value
+        if "webui_host" in webui:
+            value = str(webui.get("webui_host") or "127.0.0.1").strip() or "127.0.0.1"
+            webui_changed = webui_changed or value != self.webui_host
+            self.webui_host = value
+        if "webui_port" in webui:
+            value = clamp_int(webui.get("webui_port"), self.webui_port, 0, 65535)
+            webui_changed = webui_changed or value != self.webui_port
+            self.webui_port = value
+        if "webui_token" in webui:
+            value = str(webui.get("webui_token") or "")
+            webui_changed = webui_changed or value != self.webui_token
+            self.webui_token = value
+        if "knowledge_base_dir" in storage:
+            new_dir = str(storage.get("knowledge_base_dir") or "").strip()
+            if new_dir and new_dir != self.kb_base_dir:
+                error = await self._reload_manager(new_dir)
+                if error:
+                    warnings.append(error)
+                else:
+                    dir_changed = True
+
+        if webui_changed or dir_changed:
+            error = await self._restart_webui()
+            if error:
+                warnings.append(error)
+
         self._persist_settings()
         return {"ok": True, "settings": self._settings_snapshot(), "warnings": warnings}
+
+    async def _restart_webui(self) -> str:
+        if self._webui_server is not None:
+            try:
+                await self._webui_server.stop()
+            except Exception:
+                pass
+            self._webui_server = None
+        if not self.enable_webui or self.webui_port <= 0 or self.kb_manager is None:
+            return ""
+        from .web_server import WebUIServer
+        server = WebUIServer(
+            kb_manager=self.kb_manager,
+            host=self.webui_host,
+            port=self.webui_port,
+            token=self.webui_token,
+            default_embedding_uuid=self._config_value("models.default_embedding"),
+        )
+        try:
+            await server.start()
+            self._webui_server = server
+            return ""
+        except Exception as exc:  # noqa: BLE001
+            return f"独立 WebUI 启动失败：{type(exc).__name__}: {exc}"
+
+    async def _reload_manager(self, new_dir: str) -> str:
+        old_dir = self.kb_base_dir
+        target = Path(new_dir).expanduser()
+        try:
+            target.mkdir(parents=True, exist_ok=True)
+            probe = target / ".kirakb_write_test"
+            probe.write_text("ok", encoding="utf-8")
+            probe.unlink()
+        except Exception as exc:  # noqa: BLE001
+            return f"知识库目录不可用：{type(exc).__name__}: {exc}"
+        old_manager = self.kb_manager
+        try:
+            if old_manager is not None:
+                await old_manager.close_all()
+            manager = self._create_manager(str(target))
+            await manager.load_existing_kbs()
+        except Exception as exc:  # noqa: BLE001
+            try:
+                fallback = self._create_manager(old_dir)
+                await fallback.load_existing_kbs()
+                self._attach_manager(fallback)
+                self.kb_manager = fallback
+                self.kb_base_dir = old_dir
+            except Exception:
+                self.kb_manager = None
+            return f"切换知识库目录失败：{type(exc).__name__}: {exc}；已回退到原目录。"
+        self._attach_manager(manager)
+        self.kb_manager = manager
+        self.kb_base_dir = str(target)
+        return ""
+
+    def _attach_manager(self, manager) -> None:
+        manager.recall_global = dict(self.recall_config)
+        manager.default_policies = dict(self.default_policies)
+        manager.lexical_enabled = self.enable_lexical_search
+        manager.lexical_min_score = self.lexical_min_score
+        manager.ignore_time = self.ignore_time
+        manager.settings_getter = self._settings_snapshot
+        manager.settings_setter = self._apply_settings
 
     def _persist_settings(self) -> None:
         try:
@@ -529,6 +675,10 @@ class KiraKBPlugin(BasePlugin):
             if not isinstance(cfg, dict):
                 cfg = {}
             basic = cfg.setdefault("section_basic", {})
+            default_dir = str(self.data_dir / "knowledge_base")
+            basic["knowledge_base_dir"] = (
+                None if str(self.kb_base_dir) == default_dir else self.kb_base_dir
+            )
             basic.update({
                 "enable_hybrid_search": self.enable_hybrid,
                 "default_top_k": self.default_top_k,
@@ -536,6 +686,9 @@ class KiraKBPlugin(BasePlugin):
                 "chunk_overlap": self.chunk_overlap,
                 "enable_stopwords": self.enable_stopwords,
                 "enable_rerank": self.enable_rerank,
+                "enable_lexical_search": self.enable_lexical_search,
+                "ignore_time": self.ignore_time,
+                "auto_install_dependencies": self.auto_install_dependencies,
                 "entry_title_max_chars": self.entry_title_max_chars,
                 "extra_tools_enabled": self.extra_tools_enabled,
                 "auto_sync_versions": self.auto_sync_versions,
@@ -547,6 +700,13 @@ class KiraKBPlugin(BasePlugin):
                 "default_add_policy": self.default_policies["add"],
                 "default_edit_policy": self.default_policies["edit"],
                 "default_delete_policy": self.default_policies["delete"],
+            })
+            webui = cfg.setdefault("section_webui", {})
+            webui.update({
+                "enable_webui": self.enable_webui,
+                "webui_host": self.webui_host,
+                "webui_port": self.webui_port,
+                "webui_token": self.webui_token,
             })
             rec = cfg.setdefault("section_recall", {})
             rec.update({
@@ -560,6 +720,7 @@ class KiraKBPlugin(BasePlugin):
                 "recall_dedupe_turns": self.recall_config.get("dedupe_turns", 2),
                 "recall_max_kbs": self.recall_config.get("max_kbs", 3),
                 "recall_min_query_chars": self.recall_config.get("min_query_chars", 2),
+                "lexical_min_score": self.lexical_min_score,
             })
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
             tmp = self.config_path.with_suffix(".tmp")
@@ -757,34 +918,18 @@ class KiraKBPlugin(BasePlugin):
         collected = []
         errors = []
         for target_id, kb in targets:
-            active_ver = kb.active_version
-            if not active_ver:
-                if any(v.status != "ready" for v in kb._versions.values()):
-                    errors.append(f"{target_id}: 没有可用版本（存在不完整的建库残留，请删除后重建）")
-                else:
-                    errors.append(f"{target_id}: 没有激活版本")
-                continue
-            if active_ver.status != "ready":
-                errors.append(f"{target_id}: 激活版本不完整，请删除并重建")
-                continue
-            try:
-                hits = await active_ver.search(
-                    query, top_k=per_kb, enable_hybrid=self.enable_hybrid
-                )
-            except EmbeddingDimensionError as exc:
-                errors.append(f"{target_id}: {exc}")
-                continue
-            except Exception as exc:  # noqa: BLE001
-                detail = str(exc).strip() or type(exc).__name__
-                errors.append(f"{target_id}: {detail}")
-                continue
-            hits = self._decorate_hits(kb, hits)
+            hits, error, note = await self._search_one_kb(kb, query, per_kb)
+            if error:
+                errors.append(f"{target_id}: {error}")
+            if note:
+                errors.append(f"{target_id}: {note}")
             for hit in hits:
                 hit["kb_id"] = target_id
                 hit["kb_name"] = kb.display_name
-            if hits and self.recall_engine is not None:
-                self.recall_engine.record_tool_hits(event.sid, target_id, hits)
-            collected.append(hits)
+            if hits:
+                if self.recall_engine is not None:
+                    self.recall_engine.record_tool_hits(event.sid, target_id, hits)
+                collected.append(hits)
 
         merged = []
         index = 0
@@ -816,6 +961,123 @@ class KiraKBPlugin(BasePlugin):
         if errors:
             output.append("部分知识库检索失败：\n" + "\n".join(f"- {line}" for line in errors))
         return "\n".join(output)
+
+    # ------------------------------------------------------------------
+    # Search helpers: lexical + vector fusion
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _chunk_key(doc_id: str, hit: dict) -> tuple:
+        chunk_id = str(hit.get("chunk_id") or "")
+        if not chunk_id:
+            chunk_id = hashlib.sha1(
+                str(hit.get("content") or "").encode("utf-8", errors="replace")
+            ).hexdigest()[:16]
+        return str(doc_id or ""), chunk_id
+
+    async def _lexical_chunk_results(self, kb, query: str, entries, top_n: int):
+        """Turn entry-level lexical hits into scored chunk results."""
+        if not entries:
+            return []
+        query_tokens = kb.lexical_tokens(query)
+        out = []
+        for entry in entries:
+            doc_id = str(entry.get("doc_id") or "")
+            if not doc_id:
+                continue
+            doc = kb.find_document(doc_id, include_deleted=True) or {}
+            name = doc.get("name") or entry.get("name") or doc_id
+            chunks = await kb.get_entry_chunks(doc_id, limit=8)
+            if not chunks:
+                continue
+            scored = [
+                (kb.lexical_score(query_tokens, str(chunk.get("content") or "")), chunk)
+                for chunk in chunks
+            ]
+            scored.sort(key=lambda pair: pair[0], reverse=True)
+            picked = [chunk for score, chunk in scored if score > 0][:2]
+            if not picked:
+                picked = chunks[:2]
+            for chunk in picked:
+                content = str(chunk.get("content") or "")
+                raw = float(entry.get("score") or 0) + kb.lexical_score(query_tokens, content)
+                out.append({
+                    "doc_id": doc_id,
+                    "doc_name": name,
+                    "content": content,
+                    "chunk_id": chunk.get("chunk_id") or "",
+                    "lexical_score": raw,
+                    "score": min(0.99, 0.5 + raw / 40.0),
+                })
+        return out[:max(top_n * 2, 10)]
+
+    async def _search_one_kb(self, kb, query: str, top_n: int):
+        """Return (hits, error, note) for one knowledge base."""
+        lexical = []
+        if self.enable_lexical_search:
+            try:
+                live_ids = {
+                    str(doc.get("doc_id"))
+                    for doc in kb.list_documents(include_deleted=False)
+                }
+                entries = await kb.lexical_search(
+                    query,
+                    allowed_ids=live_ids,
+                    min_content_score=self.lexical_min_score,
+                    limit=max(top_n * 4, 12),
+                    ignore_time=self.ignore_time,
+                )
+                lexical = await self._lexical_chunk_results(kb, query, entries, top_n)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(f"[kiraKB] lexical search failed for {kb.kb_id}: "
+                               f"{type(exc).__name__}: {exc}")
+
+        vector = []
+        error = None
+        note = None
+        active = kb.active_version
+        if active is not None and active.status == "ready":
+            try:
+                vector = await active.search(
+                    query, top_k=top_n, enable_hybrid=self.enable_hybrid
+                )
+                vector = self._decorate_hits(kb, vector)
+            except EmbeddingDimensionError as exc:
+                error = str(exc)
+            except Exception as exc:  # noqa: BLE001
+                error = str(exc).strip() or type(exc).__name__
+            if error and lexical:
+                note = f"向量检索失败（{error}），已返回词法结果"
+                error = None
+        elif not lexical:
+            if any(v.status != "ready" for v in kb._versions.values()):
+                error = "没有可用版本（存在不完整的建库残留，请删除后重建）"
+            else:
+                error = "没有激活版本"
+
+        if not lexical and not vector:
+            return [], error, note
+
+        fused = {}
+        for rank, hit in enumerate(lexical):
+            key = self._chunk_key(hit.get("doc_id"), hit)
+            fused[key] = {"hit": hit, "score": 1.0 / (60 + rank + 1)}
+        for rank, hit in enumerate(vector):
+            doc_id = str((hit.get("metadata") or {}).get("doc_id") or hit.get("doc_id") or "")
+            key = self._chunk_key(doc_id, hit)
+            if key in fused:
+                fused[key]["score"] += 1.0 / (60 + rank + 1)
+            else:
+                fused[key] = {"hit": hit, "score": 1.0 / (60 + rank + 1)}
+        ordered = sorted(fused.values(), key=lambda item: item["score"], reverse=True)[:top_n]
+        results = []
+        for item in ordered:
+            hit = dict(item["hit"])
+            if "lexical_score" in hit:
+                hit["score"] = min(0.99, 0.5 + item["score"] * 20.0)
+            else:
+                hit["score"] = float(hit.get("score") or 0)
+            results.append(hit)
+        return results, error, note
 
     # ------------------------------------------------------------------
     # Tool 3: add / update entry
@@ -1020,7 +1282,7 @@ class KiraKBPlugin(BasePlugin):
     @register.api(method="PUT", path="/settings", auth=True, summary="Update runtime settings")
     async def api_update_settings(self, request: Request):
         body = await request.json()
-        data, status = api.update_settings(self.kb_manager, body)
+        data, status = await api.update_settings(self.kb_manager, body)
         return _json(data, status)
 
     @register.api(method="GET", path="/embedding-models", auth=True, summary="List embedding models")
