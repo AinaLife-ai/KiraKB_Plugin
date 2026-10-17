@@ -21,7 +21,11 @@ logger = get_logger("kb_manager", "cyan")
 
 
 def content_hash(text: str) -> str:
-    return "sha1:" + hashlib.sha1((text or "").encode("utf-8", errors="replace")).hexdigest()
+    # Canonicalise line endings: uploads may carry CRLF while Python's text
+    # reader normalises files to LF. Hashing the raw string would make the
+    # same entry look different depending on which path computed the hash.
+    text = (text or "").replace("\r\n", "\n").replace("\r", "\n")
+    return "sha1:" + hashlib.sha1(text.encode("utf-8", errors="replace")).hexdigest()
 
 
 def now_ts() -> float:
@@ -987,35 +991,38 @@ class KnowledgeBase:
     # ------------------------------------------------------------------
     # Versions
     # ------------------------------------------------------------------
-    def _backfill_content_hashes(self) -> int:
-        """Backfill hashes for entries created before v1.2.
+    def _repair_content_hashes(self) -> int:
+        """Repair stale metadata hashes, not just missing ones.
 
-        Older metadata files have no ``content_hash``. Without this, any version
-        that *does* have a ``doc_hashes.json`` compares its stored hash with an
-        empty string and reports every entry as stale after an upgrade.
+        Pre-v1.2 entries have no ``content_hash``. Entries uploaded on Windows
+        may have a hash computed from CRLF text while the version index was
+        built from LF text (Python's text reader normalises newlines), so the
+        hashes differ even though the content is unchanged. Recompute from the
+        actual file and update the metadata when it disagrees.
         """
         if not self.raw_docs_dir.exists():
             return 0
-        filled = 0
+        repaired = 0
         for doc_path in self.raw_docs_dir.glob("*.txt"):
             doc_id = doc_path.stem
-            meta = self.read_doc_meta(doc_id)
-            if meta.get("content_hash"):
-                continue
             try:
                 text = doc_path.read_text(encoding="utf-8")
             except Exception:
                 continue
-            meta["content_hash"] = content_hash(text)
+            digest = content_hash(text)
+            meta = self.read_doc_meta(doc_id)
+            if meta.get("content_hash") == digest:
+                continue
+            meta["content_hash"] = digest
             self.write_doc_meta(doc_id, meta)
-            filled += 1
-        if filled:
-            logger.info(f"Backfilled content hashes for {filled} entries in {self.kb_id}")
-        return filled
+            repaired += 1
+        if repaired:
+            logger.info(f"Repaired content hashes for {repaired} entries in {self.kb_id}")
+        return repaired
 
     async def load_versions(self):
-        # Repair pre-v1.2 metadata once, before the WebUI asks for freshness.
-        await asyncio.to_thread(self._backfill_content_hashes)
+        # Repair legacy/CRLF metadata before the WebUI asks for freshness.
+        await asyncio.to_thread(self._repair_content_hashes)
         if not self.versions_dir.exists():
             return
         for ver_dir in self.versions_dir.iterdir():
