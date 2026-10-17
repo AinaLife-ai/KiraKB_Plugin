@@ -172,6 +172,9 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
 }
 .hero h1 em{font-style:italic;color:var(--acid)}
 .hero p{max-width:62ch;color:var(--muted);font-size:16px}
+.hero-kb{font-family:var(--sans);font-size:12px;letter-spacing:.02em;text-transform:none;color:var(--paper)}
+.title-dot{color:var(--acid);font-style:normal}
+.hero p.hero-note{margin-top:8px;font-size:12px;color:var(--faint);opacity:.85;max-width:70ch}
 .hero-meta{display:flex;gap:22px;margin-top:26px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
 .hero-meta b{color:var(--paper);font-weight:500}
 
@@ -465,9 +468,10 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
     <!-- OVERVIEW -->
     <section class="view is-active" id="view-overview">
       <div class="hero">
-        <div class="eyebrow">Knowledge archive / <span id="heroIndex">01</span></div>
-        <h1 id="heroTitle">Kira<em>KB</em></h1>
-        <p id="heroDesc">A living knowledge base for KiraAI. Entries are versioned, searchable, and can be recalled automatically when a conversation touches them.</p>
+        <div class="eyebrow">Knowledge archive / <span id="heroIndex">01</span><span class="hero-kb" id="heroKbName"></span></div>
+        <h1 id="heroTitle">Kira<em>KB</em><span class="title-dot">.</span></h1>
+        <p id="heroDesc">记忆在这里生长。翻得到，也回得去。</p>
+        <p class="hero-note" id="heroNote"></p>
         <div class="hero-meta">
           <span>Entries <b id="metaEntries">0</b></span>
           <span>Versions <b id="metaVersions">0</b></span>
@@ -508,7 +512,7 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="hero" style="padding-bottom:26px">
         <div class="eyebrow">Archive / entries</div>
         <h1 style="font-size:clamp(42px,6vw,84px)">Entries</h1>
-        <p>Upload, read, rename and lock individual entries. Every write operation can be restricted per entry.</p>
+        <p>Write, browse, lock. Every memory has its own door.</p>
       </div>
       <div class="panel">
         <div class="doc-toolbar">
@@ -548,7 +552,7 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="hero" style="padding-bottom:26px">
         <div class="eyebrow">Archive / indexes</div>
         <h1 style="font-size:clamp(42px,6vw,84px)">Versions</h1>
-        <p>Each version owns its embedding model and dimension. Editing an entry updates the active version immediately; other versions are marked for sync.</p>
+        <p>One memory, many readings.</p>
       </div>
       <div class="panel">
         <div class="panel-head">
@@ -588,7 +592,7 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="hero" style="padding-bottom:26px">
         <div class="eyebrow">Archive / permissions</div>
         <h1 style="font-size:clamp(42px,6vw,84px)">Access</h1>
-        <p>Set who may add, edit or delete. Rules apply to the AI tools; the WebUI always acts as the human operator unless an operation is frozen.</p>
+        <p>You decide who may touch her memory.</p>
       </div>
 
       <div class="panel" style="margin-bottom:22px">
@@ -654,7 +658,7 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="hero" style="padding-bottom:26px">
         <div class="eyebrow">Archive / passive recall</div>
         <h1 style="font-size:clamp(42px,6vw,84px)">Recall</h1>
-        <p>When a message mentions an entry, the archive can surface it for that turn. The block is request-only: it never enters the conversation history.</p>
+        <p>Mention it, and it comes back.</p>
       </div>
 
       <div class="panel" style="margin-bottom:22px">
@@ -697,7 +701,7 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="hero" style="padding-bottom:26px">
         <div class="eyebrow">Archive / runtime settings</div>
         <h1 style="font-size:clamp(42px,6vw,84px)">Settings</h1>
-        <p>Everything on this page applies immediately and is written back to the plugin config. Storage paths and the standalone server need a restart.</p>
+        <p>Tune how she remembers. Applied live.</p>
       </div>
 
       <div class="panel" style="margin-bottom:22px">
@@ -796,7 +800,7 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="hero" style="padding-bottom:26px">
         <div class="eyebrow">Archive / jobs</div>
         <h1 style="font-size:clamp(42px,6vw,84px)">Tasks</h1>
-        <p>Vectorization runs in the background. Progress is reported per document.</p>
+        <p>She is sorting memories in the background.</p>
       </div>
       <div class="panel"><div id="taskList"></div></div>
     </section>
@@ -1284,10 +1288,12 @@ function renderTopbar() {
 
 function renderHero() {
   const kb = currentKb();
-  $("#heroTitle").innerHTML = kb ? `${esc(kb.display_name)}<em>.</em>` : "Kira<em>KB</em>";
-  $("#heroDesc").textContent = kb
-    ? (kb.description || "This archive has no description yet. Use Edit to add one.")
-    : "Create a knowledge base to begin. Entries are versioned, searchable, and can be recalled automatically.";
+  $("#heroTitle").innerHTML = `Kira<em>KB</em><span class="title-dot">.</span>`;
+  $("#heroKbName").textContent = kb ? ` · ${kb.display_name}` : "";
+  $("#heroDesc").textContent = "记忆在这里生长。翻得到，也回得去。";
+  const note = kb && kb.description ? kb.description : "";
+  $("#heroNote").textContent = note ? "档案备注 / " + note : "";
+  $("#heroNote").style.display = note ? "block" : "none";
   const ver = activeVersion();
   $("#metaEntries").textContent = String(state.docs.length).padStart(2, "0");
   $("#metaVersions").textContent = String(state.versions.length).padStart(2, "0");

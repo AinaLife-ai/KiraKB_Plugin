@@ -32,15 +32,12 @@ def _json(data, status: int = 200):
 _EXTRA_TOOLS = (
     {
         "name": "knowledge_list_entries",
-        "description": (
-            "列出知识库中的条目（名称、大小、更新时间）。"
-            "用法：knowledge_list_entries(kb_id=\"知识库ID，可选\", limit=50)"
-        ),
+        "description": "列出条目（名称、大小、更新时间）。",
         "params": {
             "type": "object",
             "properties": {
-                "kb_id": {"type": "string", "description": "知识库ID（可选）"},
-                "limit": {"type": "integer", "description": "最多返回多少条", "default": 50}
+                "kb_id": {"type": "string", "description": "知识库ID，可选"},
+                "limit": {"type": "integer", "description": "最多条数", "default": 50}
             },
             "required": []
         },
@@ -48,15 +45,12 @@ _EXTRA_TOOLS = (
     },
     {
         "name": "knowledge_get_entry",
-        "description": (
-            "读取指定条目的完整内容。"
-            "用法：knowledge_get_entry(title=\"标题\", kb_id=\"知识库ID，可选\")"
-        ),
+        "description": "读取条目全文。",
         "params": {
             "type": "object",
             "properties": {
-                "title": {"type": "string", "description": "条目标题"},
-                "kb_id": {"type": "string", "description": "知识库ID（可选）"}
+                "title": {"type": "string", "description": "标题"},
+                "kb_id": {"type": "string", "description": "知识库ID，可选"}
             },
             "required": ["title"]
         },
@@ -701,7 +695,7 @@ class KiraKBPlugin(BasePlugin):
     # ------------------------------------------------------------------
     @register.tool(
         name="list_knowledge_bases",
-        description="列出所有知识库、条目数量与当前激活版本。不确定用哪个知识库时先调用。用法：list_knowledge_bases()",
+        description="列出知识库、条目数与激活版本。",
         params={"type": "object", "properties": {}, "required": []}
     )
     async def list_knowledge_bases(self, event: KiraMessageBatchEvent) -> str:
@@ -725,16 +719,13 @@ class KiraKBPlugin(BasePlugin):
     # ------------------------------------------------------------------
     @register.tool(
         name="knowledge_search",
-        description=(
-            "检索知识库获取信息。用户问题可能涉及知识库内容时调用。"
-            "用法：knowledge_search(query=\"用户问题\", kb_id=\"知识库ID，可选；省略表示检索全部\", top_k=5)"
-        ),
+        description="检索知识库；省略 kb_id 时检索全部。",
         params={
             "type": "object",
             "properties": {
-                "query": {"type": "string", "description": "用户的问题"},
-                "kb_id": {"type": "string", "description": "知识库ID（可选，省略表示检索全部知识库）"},
-                "top_k": {"type": "integer", "description": "返回结果数量（1-20）", "default": 5}
+                "query": {"type": "string", "description": "查询内容"},
+                "kb_id": {"type": "string", "description": "知识库ID，省略=全部"},
+                "top_k": {"type": "integer", "description": "结果数 1-20", "default": 5}
             },
             "required": ["query"]
         }
@@ -817,10 +808,10 @@ class KiraKBPlugin(BasePlugin):
         output = []
         show_kb = len(targets) > 1
         for i, hit in enumerate(merged):
-            source = f"{hit.get('kb_name')} / " if show_kb else ""
+            source = f"{hit.get('kb_name')}/" if show_kb else ""
             output.append(
-                f"【结果 {i + 1}】来自 {source}{hit.get('doc_name', 'unknown')} "
-                f"(相关度: {float(hit.get('score', 0)):.2f})\n{hit.get('content', '')}\n"
+                f"[{i + 1}] {source}{hit.get('doc_name', 'unknown')} · "
+                f"{float(hit.get('score', 0)):.2f}\n{hit.get('content', '')}\n"
             )
         if errors:
             output.append("部分知识库检索失败：\n" + "\n".join(f"- {line}" for line in errors))
@@ -831,16 +822,13 @@ class KiraKBPlugin(BasePlugin):
     # ------------------------------------------------------------------
     @register.tool(
         name="knowledge_update_entry",
-        description=(
-            "新增或更新知识条目。用户提供有长期价值的信息时调用。"
-            "用法：knowledge_update_entry(content=\"内容\", title=\"标题，可选\", kb_id=\"知识库ID，可选\")"
-        ),
+        description="新增或更新条目；有长期价值的信息才写。",
         params={
             "type": "object",
             "properties": {
-                "content": {"type": "string", "description": "要存储的知识内容"},
-                "title": {"type": "string", "description": "条目标题（可选，由你根据内容生成）"},
-                "kb_id": {"type": "string", "description": "知识库ID（可选，默认第一个）"}
+                "content": {"type": "string", "description": "内容"},
+                "title": {"type": "string", "description": "标题，可选"},
+                "kb_id": {"type": "string", "description": "知识库ID，可选"}
             },
             "required": ["content"]
         }
@@ -871,7 +859,7 @@ class KiraKBPlugin(BasePlugin):
                 ok, detail = await kb.restore_document(doc_id)
                 if not ok:
                     return f"条目 '{name}' 已更新，但恢复失败：{detail}"
-                return f"已恢复并更新知识条目 '{name}'，并同步到所有可用版本。"
+                return f"已恢复并更新 '{name}'（全部版本已同步）。"
             active_ver = kb.active_version
             if active_ver:
                 await active_ver.delete_document(doc_id)
@@ -889,14 +877,11 @@ class KiraKBPlugin(BasePlugin):
                         except Exception as exc:  # noqa: BLE001
                             logger.warning(f"[kiraKB] auto sync {ver.version_id} failed: {exc}")
                 if not others:
-                    return f"已更新知识条目 '{name}'，并同步更新了当前激活版本中的向量。"
+                    return f"已更新 '{name}'（激活版本已同步）。"
                 if self.auto_sync_versions and synced == len(others):
-                    return f"已更新知识条目 '{name}'，并同步到全部 {len(others) + 1} 个可用版本。"
-                return (
-                    f"已更新知识条目 '{name}'，并同步更新了当前激活版本中的向量。"
-                    f"另有 {len(others)} 个版本待同步，可在面板一键同步。"
-                )
-            return "文档已保存，但知识库没有激活版本，无法向量化。请先在 WebUI 创建版本。"
+                    return f"已更新 '{name}'（全部版本已同步）。"
+                return f"已更新 '{name}'（激活版本已同步；{len(others)} 个版本待同步）。"
+            return "已保存，但没有激活版本，暂未向量化。"
 
         allowed, reason, _ = self._check_write(event, "add", kb, None)
         if not allowed:
@@ -905,28 +890,25 @@ class KiraKBPlugin(BasePlugin):
         doc_id = await kb.add_raw_document(content, name, actor="ai")
         active_ver = kb.active_version
         if not active_ver:
-            return "文档已保存，但知识库没有激活版本，无法向量化。请先在 WebUI 创建版本。"
+            return "已保存，但没有激活版本，暂未向量化。"
         try:
             await kb._vectorize_document(active_ver, doc_id, content)
         except Exception as exc:  # noqa: BLE001
             logger.error(f"[kiraKB] Vectorization failed: {exc}", exc_info=True)
-            return f"文档已保存，但向量化失败: {exc}。请检查嵌入模型配置。"
-        return f"已新增知识条目 '{name}'，并同步更新了当前激活版本中的向量。"
+            return f"已保存，但向量化失败：{exc}"
+        return f"已新增 '{name}'（已向量化）。"
 
     # ------------------------------------------------------------------
     # Tool 4: delete entry
     # ------------------------------------------------------------------
     @register.tool(
         name="knowledge_delete_entry",
-        description=(
-            "删除指定的知识条目（软删除，可在 WebUI 恢复）。"
-            "用法：knowledge_delete_entry(title=\"标题\", kb_id=\"知识库ID，可选\")"
-        ),
+        description="软删除条目，可在 WebUI 恢复。",
         params={
             "type": "object",
             "properties": {
-                "title": {"type": "string", "description": "要删除的条目标题"},
-                "kb_id": {"type": "string", "description": "知识库ID（可选，默认第一个）"}
+                "title": {"type": "string", "description": "标题"},
+                "kb_id": {"type": "string", "description": "知识库ID，可选"}
             },
             "required": ["title"]
         }
@@ -945,22 +927,19 @@ class KiraKBPlugin(BasePlugin):
         if not allowed:
             return self._deny_message("delete", kb, doc, reason)
         await kb.delete_raw_document(doc["doc_id"], soft=True)
-        return f"已删除知识条目 '{doc['name']}'（软删除），可从 WebUI 恢复。"
+        return f"已软删除 '{doc['name']}'（可在 WebUI 恢复）。"
 
     # ------------------------------------------------------------------
     # Tool 5: restore entry
     # ------------------------------------------------------------------
     @register.tool(
         name="knowledge_restore_entry",
-        description=(
-            "恢复被软删除的知识条目。"
-            "用法：knowledge_restore_entry(title=\"标题\", kb_id=\"知识库ID，可选\")"
-        ),
+        description="恢复软删除条目。",
         params={
             "type": "object",
             "properties": {
-                "title": {"type": "string", "description": "要恢复的条目标题"},
-                "kb_id": {"type": "string", "description": "知识库ID（可选，默认第一个）"}
+                "title": {"type": "string", "description": "标题"},
+                "kb_id": {"type": "string", "description": "知识库ID，可选"}
             },
             "required": ["title"]
         }
@@ -984,7 +963,7 @@ class KiraKBPlugin(BasePlugin):
         failed = [v for v in detail.get("versions", []) if not v.get("ok")]
         if failed:
             return f"条目 '{doc['name']}' 已恢复，但部分版本同步失败：{failed}"
-        return f"已恢复知识条目 '{doc['name']}'，并同步到所有可用版本。"
+        return f"已恢复 '{doc['name']}'（全部版本已同步）。"
 
     # ------------------------------------------------------------------
     # Tool 6: list entries (registered conditionally in initialize())
@@ -1003,14 +982,14 @@ class KiraKBPlugin(BasePlugin):
         docs = kb.list_documents(include_deleted=False)[:limit]
         if not docs:
             return f"知识库 '{kb.display_name}' 还没有条目。"
-        lines = [f"知识库「{kb.display_name}」共有 {len(kb.list_documents())} 个条目："]
+        lines = [f"{kb.display_name} · {len(kb.list_documents())} 条"]
         for doc in docs:
             updated = ""
             if doc.get("updated_at"):
-                updated = " | 更新于 " + time.strftime(
+                updated = " · " + time.strftime(
                     "%Y-%m-%d %H:%M", time.localtime(float(doc["updated_at"]))
                 )
-            lines.append(f"- {doc['name']} ({max(1, doc.get('size', 0) // 1024)} KB{updated})")
+            lines.append(f"- {doc['name']} · {max(1, doc.get('size', 0) // 1024)} KB{updated}")
         return "\n".join(lines)
 
     # ------------------------------------------------------------------

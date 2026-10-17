@@ -306,9 +306,15 @@ async def hook_tests():
 
     req = main.LLMRequest()
     from core.prompt_manager import Prompt
+    req.system_prompt.append(Prompt("SYSTEM_SENTINEL"))
+    req.messages.append({"role": "system", "content": "SYSTEM_SENTINEL"})
     req.user_prompt.append(Prompt("用户正文"))
     event = Event([Msg("请问安装指南说了什么")])
     await plugin.inject_passive_recall(event, req)
+    check("系统提示未被改写", req.system_prompt[0].content == "SYSTEM_SENTINEL",
+          req.system_prompt[0].content)
+    check("历史消息未被改写", req.messages == [{"role": "system", "content": "SYSTEM_SENTINEL"}],
+          str(req.messages))
     check("注入了请求块", len(req.user_prompt) == 2, str(len(req.user_prompt)))
     block = req.user_prompt[0]
     check("注入块在最前", getattr(block, "name", "") == "kirakb_recall", getattr(block, "name", ""))

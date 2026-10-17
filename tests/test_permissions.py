@@ -198,7 +198,7 @@ async def tool_tests():
     msg = await plugin.knowledge_delete_entry(evt_u2, "知识条目")
     check("默认删除拒绝非白名单", "权限不足" in msg, msg)
     msg = await plugin.knowledge_delete_entry(evt_u1, "知识条目")
-    check("白名单删除成功", "已删除" in msg, msg)
+    check("白名单删除成功", "已软删除" in msg, msg)
 
     await kb.set_permissions({"add": "admin"})
     msg = await plugin.knowledge_update_entry(evt_u1, "第三条", "第三条")

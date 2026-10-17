@@ -85,7 +85,7 @@ KiraKB/
 └── tests/
     ├── run_tests.py        # 既有回归套件（42 项）
     ├── test_permissions.py # 权限矩阵与工具层校验（27 项）
-    ├── test_recall.py      # 被动召回与注入形态（34 项）
+    ├── test_recall.py      # 被动召回与注入形态（36 项）
     ├── test_upgrade.py     # 显示名、版本新鲜度、恢复、口径统一（26 项）
     ├── test_history.py     # 修订历史、原始版本保留、裁剪、回退（28 项）
     ├── test_settings.py    # 热设置、持久化、非法值回退（29 项）
@@ -104,7 +104,7 @@ python3 tests/test_history.py
 python3 tests/test_settings.py
 ```
 
-全部通过后分别输出 `42/42`、`27/27`、`34/34`、`26/26`、`28/28`、`29/29`。测试使用桩 `core` 包，不需要 KiraAI 本体。
+全部通过后分别输出 `42/42`、`27/27`、`36/36`、`26/26`、`28/28`、`29/29`。测试使用桩 `core` 包，不需要 KiraAI 本体。
 
 ---
 
