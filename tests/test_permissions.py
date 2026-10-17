@@ -107,7 +107,8 @@ ROOT = Path("/tmp/kirakb_perm_test")
 
 def cfg_for(**perm):
     return {
-        "section_basic": {"chunk_size": 200, "chunk_overlap": 20},
+        "section_basic": {"chunk_size": 200, "chunk_overlap": 20,
+                          "auto_install_dependencies": False},
         "section_webui": {"enable_webui": False},
         "section_permission": {
             "owner_whitelist": perm.pop("owner_whitelist", []),

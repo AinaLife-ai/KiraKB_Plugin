@@ -74,7 +74,8 @@ ROOT = Path("/tmp/kirakb_settings_test")
 
 def base_cfg():
     return {
-        "section_basic": {"chunk_size": 500, "chunk_overlap": 100},
+        "section_basic": {"chunk_size": 500, "chunk_overlap": 100,
+                          "auto_install_dependencies": False},
         "section_webui": {"enable_webui": False},
         "section_permission": {},
         "section_recall": {},

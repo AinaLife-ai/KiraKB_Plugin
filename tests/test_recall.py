@@ -290,7 +290,8 @@ async def hook_tests():
     shutil.rmtree(ROOT, ignore_errors=True)
     stub_core.sys.modules["core.utils.path_utils"].set_data_dir(ROOT)
     cfg = {
-        "section_basic": {"chunk_size": 200, "chunk_overlap": 20},
+        "section_basic": {"chunk_size": 200, "chunk_overlap": 20,
+                          "auto_install_dependencies": False},
         "section_webui": {"enable_webui": False},
         "section_permission": {},
         "section_recall": {"recall_enabled": True, "recall_mode": "semantic",

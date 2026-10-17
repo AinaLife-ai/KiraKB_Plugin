@@ -1,8 +1,0 @@
-# Optional KiraKB capabilities.
-# The plugin detects these at startup and installs them on first use:
-#   - markitdown: .docx / .xlsx / .pptx parsing
-#   - openpyxl:   Excel workbooks used by markitdown
-#   - pdf2image:  scanned-PDF OCR (also needs the system poppler binaries)
-markitdown>=0.0.1a2
-openpyxl>=3.1.0
-pdf2image>=1.16.0

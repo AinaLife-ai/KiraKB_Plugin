@@ -29,7 +29,7 @@ async def main():
 
     print("\nD2  报告结构")
     report = deps.report()
-    check("报告包含 core/optional", set(report) == {"core", "optional"}, str(report.keys()))
+    check("报告包含 core/default", set(report) == {"core", "default"}, str(report.keys()))
 
     print("\nD3  自动安装开关")
     deps.configure(False)
@@ -39,13 +39,12 @@ async def main():
 
     print("\nD4  依赖清单")
     plugin = Path(__file__).resolve().parent.parent
-    core = (plugin / "requirements.txt").read_text(encoding="utf-8")
-    optional = (plugin / "requirements-optional.txt").read_text(encoding="utf-8")
+    req = (plugin / "requirements.txt").read_text(encoding="utf-8")
     for pkg in ("faiss-cpu", "numpy", "aiofiles", "pypdf", "rank-bm25", "jieba"):
-        check(f"core 包含 {pkg}", pkg in core)
+        check(f"requirements 包含 {pkg}", pkg in req)
     for pkg in ("markitdown", "openpyxl", "pdf2image"):
-        check(f"optional 包含 {pkg}", pkg in optional)
-    check("可选依赖不混入 core", "markitdown" not in core and "pdf2image" not in core)
+        check(f"requirements 包含默认运行时依赖 {pkg}", pkg in req)
+    check("可选依赖文件已合并", not (plugin / "requirements-optional.txt").exists())
 
     passed = sum(1 for _, ok, _ in RESULTS if ok)
     failed = [(n, d) for n, ok, d in RESULTS if not ok]

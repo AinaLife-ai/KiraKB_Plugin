@@ -1,10 +1,10 @@
-"""Dependency detection and optional auto-install.
+"""Dependency detection and auto-install.
 
 KiraAI installs ``requirements.txt`` automatically when a plugin import fails.
-This module adds the missing half: optional capabilities (Office parsing, PDF
-OCR) are detected at runtime and installed in the background when they are
-missing. Core dependencies are never installed here - if they are missing the
-plugin cannot be imported in the first place; KiraAI's loader handles that.
+This module adds startup detection plus background installation for the
+runtime packages used by document parsing / OCR. Core dependencies are never
+installed here - if they are missing the plugin cannot be imported in the first
+place; KiraAI's loader handles that.
 """
 
 from __future__ import annotations
@@ -23,10 +23,10 @@ CORE: Tuple[Tuple[str, str], ...] = (
     ("jieba", "jieba"),
 )
 
-OPTIONAL: Tuple[Tuple[str, str], ...] = (
-    ("markitdown", "markitdown"),
-    ("openpyxl", "openpyxl"),
-    ("pdf2image", "pdf2image"),
+DEFAULT: Tuple[Tuple[str, str], ...] = (
+    ("markitdown", "markitdown>=0.0.1a2"),
+    ("openpyxl", "openpyxl>=3.1.0"),
+    ("pdf2image", "pdf2image>=1.16.0"),
 )
 
 _AUTO_INSTALL = True
@@ -53,7 +53,7 @@ def missing(packages: Iterable[Tuple[str, str]] = CORE) -> List[Tuple[str, str]]
 
 
 def report() -> Dict[str, List[Tuple[str, str]]]:
-    return {"core": missing(CORE), "optional": missing(OPTIONAL)}
+    return {"core": missing(CORE), "default": missing(DEFAULT)}
 
 
 async def _pip_install(packages: List[str]) -> Tuple[bool, str]:
@@ -96,18 +96,18 @@ async def _pip_install(packages: List[str]) -> Tuple[bool, str]:
 
 async def ensure_optional(module: str, package: Optional[str] = None,
                           timeout: int = _INSTALL_TIMEOUT) -> bool:
-    """Ensure an optional module is importable, installing it if allowed."""
+    """Ensure a runtime module is importable, installing it if allowed."""
     if has_module(module):
         return True
     if not _AUTO_INSTALL:
         return False
-    package = package or module
+    spec = dict(DEFAULT).get(module) or package or module
     lock = _LOCKS.setdefault(module, asyncio.Lock())
     async with lock:
         if has_module(module):
             return True
         ok, detail = await asyncio.wait_for(
-            _pip_install([package]), timeout=max(10, timeout + 10)
+            _pip_install([spec]), timeout=max(10, timeout + 10)
         )
         if not ok:
             return False
@@ -116,18 +116,18 @@ async def ensure_optional(module: str, package: Optional[str] = None,
 
 async def preflight(logger=None, auto_install: Optional[bool] = None,
                     install_missing: bool = False) -> Dict[str, object]:
-    """Log a dependency report; optionally install missing optional packages.
+    """Detect runtime dependencies; optionally install missing ones.
 
-    Never installs core packages: the plugin is already running, so they are
-    present; if they are not, KiraAI's loader reports the import failure.
-    Optional packages are installed on first use (Office / PDF OCR) by
-    ``ensure_optional``; startup only reports them to avoid blocking on pip.
+    Core packages are handled by KiraAI's requirements installer. MarkItDown /
+    openpyxl / pdf2image are listed in requirements.txt and are also installed
+    on first use (Office / OCR) by ``ensure_optional``. Startup only reports by
+    default so a slow/blocked PyPI can never delay plugin load.
     """
     if auto_install is not None:
         configure(auto_install, _MIRROR)
     state = report()
     core_missing = state["core"]
-    opt_missing = state["optional"]
+    opt_missing = state["default"]
     if logger:
         if core_missing:
             logger.error(
@@ -136,9 +136,9 @@ async def preflight(logger=None, auto_install: Optional[bool] = None,
             )
         if opt_missing:
             logger.info(
-                "[kiraKB] optional dependencies missing: "
+                "[kiraKB] runtime dependencies missing: "
                 + ", ".join(pkg for _, pkg in opt_missing)
-                + (" (auto-install enabled)" if _AUTO_INSTALL else "")
+                + (" (will install on first use)" if _AUTO_INSTALL else "")
             )
     installed: List[str] = []
     failed: List[Dict[str, str]] = []
@@ -148,17 +148,17 @@ async def preflight(logger=None, auto_install: Optional[bool] = None,
             if ok:
                 installed.append(package)
                 if logger:
-                    logger.info(f"[kiraKB] optional dependency installed: {package}")
+                    logger.info(f"[kiraKB] runtime dependency installed: {package}")
             else:
                 failed.append({"module": module, "package": package})
                 if logger:
                     logger.warning(
-                        f"[kiraKB] optional dependency not installed: {package} "
+                        f"[kiraKB] runtime dependency not installed: {package} "
                         f"(Office/OCR features stay disabled until it is available)"
                     )
     return {
         "core_missing": [pkg for _, pkg in core_missing],
-        "optional_missing": [pkg for _, pkg in opt_missing],
+        "default_missing": [pkg for _, pkg in opt_missing],
         "installed": installed,
         "failed": failed,
     }

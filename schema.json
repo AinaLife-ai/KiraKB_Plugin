@@ -91,10 +91,10 @@
                 "hint": "知识库不是越新越重要。默认忽略更新时间；关闭后同分时较新的条目优先。"
             },
             "auto_install_dependencies": {
-                "name": "自动安装可选依赖",
+                "name": "自动安装运行时依赖",
                 "type": "switch",
                 "default": true,
-                "hint": "启动时检测可选依赖并记录日志；Office / OCR 首次使用时自动 pip 安装。核心依赖由 KiraAI 加载器按 requirements.txt 安装。"
+                "hint": "启动时检测运行时依赖（MarkItDown / Office / OCR）；缺失时在首次使用对应功能时自动安装，避免启动被网络/安装阻塞。核心依赖由 KiraAI 按 requirements.txt 安装。"
             }
         }
     },

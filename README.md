@@ -53,10 +53,8 @@ KiraKB 为同一个知识库保留多个独立版本。每个版本记录自己�
 3. 安装依赖：
 
    ```bash
-   # 核心依赖（KiraAI 也会在导入失败时自动安装）
+   # 全部运行时依赖（含 Office / OCR）
    pip install -r data/plugins/kiraKB/requirements.txt
-   # 可选：Office / OCR（插件检测到缺失时也会在首次使用时自动安装）
-   pip install -r data/plugins/kiraKB/requirements-optional.txt
    ```
 
 4. 重启 KiraAI。
@@ -71,12 +69,11 @@ KiraKB 为同一个知识库保留多个独立版本。每个版本记录自己�
 KiraKB/
 ├── manifest.json           # 插件元信息
 ├── schema.json             # 配置定义
-├── requirements.txt        # 核心依赖（KiraAI 自动安装）
-├── requirements-optional.txt # Office / OCR 可选依赖（按需自动安装）
+├── requirements.txt        # 全部运行时依赖（KiraAI / 插件自动安装）
 ├── main.py                 # 插件入口：工具、钩子、侧边栏 API
 ├── permissions.py          # 写权限策略（纯函数，可单测）
 ├── lexical.py              # 全库词法索引（标题 + 内容，FTS5/内存回退）
-├── dependencies.py         # 依赖检测与可选依赖按需安装
+├── dependencies.py         # 依赖检测与自动安装
 ├── recall.py               # 被动召回引擎（词法 OR + 向量、去重、预算）
 ├── api_handlers.py         # 共享 API 处理逻辑（侧边栏/独立模式）
 ├── kb_manager.py           # 知识库核心：版本、条目、权限、新鲜度
@@ -140,7 +137,7 @@ python3 tests/test_dependencies.py
 | `entry_history_keep` | 每个条目保留的最近修订数（最初版本永久保留） | 5 |
 | `enable_lexical_search` | 词法召回（标题 + 内容，OR） | true |
 | `ignore_time` | 忽略时间因素（知识库不是越新越重要） | true |
-| `auto_install_dependencies` | 检测并按需自动安装可选依赖 | true |
+| `auto_install_dependencies` | 检测并自动安装缺失的运行时依赖 | true |
 
 ### WebUI 设置
 
@@ -209,7 +206,7 @@ Settings 页面覆盖全部配置，保存后立即生效，不需要重载插�
 - 存储目录：切换后立即用新目录重建管理器（旧目录不会自动迁移）。
 - 独立 WebUI：开关、绑定地址、端口、访问令牌；保存即启停或重启服务。
 
-依赖方面：核心依赖由 KiraAI 按 `requirements.txt` 自动安装；可选依赖（markitdown / openpyxl / pdf2image）启动时检测，首次使用 Office / OCR 时自动 pip 安装。
+依赖方面：`requirements.txt` 已包含 Office / OCR 所需的 markitdown / openpyxl / pdf2image。KiraAI 会在插件安装/导入失败时按该文件安装；插件启动时检测缺失项并记录日志，Office / OCR 首次使用时会自动补装，避免启动阶段被网络/安装阻塞。
 
 ---
 
@@ -463,8 +460,8 @@ data/knowledge_base/
 - 主动检索改为词法 + 向量 RRF 融合；词法命中直接取条目块，不受向量候选池与 cosine 阈值否决。
 - 新增“忽略时间因素”开关，默认开启；知识库排序不再默认偏向新条目。
 - Settings 覆盖全部配置并全部热生效：存储目录热切换、独立 WebUI 热启停/地址/端口/令牌。
-- 依赖拆分核心/可选；启动检测可选依赖，Office / OCR 首次使用时自动安装。
-- 新增 `lexical.py`、`dependencies.py`、`requirements-optional.txt` 及对应测试。
+- 依赖合并到 `requirements.txt` 默认安装；启动只检测，Office / OCR 首次使用自动补装。
+- 新增 `lexical.py`、`dependencies.py` 及对应测试；依赖合并到 `requirements.txt`。
 
 ### 1.2.1
 
