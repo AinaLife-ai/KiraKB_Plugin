@@ -516,6 +516,7 @@ class KiraKBPlugin(BasePlugin):
                     warnings.append("未配置重排序模型，未能启用重排序。")
                 else:
                     self.enable_rerank = desired
+                    self._rerank_client = client
                     if self.kb_manager:
                         self.kb_manager.set_rerank(client, desired)
 

@@ -255,7 +255,8 @@ class LexicalIndex:
 
     def _insert_sync(self, conn: sqlite3.Connection, doc_id: str, name: str,
                      content: str, updated_at: float) -> None:
-        name_tokens = tokenize(name, self.stopwords)
+        token_name = re.sub(r"\.(txt|md|markdown)$", "", name or "", flags=re.IGNORECASE)
+        name_tokens = tokenize(token_name, self.stopwords)
         content_tokens = tokenize(content, self.stopwords)
         if self._use_fts:
             conn.execute("DELETE FROM entry_fts WHERE doc_id=?", (doc_id,))
