@@ -720,7 +720,12 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
           <div class="field"><label>Auto sync other versions</label>
             <label class="switch"><input type="checkbox" id="setAutoSync"><span class="track"></span><span class="txt">After edit</span></label>
           </div>
-          <div class="field"><label>Stopwords / rerank</label><span class="faint" style="font-size:11px;padding-top:8px">Requires plugin reload</span></div>
+          <div class="field"><label>Stopwords</label>
+            <label class="switch"><input type="checkbox" id="setStopwords"><span class="track"></span><span class="txt">BM25 filter</span></label>
+          </div>
+          <div class="field"><label>Rerank</label>
+            <label class="switch"><input type="checkbox" id="setRerank"><span class="track"></span><span class="txt">Default model</span></label>
+          </div>
         </div>
       </div>
 
@@ -1990,6 +1995,8 @@ function renderSettings() {
   val("setChunkSize", search.chunk_size);
   val("setChunkOverlap", search.chunk_overlap);
   chk("setHybrid", search.enable_hybrid_search);
+  chk("setStopwords", search.enable_stopwords);
+  chk("setRerank", search.enable_rerank);
   const entries = cfg.entries || {};
   val("setTitleMax", entries.entry_title_max_chars);
   val("setHistoryKeep", entries.entry_history_keep);
@@ -2029,7 +2036,9 @@ async function saveSettings() {
       enable_hybrid_search: document.getElementById("setHybrid").checked,
       default_top_k: num("setTopK"),
       chunk_size: num("setChunkSize"),
-      chunk_overlap: num("setChunkOverlap")
+      chunk_overlap: num("setChunkOverlap"),
+      enable_stopwords: document.getElementById("setStopwords").checked,
+      enable_rerank: document.getElementById("setRerank").checked
     },
     entries: {
       entry_title_max_chars: num("setTitleMax"),

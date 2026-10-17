@@ -447,9 +447,32 @@ class KiraKBPlugin(BasePlugin):
             for kb in self.kb_manager.kbs.values():
                 kb.chunk_size = chunk_size
                 kb.chunk_overlap = chunk_overlap
-        for key in ("enable_stopwords", "enable_rerank"):
-            if key in search and bool(search.get(key)) != bool(getattr(self, key)):
-                warnings.append(f"{key} 修改后需要重载插件才会生效。")
+        if "enable_stopwords" in search:
+            desired = bool(search.get("enable_stopwords"))
+            if desired != self.enable_stopwords:
+                self.enable_stopwords = desired
+                if self.kb_manager:
+                    sw_path = self.data_dir / "stopwords.txt"
+                    dsw_path = Path(__file__).parent / "stopwords_default.txt"
+                    self.kb_manager.refresh_stopwords(
+                        str(sw_path) if desired and sw_path.exists() else None,
+                        str(dsw_path) if desired and dsw_path.exists() else None,
+                    )
+        if "enable_rerank" in search:
+            desired = bool(search.get("enable_rerank"))
+            if desired != self.enable_rerank:
+                client = None
+                if desired:
+                    try:
+                        client = self.ctx.provider_mgr.get_default_rerank()
+                    except Exception:
+                        client = None
+                if desired and client is None:
+                    warnings.append("未配置重排序模型，未能启用重排序。")
+                else:
+                    self.enable_rerank = desired
+                    if self.kb_manager:
+                        self.kb_manager.set_rerank(client, desired)
 
         if "entry_title_max_chars" in entries:
             self.entry_title_max_chars = clamp_int(
@@ -517,6 +540,8 @@ class KiraKBPlugin(BasePlugin):
                 "default_top_k": self.default_top_k,
                 "chunk_size": self.chunk_size,
                 "chunk_overlap": self.chunk_overlap,
+                "enable_stopwords": self.enable_stopwords,
+                "enable_rerank": self.enable_rerank,
                 "entry_title_max_chars": self.entry_title_max_chars,
                 "extra_tools_enabled": self.extra_tools_enabled,
                 "auto_sync_versions": self.auto_sync_versions,

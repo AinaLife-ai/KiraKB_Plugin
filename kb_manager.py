@@ -1220,6 +1220,31 @@ class KnowledgeBaseManager:
     async def get_kb(self, kb_id: str) -> Optional[KnowledgeBase]:
         return self.kbs.get(kb_id)
 
+    def refresh_stopwords(self, stopwords_path: Optional[str],
+                          default_stopwords_path: Optional[str]) -> None:
+        self.stopwords_path = stopwords_path
+        self.default_stopwords_path = default_stopwords_path
+        for kb in self.kbs.values():
+            kb.stopwords_path = stopwords_path
+            kb.default_stopwords_path = default_stopwords_path
+            for version in kb._versions.values():
+                version.stopwords_path = stopwords_path
+                version.default_stopwords_path = default_stopwords_path
+                if version.retriever is not None:
+                    version.retriever = HybridRetriever(
+                        version.vector_store, stopwords_path, default_stopwords_path
+                    )
+
+    def set_rerank(self, client, enabled: bool) -> None:
+        self.rerank_client = client
+        self.enable_rerank = bool(enabled)
+        for kb in self.kbs.values():
+            kb.rerank_client = client
+            kb.enable_rerank = bool(enabled)
+            for version in kb._versions.values():
+                version.rerank_client = client
+                version.enable_rerank = bool(enabled)
+
     async def delete_kb(self, kb_id: str):
         if kb_id in self.kbs:
             await self.kbs[kb_id].close()

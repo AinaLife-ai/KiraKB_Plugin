@@ -126,6 +126,15 @@ async def main_async():
     check("强门槛可调", plugin.recall_config["strong_score"] == 0.71)
     check("管理器召回快照同步", plugin.kb_manager.recall_global["enabled"] is True)
 
+    print("\nS2b 停用词与重排热切换")
+    plugin._apply_settings({"search": {"enable_stopwords": True}})
+    check("停用词开关生效", plugin.enable_stopwords is True)
+    check("检索器已刷新", plugin.kb_manager.kbs["test"].stopwords_path is not None,
+          str(plugin.kb_manager.kbs["test"].stopwords_path))
+    result = plugin._apply_settings({"search": {"enable_rerank": True}})
+    check("无重排模型时不启用", plugin.enable_rerank is False, str(plugin.enable_rerank))
+    check("返回可读警告", bool(result.get("warnings")), str(result.get("warnings")))
+
     print("\nS3  只读工具热开关")
     check("关闭后不再注册", "knowledge_list_entries" not in plugin.ctx.tool_mgr.tools
           and "knowledge_get_entry" not in plugin.ctx.tool_mgr.tools)
