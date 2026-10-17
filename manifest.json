@@ -3,7 +3,7 @@
   "plugin_id": "kiraKB",
   "version": "1.2.0",
   "author": "znq19",
-  "description": "为 KiraAI 量身打造的知识库插件：多版本共存、可检索、可实时编辑，并支持细粒度写权限与按知识库/条目配置的被动召回",
+  "description": "为 KiraAI 量身打造的知识库插件：为数字生命提供多版本共存、可检索、可实时编辑并可回退的知识，支持细粒度写权限与按知识库/条目配置的被动召回",
   "repo": "https://github.com/znq19/KiraKB_Plugin",
   "core_version": ">=2.33.1",
   "tags": [
@@ -17,7 +17,7 @@
   "locales": {
     "zh": {
       "display_name": "KiraKB 知识库",
-      "description": "为 KiraAI 量身打造的知识库插件：多版本共存、可检索、细粒度写权限、按知识库与条目配置的被动召回"
+      "description": "为 KiraAI 量身打造的知识库插件：为数字生命提供多版本共存、可检索、可回退的知识库，支持细粒度写权限与按知识库/条目配置的被动召回"
     }
   }
 }
