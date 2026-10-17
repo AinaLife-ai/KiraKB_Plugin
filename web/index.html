@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#08060d">
 <title>KiraKB // 临极档案 · LINJI ARCHIVE</title>
-<link rel="stylesheet" href="cathode.css?v=25">
+<link rel="stylesheet" href="cathode.css?v=34">
 </head>
 <body class="boot-hold" data-theme="violet" data-crt="high">
 <svg class="svg-defs" aria-hidden="true" focusable="false">
@@ -35,6 +35,8 @@
   <div class="boot-static"></div>
   <div class="boot-frame">
     <div class="boot-kicker">PROJECT // 临极档案 · LINJI ARCHIVE</div>
+    <img class="boot-badge" id="bootBadge" alt="">
+    <div class="boot-org" id="bootOrg">CHAPTER 01 // 紫垣档案局</div>
     <div class="boot-logo">KIRA<span>KB</span></div>
     <div class="boot-sub">LINJI ARCHIVE · KNOWLEDGE RETRIEVAL · MODEL 07</div>
     <div class="boot-bar"><i></i></div>
@@ -55,7 +57,7 @@
       <aside class="rail">
         <div class="rail-top">
           <div class="rail-eyebrow">INDEX / 档案终端</div>
-          <div class="rail-title-row" id="railBrandRow"><span class="rail-kb" id="railKb" data-fx="decode">KB</span><span class="rail-kb-lamp" aria-hidden="true"></span><span class="rail-title" id="railTitle" data-fx="glitch">知识库</span></div>
+          <div class="rail-title-row" id="railBrandRow"><img class="rail-badge" id="railBadge" alt=""><span class="rail-kb" id="railKb" data-fx="decode">KB</span><span class="rail-kb-lamp" aria-hidden="true"></span><span class="rail-title" id="railTitle" data-fx="glitch">知识库</span></div>
           <div class="rail-alias" id="railAlias" data-fx="scan">临极档案 <i>/ LINJI ARCHIVE</i></div>
           <div class="rail-sub">KNOWLEDGE BASE // <span id="railKbCount">0</span> ARCHIVES</div>
         </div>
@@ -67,6 +69,7 @@
           <button class="channel" type="button" data-view="recall"><span class="ch-no">05</span><svg><use href="#i-radar"></use></svg><span class="ch-label"><b>召回</b><small>RECALL</small></span><span class="ch-pip"></span></button>
           <button class="channel" type="button" data-view="settings"><span class="ch-no">06</span><svg><use href="#i-sliders"></use></svg><span class="ch-label"><b>机台设置</b><small>SETTINGS</small></span><span class="ch-pip"></span></button>
           <button class="channel" type="button" data-view="tasks"><span class="ch-no">07</span><svg><use href="#i-activity"></use></svg><span class="ch-label"><b>任务</b><small>TASKS</small></span><span class="ch-pip"></span></button>
+          <button class="channel" type="button" data-view="wiki"><span class="ch-no">08</span><svg><use href="#i-book"></use></svg><span class="ch-label"><b>虚构档案</b><small>WIKI</small></span><span class="ch-pip"></span></button>
         </nav>
         <div class="rail-archive">
           <div class="mini-label">ACTIVE ARCHIVE</div>
@@ -208,9 +211,10 @@
               <div class="view-art" data-art="settings"></div>
               <div class="view-inner">
                 <div class="chapter-row"><span class="chapter-no">06</span><span class="chapter-rule"></span><span class="chapter-label">MACHINE SETTINGS / 机台设置</span><span class="chapter-stamp">USER SKIN</span></div>
-                <div class="page-title"><div><div class="eyebrow">A MACHINE YOU CAN CALL YOURS</div><h1 data-fx="pulse">调到你喜欢的<em>那一道噪点</em></h1><p>主题、显像管、字幕与所有检索参数；大部分即时生效。</p></div><button class="btn primary" id="saveSettingsBtn" type="button"><svg><use href="#i-check"></use></svg>应用设置</button></div>
+                <div class="page-title"><div><div class="eyebrow">A MACHINE YOU CAN CALL YOURS</div><h1 data-fx="pulse">调到你喜欢的<em>那一道噪点</em></h1><p>主题、显像管、字幕与所有检索参数；大部分即时生效。</p></div><div style="display:flex;gap:6px;align-items:center"><button class="btn ghost" id="replayBootBtn" type="button">重播开屏</button><button class="btn primary" id="saveSettingsBtn" type="button"><svg><use href="#i-check"></use></svg>应用设置</button></div></div>
                 <div class="settings-grid">
                   <div class="panel span-2"><div class="panel-head"><div><span class="mini-label">MACHINE SKIN / 机台皮肤</span><h2>显像管与字幕</h2></div><span class="badge">LIVE</span></div><div class="skin-grid">
+                    <div class="field span-2"><label>组织徽章 / 快速切换</label><div class="theme-badge-row" id="themeBadgeRow"></div></div>
                     <div class="field"><label for="setUiTheme">配色主题</label><select id="setUiTheme"><option value="violet">紫色 · VIOLET</option><option value="pink">粉色 · PINK</option><option value="blue">蓝色 · BLUE</option><option value="amber">黄色 · AMBER</option><option value="sg">命运石之门 · AMBER/TEAL</option><option value="green">绿色 · GREEN</option><option value="red">红色 · RED</option><option value="gray">灰色 · GRAY</option></select></div>
                     <div class="field"><label for="setUiCrt">CRT 强度</label><select id="setUiCrt"><option value="high">高</option><option value="medium">中</option><option value="low">低</option><option value="off">关闭</option></select></div>
                     <div class="field"><label for="setUiTextFx">文字特效</label><select id="setUiTextFx"><option value="mix">混合</option><option value="radio">电波干扰</option><option value="pulse">脉冲</option><option value="type">打字机</option><option value="decode">解码</option><option value="scan">扫描</option><option value="glitch">故障</option></select></div>
@@ -247,6 +251,23 @@
                 <div class="panel"><div id="taskList"></div></div>
               </div>
             </section>
+
+            <!-- WIKI -->
+            <section class="view" data-view="wiki">
+              <div class="view-art" data-art="wiki"></div>
+              <div class="view-inner">
+                <div class="chapter-row"><span class="chapter-no">08</span><span class="chapter-rule"></span><span class="chapter-label">WIKI / 虚构档案</span><span class="chapter-stamp">STORY FIRST</span></div>
+                <div class="page-title"><div><div class="eyebrow">A CITY THAT REMEMBERS ITSELF INTO BEING</div><h1 data-fx="decode">虚构的知识？<em>或许吧，这是故事</em></h1><p>临极市没有官方历史，只有八个协会共同承认的版本。你正在读的，是第九个。</p></div></div>
+                <div class="panel wiki-intro">
+                  <div class="panel-head"><div><span class="mini-label">THE LINJI CONCORD / 临极协定</span><h2>八个协会，一座档案馆</h2></div><span class="badge">FICTION</span></div>
+                  <div class="wiki-lore">
+                    <p>十九年前，临极市发生了一场没有被正式命名的「静默事故」。一个街区从地图、账册和新闻里消失，但所有市民都记得自己从哪里回家。为了不再让城市被记忆拖回同一个夜晚，八个协会在档案馆的地下大厅签下《临极协定》：每一方保管一段真相，任何一方都不得独自读完。</p>
+                    <p>临极档案因此成为中立地。紫垣负责编号，Zwei 负责封控，刘负责焚烧，绯灯负责让人活下去，七协会负责让死者开口，六协会负责把不该存在的东西推回黑暗，时计局负责确认你还在正确的世界上，Hana 负责让以上所有人都相信彼此。协定第八条只有一句：<b>第零章不存在。</b></p>
+                  </div>
+                </div>
+                <div class="org-grid" id="orgGrid"></div>
+              </div>
+            </section>
           </div>
 
           <footer class="ticker" id="ticker">
@@ -264,7 +285,8 @@
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="modalRoot"></div>
-<script src="textfx.js?v=16"></script>
-<script src="cathode.js?v=14"></script>
+<script src="linji-data.js"></script>
+<script src="textfx.js?v=24"></script>
+<script src="cathode.js?v=23"></script>
 </body>
 </html>

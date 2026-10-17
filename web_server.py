@@ -13,6 +13,7 @@ from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, HTMLResponse, Response, FileResponse
+from starlette.staticfiles import StaticFiles
 from starlette.routing import Route
 
 from core.logging_manager import get_logger
@@ -31,8 +32,8 @@ class TokenAuthMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         if not self.token or request.url.path in {
-            "/", "/cathode.css", "/textfx.js", "/cathode.js", "/favicon.ico"
-        }:
+            "/", "/cathode.css", "/textfx.js", "/cathode.js", "/linji-data.js", "/favicon.ico"
+        } or request.url.path.startswith("/assets/"):
             return await call_next(request)
         auth = request.headers.get("authorization", "")
         if auth == f"Bearer {self.token}":
@@ -58,7 +59,7 @@ async def favicon(request: Request) -> Response:
 
 async def serve_web_asset(request: Request) -> Response:
     name = request.path_params.get("name", "")
-    if name not in {"cathode.css", "textfx.js", "cathode.js"}:
+    if name not in {"cathode.css", "textfx.js", "cathode.js", "linji-data.js"}:
         return Response(status_code=404)
     path = _WEB_DIR / name
     if not path.is_file():
@@ -396,6 +397,9 @@ def create_app(kb_manager, token: str = "", default_embedding_uuid: Optional[str
     ]
     middleware = [Middleware(TokenAuthMiddleware, token=token)] if token else []
     app = Starlette(routes=routes, middleware=middleware)
+    assets_dir = _WEB_DIR / "assets"
+    if assets_dir.is_dir():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
     app.state.kb_manager = kb_manager
     app.state.default_embedding_uuid = default_embedding_uuid
     return app

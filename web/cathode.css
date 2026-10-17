@@ -1406,3 +1406,109 @@ body[data-theme="sg"] .entry-status.is-recall i {
 body[data-theme="sg"] .stat-card.accent b { color: var(--accent-2); }
 body[data-theme="sg"] .signal-meter i:nth-child(4),
 body[data-theme="sg"] .signal-meter i:nth-child(5) { background: var(--accent-2); box-shadow: 0 0 7px var(--accent-2); }
+
+/* ==========================================================================
+   LINJI ORGS · badge, boot variants, wiki
+   ========================================================================== */
+.rail-badge {
+  width: 34px; height: 34px; flex: 0 0 34px; object-fit: cover; border-radius: 50%;
+  mix-blend-mode: screen; filter: drop-shadow(0 0 7px rgba(var(--accent-rgb), .45));
+  animation: rail-badge-idle 5.8s ease-in-out infinite;
+}
+@keyframes rail-badge-idle {
+  0%, 100% { transform: rotate(0deg) scale(1); filter: drop-shadow(0 0 5px rgba(var(--accent-rgb), .35)); }
+  50% { transform: rotate(2deg) scale(1.06); filter: drop-shadow(0 0 14px rgba(var(--accent-rgb), .7)); }
+}
+body.perf .rail-badge { animation: none; }
+@media (max-width: 900px) { .rail-badge { width: 25px; height: 25px; flex-basis: 25px; } }
+
+/* boot */
+.boot-badge {
+  width: clamp(92px, 13vw, 150px); height: clamp(92px, 13vw, 150px);
+  object-fit: contain; margin: 12px auto 2px; display: block;
+  mix-blend-mode: screen; filter: drop-shadow(0 0 18px rgba(var(--accent-rgb), .35));
+}
+.boot-org { margin-top: 4px; font-family: var(--mono); font-size: 8px; letter-spacing: .16em; color: var(--muted); }
+.boot-logo { margin-top: 4px !important; }
+#boot.boot-v1 .boot-badge { animation: boot-badge-in 1.2s cubic-bezier(.16,1,.3,1) both; }
+#boot.boot-v1 .boot-logo { animation: cathode-logo-flicker 2.4s infinite, boot-logo-in .9s .65s both; }
+#boot.boot-v2 .boot-badge { animation: boot-badge-spin 1.4s cubic-bezier(.16,1,.3,1) both; }
+#boot.boot-v2 .boot-logo { animation: boot-logo-in .7s .9s both, cathode-logo-flicker 2.4s 1.2s infinite; }
+#boot.boot-v3 .boot-badge { animation: boot-badge-iris 1.5s cubic-bezier(.16,1,.3,1) both; }
+#boot.boot-v3 .boot-logo { animation: boot-logo-in .7s .85s both; }
+#boot.boot-v4 .boot-badge { animation: boot-badge-glitch .8s steps(2) both; }
+#boot.boot-v4 .boot-logo { animation: boot-logo-in .8s .5s both, boot-logo-glitch .6s 1.2s both; }
+@keyframes boot-badge-in { from { opacity: 0; transform: scale(.72) rotate(-8deg); filter: blur(1px); } to { opacity: 1; transform: none; filter: drop-shadow(0 0 18px rgba(var(--accent-rgb), .35)); } }
+@keyframes boot-badge-spin { from { opacity: 0; transform: scale(.6) rotate(-180deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes boot-badge-iris { from { opacity: 0; clip-path: circle(0% at 50% 50%); transform: scale(1.1); } to { opacity: 1; clip-path: circle(70% at 50% 50%); transform: none; } }
+@keyframes boot-badge-glitch { 0% { opacity: 0; transform: translateX(-12px); filter: blur(2px); } 35% { opacity: .6; transform: translateX(8px); } 60% { opacity: .2; transform: translateX(-3px); } 100% { opacity: 1; transform: none; filter: drop-shadow(0 0 18px rgba(var(--accent-rgb), .35)); } }
+@keyframes boot-logo-in { from { opacity: 0; transform: translateY(12px); letter-spacing: .08em; } to { opacity: 1; transform: none; } }
+@keyframes boot-logo-glitch { 0%, 100% { text-shadow: 3px 0 rgba(255,60,90,.25), -3px 0 rgba(60,180,255,.18); } 50% { text-shadow: -4px 0 rgba(255,60,90,.4), 4px 0 rgba(60,180,255,.3); } }
+
+/* theme strip badge thumbnails */
+.swatch { overflow: hidden; position: relative; }
+.swatch .swatch-badge { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; mix-blend-mode: screen; }
+.swatch.random::after {
+  content: "?"; position: absolute; inset: 0; display: grid; place-items: center;
+  color: var(--ink); font: 700 8px/1 var(--mono); text-shadow: 0 1px 3px #000;
+}
+.theme-badge-row { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; align-items: center; }
+.theme-badge-row button {
+  display: flex; align-items: center; gap: 5px; padding: 4px 6px 4px 4px;
+  border: 1px solid var(--line); background: rgba(0,0,0,.18); color: var(--muted);
+  font-family: var(--mono); font-size: 7px; cursor: pointer;
+}
+.theme-badge-row button.is-active { border-color: var(--accent); color: var(--accent); }
+.theme-badge-row img { width: 20px; height: 20px; object-fit: cover; border-radius: 50%; mix-blend-mode: screen; }
+
+/* wiki */
+.wiki-intro { margin-bottom: 12px; }
+.wiki-lore { padding: 16px 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; color: var(--ink-2); font-size: 13px; line-height: 1.9; }
+.wiki-lore b { color: var(--accent); font-weight: 500; }
+.org-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.org-card {
+  position: relative; border: 1px solid var(--line); background: var(--card-grad);
+  padding: 14px; min-width: 0; overflow: hidden;
+}
+.org-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--org); box-shadow: 0 0 14px var(--org); opacity: .8; }
+.org-top { display: flex; align-items: flex-start; gap: 11px; }
+.org-badge { width: 58px; height: 58px; object-fit: cover; border-radius: 50%; mix-blend-mode: screen; filter: drop-shadow(0 0 10px var(--org)); flex: 0 0 58px; }
+.org-title { min-width: 0; }
+.org-chapter { font-family: var(--mono); font-size: 7px; color: var(--org); letter-spacing: .12em; }
+.org-title h3 { margin-top: 3px; font-family: var(--display); font-size: 25px; line-height: 1; font-weight: 500; }
+.org-title small { display: block; margin-top: 4px; font-family: var(--mono); font-size: 7px; color: var(--dim); letter-spacing: .08em; }
+.org-motto { margin-top: 11px; color: var(--org); font-size: 12.5px; font-style: italic; line-height: 1.6; }
+.org-summary { margin-top: 8px; color: var(--ink-2); font-size: 12px; line-height: 1.8; }
+.org-details { margin-top: 8px; }
+.org-details summary { cursor: pointer; color: var(--muted); font-family: var(--mono); font-size: 8px; letter-spacing: .06em; }
+.org-lore { margin-top: 8px; color: var(--muted); font-size: 11.5px; line-height: 1.85; }
+.org-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--line); }
+.org-meta span { color: var(--dim); font-family: var(--mono); font-size: 7px; }
+.org-meta b { display: block; color: var(--ink-2); font-family: var(--sans); font-size: 10px; font-weight: 400; line-height: 1.6; margin-top: 2px; }
+.org-gallery { display: grid; grid-template-columns: repeat(5,1fr); gap: 4px; margin-top: 11px; }
+.org-gallery button { position: relative; border: 1px solid var(--line); padding: 0; overflow: hidden; aspect-ratio: 3/2; background: #000; }
+.org-gallery img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: .82; transition: opacity .2s, transform .3s; }
+.org-gallery button:hover img { opacity: 1; transform: scale(1.04); }
+.org-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--line); }
+.org-actions .btn { min-height: 27px; font-size: 7.5px; padding: 0 7px; }
+.org-actions label.switch { margin-left: 2px; }
+.org-upload { position: relative; overflow: hidden; display: inline-flex; }
+.org-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.org-note { margin-top: 7px; color: var(--dim); font-family: var(--mono); font-size: 7px; }
+@media (max-width: 1100px) { .org-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .wiki-lore { grid-template-columns: 1fr; } .org-gallery { grid-template-columns: repeat(3,1fr); } }
+@media (max-width: 560px) { .org-gallery { grid-template-columns: 1fr 1fr; } .org-title h3 { font-size: 21px; } }
+
+/* show the selected organization wallpaper behind every channel */
+.view-art {
+  background-image: var(--cathode-bg, none);
+  background-size: cover;
+  background-position: center;
+  opacity: .32;
+}
+.view::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.18));
+}
+.theme-strip .swatch { width: 19px; height: 19px; }
+.theme-strip { gap: 6px; }

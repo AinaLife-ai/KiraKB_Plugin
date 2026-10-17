@@ -7,6 +7,8 @@
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const THEMES = ["violet", "pink", "blue", "amber", "sg", "green", "red", "gray"];
+  const ORGS = window.LINJI_ORGS || {};
+  const CUSTOM_ASSET_KEY = "linji-custom-v1";
   const PREFIXES = ["记录", "残页", "旁注", "回收", "未归档", "观测", "编号", "残响"];
   const MOTTOS = [
     "知识不会拯救任何人，它只是让痛苦有了名字。",
@@ -24,12 +26,13 @@
     ["catalog", "主厅 / CATALOGUE"], ["versions", "版本 / VERSIONS"],
     ["search", "检索 / SEARCH"], ["access", "权限 / ACCESS"],
     ["recall", "召回 / RECALL"], ["settings", "设置 / SETTINGS"],
-    ["tasks", "任务 / TASKS"], ["ticker", "字幕框 / SUBTITLE"]
+    ["tasks", "任务 / TASKS"], ["wiki", "虚构档案 / WIKI"], ["ticker", "字幕框 / SUBTITLE"]
   ];
   const VIEW_META = {
     catalog: ["01", "CATALOGUE"], versions: ["02", "VERSIONS"],
     search: ["03", "SEARCH"], access: ["04", "ACCESS"],
-    recall: ["05", "RECALL"], settings: ["06", "SETTINGS"], tasks: ["07", "TASKS"]
+    recall: ["05", "RECALL"], settings: ["06", "SETTINGS"], tasks: ["07", "TASKS"],
+    wiki: ["08", "WIKI"]
   };
   const UI_DEFAULT = {
     theme: "violet", crt: "high", performance: false, splash: true,
@@ -45,7 +48,8 @@
     docFilter: "", docFilterKind: "all",
     ui: { ...UI_DEFAULT },
     quoteTimer: null, quoteBusy: false, tickerTimer: null,
-    uiSaveTimer: null, backgrounds: loadBackgrounds()
+    uiSaveTimer: null, backgrounds: loadBackgrounds(),
+    orgWallpaper: "", custom: loadCustomAssets()
   };
 
   /* ---------- API ---------- */
@@ -160,6 +164,69 @@
     });
   }
 
+  /* ---------- organization assets / custom skin ---------- */
+  function loadCustomAssets() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(CUSTOM_ASSET_KEY) || "{}");
+      return raw && typeof raw === "object" ? raw : {};
+    } catch (_) { return {}; }
+  }
+  function saveCustomAssets() {
+    try { localStorage.setItem(CUSTOM_ASSET_KEY, JSON.stringify(state.custom)); }
+    catch (_) { toast("自定义素材过大，未能写入本地存储", "err"); }
+  }
+  function orgFor(theme) { return ORGS[theme] || ORGS.violet || null; }
+  function orgEnabled(theme) {
+    const item = state.custom?.[theme];
+    return !item || item.enabled !== false;
+  }
+  function badgeFor(theme, respectEnabled = true) {
+    if (respectEnabled && !orgEnabled(theme)) return "";
+    const org = orgFor(theme);
+    return state.custom?.[theme]?.badge || (org && org.badge) || "";
+  }
+  function wallsFor(theme) {
+    const custom = Array.isArray(state.custom?.[theme]?.walls) ? state.custom[theme].walls : [];
+    const base = (orgFor(theme)?.walls || []);
+    return [...custom, ...base].filter((v, i, a) => v && a.indexOf(v) === i);
+  }
+  function pickOrgWallpaper(theme) {
+    if (!orgEnabled(theme)) return "";
+    const pool = wallsFor(theme);
+    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : "";
+  }
+  function renderThemeBadges() {
+    const row = $("#themeBadgeRow");
+    if (!row) return;
+    row.innerHTML = THEMES.map(theme => {
+      const org = orgFor(theme);
+      const badge = badgeFor(theme, false);
+      if (!org) return "";
+      return `<button type="button" data-theme-set="${theme}" class="${theme === state.ui.theme ? "is-active" : ""}" title="${esc(org.name)}">
+        ${badge ? `<img src="${badge}" alt="">` : ""}<span>${esc(org.name)}</span></button>`;
+    }).join("");
+  }
+  function applyOrgIdentity() {
+    const theme = state.ui.theme;
+    const org = orgFor(theme);
+    const badge = badgeFor(theme, true);
+    state.orgWallpaper = pickOrgWallpaper(theme);
+    const rail = $("#railBadge");
+    if (rail) {
+      rail.src = badge || "";
+      rail.hidden = !badge;
+    }
+    const boot = $("#bootBadge");
+    if (boot) {
+      boot.src = badge || (orgFor(theme)?.badge || "");
+      boot.hidden = !badge;
+    }
+    const bootOrg = $("#bootOrg");
+    if (bootOrg && org) bootOrg.textContent = `CHAPTER ${org.chapter} // ${org.name}`;
+    renderThemeBadges();
+    applyBackgrounds();
+  }
+
   /* ---------- theme / splash ---------- */
   function loadBackgrounds() {
     try { return JSON.parse(localStorage.getItem("kirakb-cathode-bg-v2") || "{}") || {}; }
@@ -172,8 +239,11 @@
   function renderThemeStrip() {
     const strip = $("#themeStrip");
     if (!strip) return;
-    strip.innerHTML = THEMES.map(t => `<button class="swatch ${t === state.ui.theme ? "is-active" : ""}" type="button" data-theme-set="${t}" title="${t}" aria-label="${t}"></button>`).join("")
-      + `<button class="swatch random" type="button" data-theme-set="random" title="随机配色" aria-label="随机配色"></button>`;
+    strip.innerHTML = THEMES.map(t => {
+      const org = orgFor(t);
+      const badge = badgeFor(t);
+      return `<button class="swatch ${t === state.ui.theme ? "is-active" : ""}" type="button" data-theme-set="${t}" title="${org ? org.name : t}" aria-label="${org ? org.name : t}" ${org ? `style="--sw:${org.color}"` : ""}>${badge ? `<img class="swatch-badge" src="${badge}" alt="">` : ""}</button>`;
+    }).join("") + `<button class="swatch random" type="button" data-theme-set="random" title="随机配色" aria-label="随机配色"></button>`;
   }
   function setTheme(theme, save = true) {
     if (theme === "random") {
@@ -187,6 +257,7 @@
     $$("#themeStrip [data-theme-set]").forEach(b => b.classList.toggle("is-active", b.dataset.themeSet === theme));
     const themeSelect = $("#setUiTheme");
     if (themeSelect) themeSelect.value = theme;
+    applyOrgIdentity();
     const screen = $("#screen");
     if (screen && save) { screen.classList.add("theme-flash"); setTimeout(() => screen.classList.remove("theme-flash"), 500); }
     if (save) queueUiSave();
@@ -279,7 +350,8 @@
     $$("[data-view]").forEach(view => {
       const key = view.dataset.view;
       const art = view.querySelector(".view-art");
-      if (art) art.style.backgroundImage = state.backgrounds[key] ? `url("${state.backgrounds[key]}")` : "none";
+      const img = state.backgrounds[key] || state.orgWallpaper;
+      if (art) art.style.backgroundImage = img ? `url("${img}")` : "none";
     });
     const ticker = $("#ticker");
     if (ticker) ticker.style.setProperty("--ticker-art", state.backgrounds.ticker ? `url("${state.backgrounds.ticker}")` : "none");
@@ -328,6 +400,19 @@
     cycleBrandMode();
     scheduleBrandMode();
   }
+  function prepareBoot() {
+    const boot = $("#boot");
+    if (!boot) return;
+    const org = orgFor(state.ui.theme);
+    const badge = badgeFor(state.ui.theme, true);
+    const img = $("#bootBadge");
+    if (img) { img.src = badge || ""; img.hidden = !badge; }
+    const label = $("#bootOrg");
+    if (label && org) label.textContent = `CHAPTER ${org.chapter} // ${org.name}`;
+    boot.classList.remove("boot-v1", "boot-v2", "boot-v3", "boot-v4");
+    boot.classList.add(`boot-v${1 + Math.floor(Math.random() * 4)}`);
+  }
+
   function runBoot() {
     const boot = $("#boot");
     if (!boot) return;
@@ -391,6 +476,46 @@
   }
 
   /* ---------- render ---------- */
+  function renderWiki() {
+    const grid = $("#orgGrid");
+    if (!grid) return;
+    const themes = Object.keys(ORGS);
+    grid.innerHTML = themes.map(theme => {
+      const org = ORGS[theme];
+      const badge = badgeFor(theme, false);
+      const walls = wallsFor(theme);
+      const enabled = orgEnabled(theme);
+      return `<article class="org-card" id="org-${theme}" style="--org:${org.color}">
+        <div class="org-top">
+          <img class="org-badge" src="${badge}" alt="${esc(org.name)}">
+          <div class="org-title">
+            <div class="org-chapter">CHAPTER ${org.chapter} // ${esc(org.en)}</div>
+            <h3>${esc(org.name)}</h3>
+            <small>${esc(org.motto)}</small>
+          </div>
+          <span class="badge" style="margin-left:auto;color:${org.color};border-color:${org.color}">${enabled ? "IN USE" : "MUTED"}</span>
+        </div>
+        <p class="org-motto">「${esc(org.quote)}」</p>
+        <p class="org-summary">${esc(org.summary)}</p>
+        <div class="org-meta">
+          <span>DOCTRINE / 信条<b>${esc(org.doctrine)}</b></span>
+          <span>UNIFORM / 制服<b>${esc(org.uniform)}</b></span>
+          <span>RELATIONS / 关系<b>${esc(org.relations)}</b></span>
+          <span>TAGS / 标签<b>${org.tags.map(esc).join(" · ")}</b></span>
+        </div>
+        <details class="org-details"><summary>展开档案全文 / LORE</summary><p class="org-lore">${esc(org.lore)}</p></details>
+        <div class="org-gallery">${walls.map((wall, index) => `<button type="button" data-org-wall="${theme}" data-org-wall-index="${index}" title="设为当前背景"><img src="${wall}" alt=""></button>`).join("")}</div>
+        <div class="org-actions">
+          <button type="button" class="btn" data-org-theme="${theme}">应用此主题</button>
+          <label class="switch" title="关闭后不使用该组织的徽章与壁纸"><input type="checkbox" data-org-enabled="${theme}" ${enabled ? "checked" : ""}><span></span><b>启用组织外观</b></label>
+          <label class="btn ghost org-upload">上传徽章<input type="file" accept="image/*" data-org-badge="${theme}"></label>
+          <label class="btn ghost org-upload">上传壁纸<input type="file" accept="image/*" multiple data-org-walls="${theme}"></label>
+        </div>
+        <div class="org-note">${walls.length} 张壁纸 · 徽章与壁纸存于本机，不上传服务器</div>
+      </article>`;
+    }).join("");
+  }
+
   function renderAll() {
     renderKbSelect();
     renderCatalog();
@@ -399,7 +524,9 @@
     renderRecall();
     renderSettings();
     renderTasks();
+    renderWiki();
     renderThemeStrip();
+    renderThemeBadges();
     syncUiControls();
     applyBackgrounds();
     replayText();
@@ -826,6 +953,7 @@
       $("#consoleNumber").textContent = VIEW_META[view][0];
       $("#viewStack").scrollTop = 0;
       if (view === "settings") { loadSettings().then(renderSettings); syncUiControls(); }
+      if (view === "wiki") renderWiki();
       replayText();
       replayBrand();
       cycleBrandMode();
@@ -846,6 +974,22 @@
       const saveRecall = e.target.closest("[data-save-recall]"); if (saveRecall) { const id = saveRecall.dataset.saveRecall; const sel = $(`[data-entry-recall="${CSS.escape(id)}"]`); const kw = $(`[data-entry-keywords="${CSS.escape(id)}"]`); try { await api(`/kbs/${encodeURIComponent(state.current)}/documents/${encodeURIComponent(id)}/recall`, { method: "PUT", body: JSON.stringify({ enabled: sel.value === "on" ? true : sel.value === "off" ? false : null, keywords: kw.value.split(/[,，]/).map(s => s.trim()).filter(Boolean) }) }); toast("条目召回已保存。"); } catch (err) { toast("保存失败：" + err.message, "err"); } return; }
       const bgUpload = e.target.closest("[data-bg-upload]"); if (bgUpload) { bgUpload.closest(".bg-slot")?.querySelector("input[type=file]")?.click(); return; }
       const bgReset = e.target.closest("[data-bg-reset]"); if (bgReset) { delete state.backgrounds[bgReset.dataset.bgReset]; persistBackgrounds(); applyBackgrounds(); renderBgGrid(); return; }
+      const orgTheme = e.target.closest("[data-org-theme]");
+      if (orgTheme) { setTheme(orgTheme.dataset.orgTheme); switchView("catalog"); toast("组织外观已应用。"); return; }
+      const orgWall = e.target.closest("[data-org-wall]");
+      if (orgWall) {
+        const theme = orgWall.dataset.orgWall, index = Number(orgWall.dataset.orgWallIndex);
+        const walls = wallsFor(theme);
+        if (walls[index]) { state.orgWallpaper = walls[index]; applyBackgrounds(); toast("已设为当前背景。"); }
+        return;
+      }
+      if (e.target.closest("#replayBootBtn")) {
+        const boot = $("#boot"); if (!boot) return;
+        prepareBoot();
+        boot.style.display = "flex"; boot.classList.remove("is-off");
+        setTimeout(hideBoot, 2300);
+        return;
+      }
       if (e.target.closest("#settingsBtn")) return switchView("settings");
       if (e.target.closest("#newKbBtn")) return openKbCreate();
       if (e.target.closest("#editKbBtn")) return openKbEdit();
@@ -886,6 +1030,46 @@
           });
           toast("条目权限已更新。");
         } catch (err) { toast("保存失败：" + err.message, "err"); }
+        return;
+      }
+      const orgToggle = e.target.closest("[data-org-enabled]");
+      if (orgToggle) {
+        const theme = orgToggle.dataset.orgEnabled;
+        state.custom[theme] = state.custom[theme] || {};
+        state.custom[theme].enabled = !!orgToggle.checked;
+        saveCustomAssets();
+        renderThemeStrip(); renderThemeBadges(); renderWiki();
+        if (theme === state.ui.theme) applyOrgIdentity();
+        toast(orgToggle.checked ? "组织外观已启用。" : "组织外观已关闭。");
+        return;
+      }
+      const orgBadgeInput = e.target.closest("input[data-org-badge]");
+      if (orgBadgeInput && orgBadgeInput.files?.[0]) {
+        const theme = orgBadgeInput.dataset.orgBadge;
+        try {
+          const data = await resizeImage(orgBadgeInput.files[0], 800);
+          state.custom[theme] = state.custom[theme] || {};
+          state.custom[theme].badge = data;
+          state.custom[theme].enabled = true;
+          saveCustomAssets(); renderThemeStrip(); renderThemeBadges(); renderWiki();
+          if (theme === state.ui.theme) applyOrgIdentity();
+          toast("组织徽章已更新。");
+        } catch (err) { toast("上传失败：" + err.message, "err"); }
+        return;
+      }
+      const orgWallsInput = e.target.closest("input[data-org-walls]");
+      if (orgWallsInput && orgWallsInput.files?.length) {
+        const theme = orgWallsInput.dataset.orgWalls;
+        try {
+          const added = [];
+          for (const file of [...orgWallsInput.files].slice(0, 5)) added.push(await resizeImage(file, 1600));
+          state.custom[theme] = state.custom[theme] || {};
+          state.custom[theme].walls = [...added, ...(state.custom[theme].walls || [])].slice(0, 12);
+          state.custom[theme].enabled = true;
+          saveCustomAssets(); renderWiki(); renderThemeStrip(); renderThemeBadges();
+          if (theme === state.ui.theme) { state.orgWallpaper = added[0] || state.orgWallpaper; applyBackgrounds(); }
+          toast(`已添加 ${added.length} 张组织壁纸。`);
+        } catch (err) { toast("上传失败：" + err.message, "err"); }
         return;
       }
       if (e.target.matches("#setUiTheme, #setUiCrt, #setUiTextFx, #setUiPerf, #setUiSplash, #setUiFxLoop, #setUiFxInterval, #setUiQuoteEnabled, #setUiQuoteInterval")) {
@@ -971,6 +1155,7 @@
     renderThemeStrip();
     renderSettings();
     syncUiControls();
+    prepareBoot();
     runBoot();
     try {
       await refreshAll();
