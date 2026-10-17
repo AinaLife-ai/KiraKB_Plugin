@@ -174,7 +174,6 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
 .hero h1 em{font-style:italic;color:var(--acid)}
 .hero p{max-width:62ch;color:var(--muted);font-size:16px}
 .hero-kb{font-family:var(--sans);font-size:12px;letter-spacing:.02em;text-transform:none;color:var(--paper)}
-.title-dot{color:var(--acid);font-style:normal}
 .hero-meta{display:flex;gap:22px;margin-top:26px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
 .hero-meta b{color:var(--paper);font-weight:500}
 
@@ -406,7 +405,7 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
 <div class="shell">
   <aside class="rail">
     <div class="brand">
-      <div class="mark">K<em>B</em><span class="title-dot">.</span></div>
+      <div class="mark">K<em>B</em></div>
     </div>
     <nav class="nav" id="railNav">
       <button type="button" data-action="nav" data-view="overview" class="is-active" aria-label="总览">
@@ -469,7 +468,7 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
     <section class="view is-active" id="view-overview">
       <div class="hero">
         <div class="eyebrow">Knowledge archive / <span id="heroIndex">01</span><span class="hero-kb" id="heroKbName"></span></div>
-        <h1 id="heroTitle">Kira<em>KB</em><span class="title-dot">.</span></h1>
+        <h1 id="heroTitle">Kira<em>KB</em></h1>
         <p id="heroDesc">知识在这里生长。翻得到，也回得去。</p>
         <div class="hero-meta">
           <span>条目 <b id="metaEntries">0</b></span>
@@ -1287,7 +1286,7 @@ function renderTopbar() {
 
 function renderHero() {
   const kb = currentKb();
-  $("#heroTitle").innerHTML = `Kira<em>KB</em><span class="title-dot">.</span>`;
+  $("#heroTitle").innerHTML = `Kira<em>KB</em>`;
   $("#heroKbName").textContent = kb ? ` · ${kb.display_name}` : "";
   $("#heroDesc").textContent = "知识在这里生长。翻得到，也回得去。";
   const ver = activeVersion();
