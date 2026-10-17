@@ -8,14 +8,14 @@
                 "name": "知识库存储目录",
                 "type": "string",
                 "default": null,
-                "hint": "知识库文件存储的根目录（留空则使用 data/knowledge_base）"
+                "hint": "知识库文件存储的根目录（留空则使用 data/knowledge_base）。在 WebUI 修改后立即切换到新目录，旧目录不会自动迁移。"
             },
             "chunk_size": {
                 "name": "分块大小（字符）",
                 "type": "integer",
                 "default": 500,
                 "minimum": 100,
-                "hint": "文档分块的字符数。"
+                "hint": "文档分块的字符数；对之后创建的版本与重建生效。"
             },
             "chunk_overlap": {
                 "name": "分块重叠（字符）",
@@ -23,7 +23,7 @@
                 "default": 100,
                 "minimum": 0,
                 "maximum": 400,
-                "hint": "相邻块之间的重叠字符数（必须小于分块大小）。"
+                "hint": "相邻块之间的重叠字符数（必须小于分块大小）；对之后创建的版本与重建生效。"
             },
             "default_top_k": {
                 "name": "默认检索结果数",
@@ -77,6 +77,24 @@
                 "minimum": 1,
                 "maximum": 200,
                 "hint": "每个条目除最初版本外，保留最近多少个可回退版本。最初版本永久保留。"
+            },
+            "enable_lexical_search": {
+                "name": "词法召回（标题 + 内容）",
+                "type": "switch",
+                "default": true,
+                "hint": "标题或内容任一命中即可召回（或关系）。补足向量对短词、精确词、半截话的盲区。"
+            },
+            "ignore_time": {
+                "name": "忽略时间因素",
+                "type": "switch",
+                "default": true,
+                "hint": "知识库不是越新越重要。默认忽略更新时间；关闭后同分时较新的条目优先。"
+            },
+            "auto_install_dependencies": {
+                "name": "自动安装运行时依赖",
+                "type": "switch",
+                "default": true,
+                "hint": "启动时检测运行时依赖（MarkItDown / Office / OCR）；缺失时在首次使用对应功能时自动安装，避免启动被网络/安装阻塞。核心依赖由 KiraAI 按 requirements.txt 安装。"
             }
         }
     },
@@ -89,7 +107,7 @@
                 "name": "启用独立 WebUI",
                 "type": "switch",
                 "default": false,
-                "hint": "是否启动独立管理界面服务（默认关闭，使用侧边栏内嵌页面即可）。"
+                "hint": "是否启动独立管理界面服务（默认关闭，使用侧边栏内嵌页面即可）。保存设置后立即启停，无需重启。"
             },
             "webui_port": {
                 "name": "独立 WebUI 端口",
@@ -97,19 +115,19 @@
                 "default": 19122,
                 "minimum": 0,
                 "maximum": 65535,
-                "hint": "独立管理界面的端口（0 = 禁用）。"
+                "hint": "独立管理界面的端口（0 = 禁用）。保存设置后热重启服务生效。"
             },
             "webui_host": {
                 "name": "WebUI 绑定地址",
                 "type": "string",
                 "default": "127.0.0.1",
-                "hint": "WebUI 绑定的 IP 地址，127.0.0.1 仅本机访问。"
+                "hint": "WebUI 绑定的 IP 地址，127.0.0.1 仅本机访问。保存设置后热重启服务生效。"
             },
             "webui_token": {
                 "name": "WebUI 访问令牌",
                 "type": "string",
                 "default": "",
-                "hint": "独立 WebUI 的 Bearer Token（留空则无认证）。"
+                "hint": "独立 WebUI 的 Bearer Token（留空则无认证）。保存设置后热重启服务生效。"
             }
         }
     },
@@ -228,6 +246,14 @@
                 "minimum": 1,
                 "maximum": 32,
                 "hint": "太短的消息（如“嗯”“好”）不触发召回。"
+            },
+            "lexical_min_score": {
+                "name": "内容命中门槛",
+                "type": "integer",
+                "default": 2,
+                "minimum": 0,
+                "maximum": 20,
+                "hint": "内容词法得分达到此值才召回（每个命中的 2 字词计 2 分）。标题命中不受此门槛限制。"
             }
         }
     }

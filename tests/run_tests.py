@@ -285,7 +285,7 @@ async def t7_search_error_readable():
     except Exception as e:
         check("抛出 EmbeddingDimensionError", False, f"{type(e).__name__}: {e}")
 
-    data, status = await api.search(mgr, "demo", {"query": "小明", "top_k": 3})
+    data, status = await api.search(mgr, "demo", {"query": "zzzznomatch", "top_k": 3})
     check("api.search 返回错误而非 500", status == 400, f"{status}")
     check("api.search 错误可读", "维度" in str(data.get("error", "")), str(data.get("error"))[:60])
 

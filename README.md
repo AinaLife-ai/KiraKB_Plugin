@@ -11,13 +11,13 @@
 - **为数字生命提供知识**：不是静态文档柜，知识会生长、会被检索，也会被修订与回退。
 - **侧边栏 WebUI**：管理界面直接嵌入 KiraAI 主 WebUI 侧边栏，无需单独开端口；也可一键在新标签页打开。
 - **多版本管理**：同一知识库可保留多个不同嵌入模型的版本，随时切换、增量和同步，无需重复上传文档。
-- **智能检索**：向量检索，可选 BM25 混合与重排序；面板与聊天工具使用同一套检索参数。
+- **智能检索**：词法 + 向量双通道；标题或内容任一命中即可召回，短词/精确词不再漏，向量负责同义改写。
 - **文档全生命周期**：上传、编辑、重命名、软删除、恢复；所有操作都可在 WebUI 或聊天工具中完成。
 - **细粒度写权限**：新增、编辑、删除三项操作可分别设置为「任何人 / 名单用户 / 仅人工 / 冻结」，支持知识库默认值与单条目覆盖。
 - **被动召回**：当聊天内容提到某个知识库条目时，自动把相关片段注入当前回合；可按知识库启用，也可按条目强制开启或排除。
 - **版本一致性**：编辑条目后激活版本立即重建，其它版本标记待同步；恢复条目会同步回写所有可用版本。
 - **修订历史**：每个条目的最初版本永久保留，过程版本默认保留最近 5 份（可调），前端可查看与一键回退，并标记 AI / Human 来源。
-- **热设置**：Settings 页面可即时修改检索、召回、默认权限等设置，写入配置且无需重载插件。
+- **全量热设置**：Settings 覆盖全部配置（含存储目录与独立 WebUI），保存即生效，无需重载插件。
 - **白天与深色主题**：默认紫白白天模式，可切换深色并记忆选择；图标全部为内联 Lucide，无表情符号。
 - **零配置启动**：自动使用 KiraAI 的默认嵌入模型与视觉模型。
 
@@ -53,6 +53,7 @@ KiraKB 为同一个知识库保留多个独立版本。每个版本记录自己�
 3. 安装依赖：
 
    ```bash
+   # 全部运行时依赖（含 Office / OCR）
    pip install -r data/plugins/kiraKB/requirements.txt
    ```
 
@@ -68,10 +69,12 @@ KiraKB 为同一个知识库保留多个独立版本。每个版本记录自己�
 KiraKB/
 ├── manifest.json           # 插件元信息
 ├── schema.json             # 配置定义
-├── requirements.txt        # Python 依赖
+├── requirements.txt        # 全部运行时依赖（KiraAI / 插件自动安装）
 ├── main.py                 # 插件入口：工具、钩子、侧边栏 API
 ├── permissions.py          # 写权限策略（纯函数，可单测）
-├── recall.py               # 被动召回引擎（触发、去重、预算、渲染）
+├── lexical.py              # 全库词法索引（标题 + 内容，FTS5/内存回退）
+├── dependencies.py         # 依赖检测与自动安装
+├── recall.py               # 被动召回引擎（词法 OR + 向量、去重、预算）
 ├── api_handlers.py         # 共享 API 处理逻辑（侧边栏/独立模式）
 ├── kb_manager.py           # 知识库核心：版本、条目、权限、新鲜度
 ├── task_manager.py         # 后台任务
@@ -85,11 +88,13 @@ KiraKB/
 │   └── index.html          # 管理界面
 └── tests/
     ├── run_tests.py        # 既有回归套件（42 项）
-    ├── test_permissions.py # 权限矩阵与工具层校验（27 项）
+    ├── test_permissions.py # 权限矩阵与工具层校验（28 项）
     ├── test_recall.py      # 被动召回与注入形态（36 项）
     ├── test_upgrade.py     # 显示名、版本新鲜度、恢复、口径统一（26 项）
     ├── test_history.py     # 修订历史、原始版本保留、裁剪、回退（32 项）
-    ├── test_settings.py    # 热设置、持久化、非法值回退（29 项）
+    ├── test_lexical.py     # 标题 OR 内容、短词、时间开关、索引更新（22 项）
+    ├── test_settings.py    # 热设置、存储/WebUI 热切换、配置覆盖（43 项）
+    ├── test_dependencies.py # 依赖检测与清单（16 项）
     ├── stub_core.py        # 无 KiraAI 运行时的 core 桩
     └── reverse_validation.py
 ```
@@ -102,10 +107,12 @@ python3 tests/test_permissions.py
 python3 tests/test_recall.py
 python3 tests/test_upgrade.py
 python3 tests/test_history.py
+python3 tests/test_lexical.py
 python3 tests/test_settings.py
+python3 tests/test_dependencies.py
 ```
 
-全部通过后分别输出 `42/42`、`27/27`、`36/36`、`26/26`、`32/32`、`29/29`。测试使用桩 `core` 包，不需要 KiraAI 本体。
+全部通过后分别输出 `42/42`、`28/28`、`36/36`、`26/26`、`32/32`、`22/22`、`43/43`、`16/16`。测试使用桩 `core` 包，不需要 KiraAI 本体。
 
 ---
 
@@ -128,6 +135,9 @@ python3 tests/test_settings.py
 | `extra_tools_enabled` | 注册只读条目工具 | true |
 | `auto_sync_versions` | 编辑后自动同步其它版本 | false |
 | `entry_history_keep` | 每个条目保留的最近修订数（最初版本永久保留） | 5 |
+| `enable_lexical_search` | 词法召回（标题 + 内容，OR） | true |
+| `ignore_time` | 忽略时间因素（知识库不是越新越重要） | true |
+| `auto_install_dependencies` | 检测并自动安装缺失的运行时依赖 | true |
 
 ### WebUI 设置
 
@@ -163,8 +173,40 @@ python3 tests/test_settings.py
 | `recall_dedupe_turns` | 同一片段的去重回合数 | 2 |
 | `recall_max_kbs` | 单轮最多检索知识库数 | 3 |
 | `recall_min_query_chars` | 触发召回的最小消息长度 | 2 |
+| `lexical_min_score` | 内容词法命中门槛（标题命中不受限） | 2 |
 
 嵌入模型和视觉模型无需在插件中配置，直接使用 KiraAI 的 `default_embedding` 与 `default_vlm`。
+
+### 词法召回（标题 OR 内容）
+
+每条召回请求都会先过一遍全库词法索引：
+
+```
+候选条目 = 标题命中 OR 内容命中
+```
+
+- 标题与正文使用同一套分词：jieba 词 + 中文 2-gram + 英文词（均 ≥2 字符），并过滤停用词。
+- 标题命中是双向的：查询词在标题里、或标题词在查询里都算（「安装」能命中「安装指南」）。
+- 内容命中按 `Σ 命中词长` 打分，达到 `lexical_min_score` 即命中；标题命中不受该门槛限制。
+- **短词、精确词、半截话都走词法**，不再要求消息 ≥8 字；8 字门槛只保留给“完全没有词法信号、纯语义”的兜底。
+- 词法命中后直接读取该条目的块，不再被向量候选池或 cosine 阈值否决。
+- 主动检索 `knowledge_search` 使用「词法 + 向量」RRF 融合；向量暂不可用时仍能返回词法结果。
+
+### 时间因素
+
+排序默认**忽略更新时间**（`ignore_time=true`）。知识库不是越新越重要，同分时按稳定顺序而非“谁更新谁优先”；需要“新条目优先”时可在 Settings 关闭该开关。当前向量路径本来就不看时间，词法路径也遵守这个默认。
+
+### 热设置
+
+Settings 页面覆盖全部配置，保存后立即生效，不需要重载插件：
+
+- 检索与条目：混合检索、词法召回、命中门槛、忽略时间、分块（对新建/重建版本生效）、标题长度、历史保留、只读工具、自动同步。
+- 被动召回：总开关、模式、门槛、条数、字符预算、超时、去重、多库上限、最小消息长度。
+- 默认权限与全局名单。
+- 存储目录：切换后立即用新目录重建管理器（旧目录不会自动迁移）。
+- 独立 WebUI：开关、绑定地址、端口、访问令牌；保存即启停或重启服务。
+
+依赖方面：`requirements.txt` 已包含 Office / OCR 所需的 markitdown / openpyxl / pdf2image。KiraAI 会在插件安装/导入失败时按该文件安装；插件启动时检测缺失项并记录日志，Office / OCR 首次使用时会自动补装，避免启动阶段被网络/安装阻塞。
 
 ---
 
@@ -325,7 +367,7 @@ python3 tests/test_settings.py
 - **Search**：检索测试，展示条目名、分块序号与相关度。
 - **Access**：知识库策略矩阵、允许名单、条目级覆盖。
 - **Recall**：知识库召回开关与参数、条目三态与关键词。
-- **Settings**：热设置（检索、条目、召回、默认权限）。
+- **Settings**：全部配置热设置（检索、条目、召回、权限、存储目录、独立 WebUI）。
 - **Tasks**：后台任务进度。
 
 界面使用 Lucide 图标，不依赖外部图标 CDN；所有弹窗为页面内实现，适配 KiraAI 的沙箱 iframe（不使用原生 `alert` / `confirm` / `prompt`）。
@@ -349,6 +391,7 @@ data/knowledge_base/
     │       ├── model_info.json
     │       ├── doc_chunk_map.json
     │       └── doc_hashes.json # 每条目的内容指纹（用于精确判断新鲜度）
+    ├── lexical.db              # 词法索引（标题 + 内容，FTS5）
     ├── info.json               # 显示名称、描述、权限、召回设置
     └── current_version
 ```
@@ -410,6 +453,15 @@ data/knowledge_base/
 
 <details>
 <summary>点击展开更新日志</summary>
+
+### 1.3.0
+
+- 新增全库词法召回：标题或内容任一命中即可（OR），短词、精确词、半截话不再漏召回。
+- 主动检索改为词法 + 向量 RRF 融合；词法命中直接取条目块，不受向量候选池与 cosine 阈值否决。
+- 新增“忽略时间因素”开关，默认开启；知识库排序不再默认偏向新条目。
+- Settings 覆盖全部配置并全部热生效：存储目录热切换、独立 WebUI 热启停/地址/端口/令牌。
+- 依赖合并到 `requirements.txt` 默认安装；启动只检测，Office / OCR 首次使用自动补装。
+- 新增 `lexical.py`、`dependencies.py` 及对应测试；依赖合并到 `requirements.txt`。
 
 ### 1.2.1
 

@@ -33,6 +33,9 @@ DEFAULT_RECALL = {
     "max_kbs": 3,
     "min_query_chars": 2,
     "embed_cache_ttl": 300,
+    "lexical_enabled": True,
+    "lexical_min_score": 2,
+    "ignore_time": True,
 }
 
 MODES = ("mention", "semantic", "hybrid")
@@ -77,6 +80,9 @@ def normalise_config(raw: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     cfg["max_kbs"] = clamp_int(cfg.get("max_kbs"), 3, 1, 20)
     cfg["min_query_chars"] = clamp_int(cfg.get("min_query_chars"), 2, 1, 32)
     cfg["embed_cache_ttl"] = clamp_int(cfg.get("embed_cache_ttl"), 300, 0, 3600)
+    cfg["lexical_enabled"] = bool(cfg.get("lexical_enabled", True))
+    cfg["lexical_min_score"] = clamp_int(cfg.get("lexical_min_score"), 2, 0, 20)
+    cfg["ignore_time"] = bool(cfg.get("ignore_time", True))
     return cfg
 
 
@@ -232,11 +238,60 @@ class RecallEngine:
             return []
         candidates = candidates[: cfg["max_kbs"]]
 
-        groups: Dict[str, List[Dict[str, Any]]] = {}
+        per_kb: List[List[Dict[str, Any]]] = []
+        vector_scopes: List[Dict[str, Any]] = []
+        short_query = len(normalise_text(query)) < 8
+
         for item in candidates:
+            kb = item["kb"]
+            mode = cfg["mode"]
+            legacy_hit = False
+            has_lexical = (
+                callable(getattr(kb, "lexical_search", None))
+                and callable(getattr(kb, "get_entry_chunks", None))
+            )
+            if cfg["lexical_enabled"] and mode != "semantic" and has_lexical:
+                try:
+                    hits = await self._lexical_chunk_hits(item, query, cfg)
+                except Exception as exc:  # noqa: BLE001 - never break a turn
+                    self._log("warning", f"[kiraKB] lexical recall failed for "
+                                         f"{kb.kb_id}: {type(exc).__name__}: {exc}")
+                    hits = []
+                if hits:
+                    for hit in hits:
+                        hit["doc_id"] = str(
+                            (hit.get("metadata") or {}).get("doc_id")
+                            or hit.get("doc_id") or ""
+                        )
+                        hit["kb_id"] = kb.kb_id
+                        hit["kb_name"] = kb.display_name
+                        hit["hash"] = _stable_hash(str(hit.get("content") or ""))
+                    per_kb.append(hits)
+                    continue
+                if mode == "mention":
+                    continue
+            elif mode in ("mention", "hybrid"):
+                # Legacy / test KB without a lexical index: keep the old
+                # title-keyword gate so behaviour does not silently change.
+                hit_ids = set(lexical_hits(query, item["entries"]))
+                if mode == "mention" and not hit_ids:
+                    continue
+                if hit_ids:
+                    legacy_hit = True
+                    item = dict(item)
+                    item["allow_doc_ids"] = hit_ids
+                    item["threshold"] = min(
+                        item_float(item.get("threshold"), cfg["min_score"]), cfg["min_score"]
+                    )
+
+            if mode == "hybrid" and short_query and not legacy_hit:
+                continue
+            vector_scopes.append(item)
+
+        groups: Dict[str, List[Dict[str, Any]]] = {}
+        for item in vector_scopes:
             groups.setdefault(item["model_key"], []).append(item)
 
-        per_kb: List[List[Dict[str, Any]]] = []
         for model_key, items in groups.items():
             embedding = await self._embed(model_key, query, items[0]["kb"], cfg)
             if embedding is None:
@@ -276,6 +331,49 @@ class RecallEngine:
             )
         return merged
 
+    async def _lexical_chunk_hits(self, item: Dict[str, Any], query: str,
+                                  cfg: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Entry hits from the full-corpus lexical index, then direct chunks."""
+        kb = item["kb"]
+        entries = await kb.lexical_search(
+            query,
+            allowed_ids=item["allow_doc_ids"],
+            min_content_score=cfg["lexical_min_score"],
+            limit=max(item["top_k"] * 4, 12),
+            ignore_time=cfg["ignore_time"],
+        )
+        if not entries:
+            return []
+        query_tokens = kb.lexical_tokens(query)
+        out: List[Dict[str, Any]] = []
+        for entry in entries:
+            doc_id = str(entry.get("doc_id") or "")
+            if not doc_id:
+                continue
+            name = item["doc_names"].get(doc_id) or entry.get("name") or doc_id
+            chunks = await kb.get_entry_chunks(doc_id, limit=8)
+            if not chunks:
+                continue
+            scored = [
+                (kb.lexical_score(query_tokens, str(chunk.get("content") or "")), chunk)
+                for chunk in chunks
+            ]
+            scored.sort(key=lambda pair: pair[0], reverse=True)
+            picked = [chunk for score, chunk in scored if score > 0][:2]
+            if not picked:
+                picked = chunks[:2]
+            for chunk in picked:
+                content = str(chunk.get("content") or "")
+                raw = float(entry.get("score") or 0) + kb.lexical_score(query_tokens, content)
+                out.append({
+                    "metadata": {"doc_id": doc_id},
+                    "content": content,
+                    "doc_name": name,
+                    "chunk_id": chunk.get("chunk_id") or "",
+                    "score": min(0.99, 0.5 + raw / 40.0),
+                })
+        return out
+
     def record_tool_hits(self, sid: str, kb_id: str, hits: Iterable[Dict[str, Any]]) -> None:
         """Remember chunks already returned by ``knowledge_search`` this turn."""
         turn = self._turn_no.get(sid, 0)
@@ -314,32 +412,16 @@ class RecallEngine:
             if not kb_enabled and not forced:
                 continue
 
-            hit_ids = set(lexical_hits(query, included))
-            mode = cfg["mode"]
-            if mode == "mention" and not hit_ids:
-                continue
-            if mode == "semantic":
-                allow_ids = {str(e.get("doc_id")) for e in included}
-                threshold = cfg["min_score"]
-            elif hit_ids:
-                allow_ids = hit_ids
-                threshold = cfg["min_score"]
-            else:
-                # hybrid, no lexical hit: need a longer question-like message and
-                # a stricter similarity gate to avoid injecting noise.
-                if len(normalise_text(query)) < 8:
-                    continue
-                allow_ids = {str(e.get("doc_id")) for e in included}
-                threshold = cfg["strong_score"]
-
-            version = kb.active_version if hasattr(kb, "active_version") else kb.get_active_version()
+            version = getattr(kb, "active_version", None)
             if version is None or getattr(version, "status", "ready") != "ready":
                 continue
             top_k = item_int(kb_settings.get("top_k"), cfg["top_k"])
+            threshold = cfg["min_score"] if cfg["mode"] == "semantic" else cfg["strong_score"]
             scopes.append({
                 "kb": kb,
                 "version": version,
-                "allow_doc_ids": allow_ids,
+                "entries": included,
+                "allow_doc_ids": {str(entry.get("doc_id")) for entry in included},
                 "doc_names": {
                     str(entry.get("doc_id")): entry.get("name") or str(entry.get("doc_id"))
                     for entry in included

@@ -4,10 +4,9 @@ import os
 import tempfile
 
 from pathlib import Path
-from typing import Tuple, List, Optional, Any
+from typing import Tuple, List, Any
 
 import aiofiles
-import httpx
 from pypdf import PdfReader
 
 try:
@@ -17,6 +16,7 @@ except ImportError:
     MARKITDOWN_AVAILABLE = False
 
 from core.logging_manager import get_logger
+from .dependencies import ensure_optional
 
 logger = get_logger("document_parser", "cyan")
 
@@ -38,8 +38,22 @@ class DocumentParser:
         elif ext in [".txt", ".md", ".markdown"]:
             return await DocumentParser._parse_text(file_path)
         elif ext in [".docx", ".xlsx", ".pptx"]:
+            global MARKITDOWN_AVAILABLE, MarkItDown
+            if ext == ".xlsx":
+                await ensure_optional("openpyxl", "openpyxl")
             if not MARKITDOWN_AVAILABLE:
-                raise ImportError("markitdown required for Office files. pip install markitdown")
+                if await ensure_optional("markitdown", "markitdown"):
+                    try:
+                        from markitdown import MarkItDown as _MarkItDown
+                        MarkItDown = _MarkItDown
+                        MARKITDOWN_AVAILABLE = True
+                    except Exception:
+                        MARKITDOWN_AVAILABLE = False
+                if not MARKITDOWN_AVAILABLE:
+                    raise ImportError(
+                        "markitdown 未安装，自动安装失败。Office 文件暂不可解析；"
+                        "可手动执行 pip install markitdown。"
+                    )
             return await DocumentParser._parse_with_markitdown(file_path)
         else:
             raise ValueError(f"Unsupported file type: {ext}")
@@ -65,7 +79,18 @@ class DocumentParser:
         try:
             from pdf2image import convert_from_path
         except ImportError:
-            raise ImportError("pdf2image required for OCR. pip install pdf2image")
+            if await ensure_optional("pdf2image", "pdf2image"):
+                try:
+                    from pdf2image import convert_from_path  # noqa: F811
+                except Exception:
+                    convert_from_path = None
+            else:
+                convert_from_path = None
+            if convert_from_path is None:
+                raise ImportError(
+                    "pdf2image 未安装，自动安装失败。OCR 需要 pdf2image 与系统 poppler；"
+                    "可手动执行 pip install pdf2image。"
+                )
         images = await asyncio.to_thread(convert_from_path, file_path, 200)
         text_parts = []
         for idx, img in enumerate(images):
@@ -113,4 +138,4 @@ class DocumentParser:
     async def _parse_with_markitdown(file_path: str) -> Tuple[str, List[bytes]]:
         md = MarkItDown(enable_plugins=False)
         result = await asyncio.to_thread(md.convert, file_path)
-        return result.markdown, []
+        return result.markdown, []

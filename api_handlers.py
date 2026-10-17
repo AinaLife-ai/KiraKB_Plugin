@@ -5,6 +5,7 @@ WebUI mode (Starlette routes in web_server.py).
 """
 
 import asyncio
+import inspect
 import tempfile
 from pathlib import Path
 from typing import Optional
@@ -67,12 +68,15 @@ def get_settings(mgr):
     return getter(), 200
 
 
-def update_settings(mgr, body: dict):
+async def update_settings(mgr, body: dict):
     setter = getattr(mgr, "settings_setter", None)
     if not callable(setter):
         return {"error": "settings unavailable"}, 503
     try:
-        return setter(body or {}), 200
+        result = setter(body or {})
+        if inspect.isawaitable(result):
+            result = await result
+        return result, 200
     except ValueError as exc:
         return {"error": str(exc)}, 400
 
@@ -554,6 +558,63 @@ async def search(mgr, kb_id: str, body: dict):
     query = body.get("query")
     if not query:
         return {"error": "query required"}, 400
+    try:
+        top_k = max(1, min(50, int(body.get("top_k", 5))))
+    except (TypeError, ValueError):
+        top_k = 5
+
+    # Lexical first: exact terms, short queries and half phrases must not
+    # depend on the embedding model ranking the right chunk into its pool.
+    lexical = []
+    if getattr(mgr, "lexical_enabled", True) and hasattr(kb, "lexical_search"):
+        try:
+            live_ids = {
+                str(doc.get("doc_id"))
+                for doc in kb.list_documents(include_deleted=False)
+            }
+            entries = await kb.lexical_search(
+                query,
+                allowed_ids=live_ids,
+                min_content_score=getattr(mgr, "lexical_min_score", 2),
+                limit=max(top_k * 4, 12),
+                ignore_time=getattr(mgr, "ignore_time", True),
+            )
+            query_tokens = kb.lexical_tokens(query)
+            names = {d["doc_id"]: d["name"] for d in kb.list_documents(include_deleted=True)}
+            for entry in entries:
+                doc_id = str(entry.get("doc_id") or "")
+                if not doc_id:
+                    continue
+                chunks = await kb.get_entry_chunks(doc_id, limit=8)
+                if not chunks:
+                    continue
+                scored = [
+                    (kb.lexical_score(query_tokens, str(chunk.get("content") or "")), chunk)
+                    for chunk in chunks
+                ]
+                scored.sort(key=lambda pair: pair[0], reverse=True)
+                picked = [chunk for score, chunk in scored if score > 0][:2]
+                if not picked:
+                    picked = chunks[:2]
+                for chunk in picked:
+                    content = str(chunk.get("content") or "")
+                    raw = float(entry.get("score") or 0) + kb.lexical_score(query_tokens, content)
+                    lexical.append({
+                        "chunk_id": chunk.get("chunk_id") or "",
+                        "doc_id": doc_id,
+                        "doc_name": names.get(doc_id) or entry.get("name") or doc_id,
+                        "content": content,
+                        "metadata": {"doc_id": doc_id},
+                        "score": min(0.99, 0.5 + raw / 40.0),
+                    })
+            lexical = lexical[:top_k]
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(f"Lexical search failed for KB {kb_id}: "
+                           f"{type(exc).__name__}: {exc}")
+            lexical = []
+    if lexical:
+        return lexical, 200
+
     active_ver = await kb.get_active_version()
     if not active_ver:
         if any(v.status != "ready" for v in kb._versions.values()):
@@ -562,10 +623,6 @@ async def search(mgr, kb_id: str, body: dict):
         return {"error": "该知识库还没有激活版本，请先创建并激活一个版本。"}, 400
     if active_ver.status != "ready":
         return {"error": "当前激活版本不完整（可能是一次失败的建库残留），请删除并重建该版本。"}, 400
-    try:
-        top_k = max(1, min(50, int(body.get("top_k", 5))))
-    except (TypeError, ValueError):
-        top_k = 5
     try:
         results = await active_ver.search(
             query,
