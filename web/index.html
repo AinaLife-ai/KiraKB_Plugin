@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>try{if(localStorage.getItem("kirakb-theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
-<title>KiraKB — Knowledge Archive</title>
+<title>KiraKB — 知识库</title>
 <style>
 :root{
   /* default: day mode, lilac white (the pre-1.2 palette family) */
@@ -217,6 +217,7 @@ select.kb-select:focus{outline:none;border-color:var(--acid)}
 }
 .doc-row + .doc-row{border-top:1px solid rgba(243,240,232,.06)}
 .doc-row:hover{background:var(--hover)}
+.doc-row > .mono{white-space:nowrap}
 .doc-name{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .doc-meta{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.06em;margin-top:3px}
 .badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
@@ -408,58 +409,58 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="dot"></div>
     </div>
     <nav class="nav" id="railNav">
-      <button type="button" data-action="nav" data-view="overview" class="is-active" aria-label="Overview">
-        <span data-icon="book-open" data-size="19"></span><span class="tip">Overview</span>
+      <button type="button" data-action="nav" data-view="overview" class="is-active" aria-label="总览">
+        <span data-icon="book-open" data-size="19"></span><span class="tip">总览</span>
       </button>
-      <button type="button" data-action="nav" data-view="docs" aria-label="Entries">
-        <span data-icon="file-text" data-size="19"></span><span class="tip">Entries</span>
+      <button type="button" data-action="nav" data-view="docs" aria-label="条目">
+        <span data-icon="file-text" data-size="19"></span><span class="tip">条目</span>
       </button>
-      <button type="button" data-action="nav" data-view="versions" aria-label="Versions">
-        <span data-icon="layers-3" data-size="19"></span><span class="tip">Versions</span>
+      <button type="button" data-action="nav" data-view="versions" aria-label="版本">
+        <span data-icon="layers-3" data-size="19"></span><span class="tip">版本</span>
       </button>
-      <button type="button" data-action="nav" data-view="search" aria-label="Search">
-        <span data-icon="search" data-size="19"></span><span class="tip">Search</span>
+      <button type="button" data-action="nav" data-view="search" aria-label="检索">
+        <span data-icon="search" data-size="19"></span><span class="tip">检索</span>
       </button>
-      <button type="button" data-action="nav" data-view="access" aria-label="Access">
-        <span data-icon="shield-check" data-size="19"></span><span class="tip">Access</span>
+      <button type="button" data-action="nav" data-view="access" aria-label="权限">
+        <span data-icon="shield-check" data-size="19"></span><span class="tip">权限</span>
       </button>
-      <button type="button" data-action="nav" data-view="recall" aria-label="Recall">
-        <span data-icon="radar" data-size="19"></span><span class="tip">Recall</span>
+      <button type="button" data-action="nav" data-view="recall" aria-label="召回">
+        <span data-icon="radar" data-size="19"></span><span class="tip">召回</span>
       </button>
-      <button type="button" data-action="nav" data-view="settings" aria-label="Settings">
-        <span data-icon="settings-2" data-size="19"></span><span class="tip">Settings</span>
+      <button type="button" data-action="nav" data-view="settings" aria-label="设置">
+        <span data-icon="settings-2" data-size="19"></span><span class="tip">设置</span>
       </button>
-      <button type="button" data-action="nav" data-view="tasks" aria-label="Tasks">
-        <span data-icon="activity" data-size="19"></span><span class="tip">Tasks</span>
+      <button type="button" data-action="nav" data-view="tasks" aria-label="任务">
+        <span data-icon="activity" data-size="19"></span><span class="tip">任务</span>
       </button>
     </nav>
-    <button type="button" class="theme-toggle" id="themeToggle" data-action="toggle-theme" aria-label="Toggle light and dark theme" title="Toggle theme"></button>
-    <div class="rail-foot">KIRAKB / 1.2</div>
+    <button type="button" class="theme-toggle" id="themeToggle" data-action="toggle-theme" aria-label="切换明暗主题" title="切换主题"></button>
+    <div class="rail-foot">KIRAKB / 1.2.1</div>
   </aside>
 
   <main class="main" id="main">
     <div class="topbar">
       <div class="left">
         <div class="kb-select-wrap">
-          <select class="kb-select" id="kbSelect" aria-label="Knowledge base"></select>
+          <select class="kb-select" id="kbSelect" aria-label="知识库"></select>
         </div>
-        <span class="badge" id="activeBadge"><span class="dot"></span><span id="activeBadgeText">No version</span></span>
+        <span class="badge" id="activeBadge"><span class="dot"></span><span id="activeBadgeText">无激活版本</span></span>
       </div>
       <div class="top-actions">
-        <button type="button" class="btn ghost" data-action="open-tab" title="Open in a new tab">
-          <span data-icon="external-link" data-size="14"></span><span>Tab</span>
+        <button type="button" class="btn ghost" data-action="open-tab" title="在新标签页打开">
+          <span data-icon="external-link" data-size="14"></span><span>新标签</span>
         </button>
         <button type="button" class="btn ghost" data-action="create-kb">
-          <span data-icon="plus" data-size="14"></span><span>New KB</span>
+          <span data-icon="plus" data-size="14"></span><span>新建</span>
         </button>
         <button type="button" class="btn" data-action="edit-kb">
-          <span data-icon="pencil-line" data-size="14"></span><span>Edit</span>
+          <span data-icon="pencil-line" data-size="14"></span><span>编辑</span>
         </button>
-        <button type="button" class="btn ghost danger" data-action="delete-kb" title="Delete knowledge base">
+        <button type="button" class="btn ghost danger" data-action="delete-kb" title="删除知识库">
           <span data-icon="trash-2" data-size="14"></span>
         </button>
         <button type="button" class="btn" data-action="upload-trigger">
-          <span data-icon="upload-cloud" data-size="14"></span><span>Upload</span>
+          <span data-icon="upload-cloud" data-size="14"></span><span>上传</span>
         </button>
       </div>
     </div>
@@ -471,25 +472,25 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
         <h1 id="heroTitle">Kira<em>KB</em><span class="title-dot">.</span></h1>
         <p id="heroDesc">知识在这里生长。翻得到，也回得去。</p>
         <div class="hero-meta">
-          <span>Entries <b id="metaEntries">0</b></span>
-          <span>Versions <b id="metaVersions">0</b></span>
-          <span>Active model <b id="metaModel">—</b></span>
-          <span>Recall <b id="metaRecall">OFF</b></span>
+          <span>条目 <b id="metaEntries">0</b></span>
+          <span>版本 <b id="metaVersions">0</b></span>
+          <span>激活模型 <b id="metaModel">—</b></span>
+          <span>召回 <b id="metaRecall">关</b></span>
         </div>
       </div>
 
       <div class="stats">
-        <div class="stat reveal" style="--i:0"><div class="num" id="statEntries">0</div><div><div class="label">Entries</div><div class="sub">Live documents in this archive</div></div></div>
-        <div class="stat reveal" style="--i:1"><div class="num" id="statVersions">0</div><div><div class="label">Versions</div><div class="sub">Independent embedding indexes</div></div></div>
-        <div class="stat reveal" style="--i:2"><div class="num" id="statChunks">—</div><div><div class="label">Active vector</div><div class="sub">Dimension of the active version</div></div></div>
-        <div class="stat reveal" style="--i:3"><div class="num" id="statRecall">OFF</div><div><div class="label">Passive recall</div><div class="sub">Automatic retrieval on mention</div></div></div>
+        <div class="stat reveal" style="--i:0"><div class="num" id="statEntries">0</div><div><div class="label">条目</div><div class="sub">这个档案里的所有内容</div></div></div>
+        <div class="stat reveal" style="--i:1"><div class="num" id="statVersions">0</div><div><div class="label">版本</div><div class="sub">彼此独立的嵌入索引</div></div></div>
+        <div class="stat reveal" style="--i:2"><div class="num" id="statChunks">—</div><div><div class="label">激活维度</div><div class="sub">当前版本的向量维度</div></div></div>
+        <div class="stat reveal" style="--i:3"><div class="num" id="statRecall">关</div><div><div class="label">被动召回</div><div class="sub">提到就自动浮上来</div></div></div>
       </div>
 
       <div class="grid-2">
         <div class="panel reveal" style="--i:4">
           <div class="panel-head">
             <span data-icon="file-text" data-size="16"></span>
-            <h2>Recent entries</h2>
+            <h2>最近条目</h2>
             <span class="count" id="recentCount"></span>
           </div>
           <div class="panel-body" id="recentList"></div>
@@ -497,7 +498,7 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
         <div class="panel reveal" style="--i:5">
           <div class="panel-head">
             <span data-icon="layers-3" data-size="16"></span>
-            <h2>Versions</h2>
+            <h2>版本</h2>
             <span class="count" id="versionCount"></span>
           </div>
           <div class="panel-body" id="overviewVersions"></div>
@@ -510,36 +511,36 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="hero" style="padding-bottom:26px">
         <div class="eyebrow">Archive / entries</div>
         <h1 style="font-size:clamp(42px,6vw,84px)">Entries</h1>
-        <p>Write, browse, lock. Every entry has its own door.</p>
+        <p>写下、翻看、锁住。每条条目都有自己的门牌。</p>
       </div>
       <div class="panel">
         <div class="doc-toolbar">
           <div class="search-mini">
             <span data-icon="search" data-size="15"></span>
-            <input id="docFilter" type="text" placeholder="Filter entries by name" autocomplete="off">
+            <input id="docFilter" type="text" placeholder="按名称筛选条目" autocomplete="off">
           </div>
-          <select class="select" id="docFilterKind" style="width:150px" aria-label="Filter entries">
-            <option value="all">all entries</option>
-            <option value="locked">WebUI only</option>
-            <option value="frozen">frozen</option>
-            <option value="recall">recall on</option>
+          <select class="select" id="docFilterKind" style="width:150px" aria-label="筛选条目">
+            <option value="all">全部条目</option>
+            <option value="locked">仅人工</option>
+            <option value="frozen">已冻结</option>
+            <option value="recall">召回开启</option>
           </select>
           <button type="button" class="btn ghost" data-action="open-deleted">
-            <span data-icon="rotate-ccw" data-size="14"></span><span>Deleted</span>
+            <span data-icon="rotate-ccw" data-size="14"></span><span>已删除</span>
           </button>
-          <span class="badge" id="docCountBadge">0 entries</span>
+          <span class="badge" id="docCountBadge">0 个条目</span>
         </div>
         <div class="dropzone" id="dropzone" data-action="upload-trigger" tabindex="0" role="button">
           <div class="dz-icon"><span data-icon="upload-cloud" data-size="20"></span></div>
-          <div><b>Drop files here, or click to upload</b><span>TXT and Markdown are read directly; PDF and Office files are parsed server-side.</span></div>
+          <div><b>把文件拖到这里，或点击上传</b><span>TXT / Markdown 直接读取；PDF 与 Office 由服务端解析。</span></div>
           <input type="file" id="fileInput" multiple accept=".txt,.md,.markdown,.pdf,.docx,.xlsx,.pptx">
         </div>
         <div class="bulkbar" id="bulkBar">
-          <span id="bulkText">0 selected</span>
+          <span id="bulkText">已选 0 条</span>
           <div class="spacer"></div>
-          <button type="button" class="btn ghost" data-action="bulk-edit">Edit policy</button>
-          <button type="button" class="btn ghost" data-action="bulk-delete">Delete policy</button>
-          <button type="button" class="btn ghost" data-action="bulk-clear">Clear</button>
+          <button type="button" class="btn ghost" data-action="bulk-edit">编辑策略</button>
+          <button type="button" class="btn ghost" data-action="bulk-delete">删除策略</button>
+          <button type="button" class="btn ghost" data-action="bulk-clear">清除</button>
         </div>
         <div id="docList" class="panel-body"></div>
       </div>
@@ -550,16 +551,16 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="hero" style="padding-bottom:26px">
         <div class="eyebrow">Archive / indexes</div>
         <h1 style="font-size:clamp(42px,6vw,84px)">Versions</h1>
-        <p>One archive, many readings.</p>
+        <p>同一段档案，可以有很多种读法。</p>
       </div>
       <div class="panel">
         <div class="panel-head">
           <span data-icon="layers-3" data-size="16"></span>
-          <h2>Embedding indexes</h2>
+          <h2>嵌入索引</h2>
           <span class="count" id="versionHeadCount"></span>
           <div style="margin-left:auto">
             <button type="button" class="btn solid" data-action="create-version">
-              <span data-icon="plus" data-size="14"></span><span>New version</span>
+              <span data-icon="plus" data-size="14"></span><span>新建版本</span>
             </button>
           </div>
         </div>
@@ -573,13 +574,13 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
         <div class="eyebrow">Archive / retrieval</div>
         <div class="search-big">
           <span data-icon="search" data-size="30"></span>
-          <input id="searchInput" type="text" placeholder="Ask the archive anything" autocomplete="off">
-          <button type="button" class="btn solid" data-action="search">Search</button>
+          <input id="searchInput" type="text" placeholder="想查什么？" autocomplete="off">
+          <button type="button" class="btn solid" data-action="search">检索</button>
         </div>
         <div class="hero-meta" style="margin-top:14px">
-          <span>Mode <b id="searchMode">vector</b></span>
-          <span>Scope <b id="searchScope">current KB</b></span>
-          <span class="faint">Press Enter to search</span>
+          <span>模式 <b id="searchMode">向量</b></span>
+          <span>范围 <b id="searchScope">当前知识库</b></span>
+          <span class="faint">回车检索</span>
         </div>
       </div>
       <div id="searchResults"></div>
@@ -590,45 +591,45 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="hero" style="padding-bottom:26px">
         <div class="eyebrow">Archive / permissions</div>
         <h1 style="font-size:clamp(42px,6vw,84px)">Access</h1>
-        <p>You decide who may touch her knowledge.</p>
+        <p>谁能碰她的知识，你说了算。</p>
       </div>
 
       <div class="panel" style="margin-bottom:22px">
         <div class="panel-head">
           <span data-icon="shield-check" data-size="16"></span>
-          <h2>Knowledge base policy</h2>
-          <span class="count">defaults for every entry</span>
+          <h2>知识库策略</h2>
+          <span class="count">每个条目的默认值</span>
         </div>
         <div class="matrix">
-          <div class="op">Add</div>
+          <div class="op">新增</div>
           <select class="select" id="policyAdd" data-kb-policy="add">
-            <option value="open">open — anyone</option>
-            <option value="whitelist">whitelist — listed users</option>
-            <option value="admin">admin — WebUI only</option>
-            <option value="off">off — frozen</option>
+            <option value="open">开放 — 任何人</option>
+            <option value="whitelist">名单 — 指定用户</option>
+            <option value="admin">仅人工 — WebUI</option>
+            <option value="off">冻结 — 不可修改</option>
           </select>
-          <div class="hint">Creating a new entry.</div>
-          <div class="op">Edit</div>
+          <div class="hint">新建条目时。</div>
+          <div class="op">编辑</div>
           <select class="select" id="policyEdit" data-kb-policy="edit">
-            <option value="open">open — anyone</option>
-            <option value="whitelist">whitelist — listed users</option>
-            <option value="admin">admin — WebUI only</option>
-            <option value="off">off — frozen</option>
+            <option value="open">开放 — 任何人</option>
+            <option value="whitelist">名单 — 指定用户</option>
+            <option value="admin">仅人工 — WebUI</option>
+            <option value="off">冻结 — 不可修改</option>
           </select>
-          <div class="hint">Changing an existing entry, including reviving a deleted one.</div>
-          <div class="op">Delete</div>
+          <div class="hint">修改已有条目，包括恢复被删除的条目。</div>
+          <div class="op">删除</div>
           <select class="select" id="policyDelete" data-kb-policy="delete">
-            <option value="open">open — anyone</option>
-            <option value="whitelist">whitelist — listed users</option>
-            <option value="admin">admin — WebUI only</option>
-            <option value="off">off — frozen</option>
+            <option value="open">开放 — 任何人</option>
+            <option value="whitelist">名单 — 指定用户</option>
+            <option value="admin">仅人工 — WebUI</option>
+            <option value="off">冻结 — 不可修改</option>
           </select>
-          <div class="hint">Soft delete (recoverable) and restore.</div>
+          <div class="hint">软删除（可恢复）与恢复操作。</div>
         </div>
         <div class="settings-row">
           <div class="info">
-            <b>Allow list</b>
-            <span>One user id per line. An empty list falls back to the global whitelist; if both are empty, whitelist mode does not restrict anyone (legacy behaviour).</span>
+            <b>允许名单</b>
+            <span>每行一个用户 ID。留空时回退到全局名单；两者都空时，名单模式不限制任何人（兼容旧行为）。</span>
           </div>
           <div style="width:min(320px,100%)">
             <div class="field"><textarea id="kbAllowUsers" rows="2" placeholder="123456789"></textarea></div>
@@ -636,7 +637,7 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
         </div>
         <div class="panel-foot">
           <button type="button" class="btn solid" data-action="save-kb-perms">
-            <span data-icon="save" data-size="14"></span><span>Save policy</span>
+            <span data-icon="save" data-size="14"></span><span>保存策略</span>
           </button>
         </div>
       </div>
@@ -644,7 +645,7 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="panel">
         <div class="panel-head">
           <span data-icon="users" data-size="16"></span>
-          <h2>Entry overrides</h2>
+          <h2>条目覆盖</h2>
           <span class="count" id="entryOverrideCount"></span>
         </div>
         <div class="panel-body" id="entryPolicyList"></div>
@@ -656,30 +657,30 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="hero" style="padding-bottom:26px">
         <div class="eyebrow">Archive / passive recall</div>
         <h1 style="font-size:clamp(42px,6vw,84px)">Recall</h1>
-        <p>Mention it, and it comes back.</p>
+        <p>话里提到，它就会回来。</p>
       </div>
 
       <div class="panel" style="margin-bottom:22px">
         <div class="panel-head">
           <span data-icon="radar" data-size="16"></span>
-          <h2>Knowledge base recall</h2>
-          <span class="badge" id="globalRecallBadge">Global off</span>
+          <h2>知识库召回</h2>
+          <span class="badge" id="globalRecallBadge">总开关 关</span>
         </div>
         <div class="settings-row">
           <div class="info">
-            <b>Enable for this knowledge base</b>
-            <span>Requires the plugin-level master switch. Entries can still opt in individually when this is off.</span>
+            <b>对此知识库启用</b>
+            <span>需要插件级总开关打开。此开关关闭时，条目仍可单独强制开启。</span>
           </div>
-          <label class="switch"><input type="checkbox" id="kbRecallEnabled"><span class="track"></span><span class="txt">Enabled</span></label>
+          <label class="switch"><input type="checkbox" id="kbRecallEnabled"><span class="track"></span><span class="txt">启用</span></label>
         </div>
         <div class="form-grid">
-          <div class="field"><label>Top K</label><input id="kbRecallTopK" type="number" min="1" max="10" placeholder="global"></div>
-          <div class="field"><label>Min score</label><input id="kbRecallMinScore" type="number" min="0" max="1" step="0.01" placeholder="global"></div>
-          <div class="field"><label>Max chars</label><input id="kbRecallMaxChars" type="number" min="100" max="8000" step="50" placeholder="global"></div>
+          <div class="field"><label>条数</label><input id="kbRecallTopK" type="number" min="1" max="10" placeholder="跟随全局"></div>
+          <div class="field"><label>最低相似度</label><input id="kbRecallMinScore" type="number" min="0" max="1" step="0.01" placeholder="跟随全局"></div>
+          <div class="field"><label>字符上限</label><input id="kbRecallMaxChars" type="number" min="100" max="8000" step="50" placeholder="跟随全局"></div>
         </div>
         <div class="panel-foot">
           <button type="button" class="btn solid" data-action="save-kb-recall">
-            <span data-icon="save" data-size="14"></span><span>Save recall</span>
+            <span data-icon="save" data-size="14"></span><span>保存召回</span>
           </button>
         </div>
       </div>
@@ -687,8 +688,8 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="panel">
         <div class="panel-head">
           <span data-icon="target" data-size="16"></span>
-          <h2>Entry recall</h2>
-          <span class="count">inherit / force on / opt out</span>
+          <h2>条目召回</h2>
+          <span class="count">继承 / 强制开启 / 排除</span>
         </div>
         <div class="panel-body" id="entryRecallList"></div>
       </div>
@@ -699,35 +700,35 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="hero" style="padding-bottom:26px">
         <div class="eyebrow">Archive / runtime settings</div>
         <h1 style="font-size:clamp(42px,6vw,84px)">Settings</h1>
-        <p>Tune how she remembers. Applied live.</p>
+        <p>调她的记忆方式，改完立即生效。</p>
       </div>
 
       <div class="panel" style="margin-bottom:22px">
         <div class="panel-head">
           <span data-icon="search" data-size="16"></span>
-          <h2>Search and entries</h2>
-          <span class="count">hot applied</span>
+          <h2>检索与条目</h2>
+          <span class="count">即时生效</span>
         </div>
         <div class="form-grid">
-          <div class="field"><label>Default top K</label><input id="setTopK" type="number" min="1" max="20"></div>
-          <div class="field"><label>Chunk size</label><input id="setChunkSize" type="number" min="100" max="8000"></div>
-          <div class="field"><label>Chunk overlap</label><input id="setChunkOverlap" type="number" min="0" max="7999"></div>
-          <div class="field"><label>Entry title max chars</label><input id="setTitleMax" type="number" min="4" max="60"></div>
-          <div class="field"><label>History keep (intermediate)</label><input id="setHistoryKeep" type="number" min="1" max="200"></div>
-          <div class="field"><label>Hybrid search</label>
-            <label class="switch"><input type="checkbox" id="setHybrid"><span class="track"></span><span class="txt">BM25 + vector</span></label>
+          <div class="field"><label>默认条数</label><input id="setTopK" type="number" min="1" max="20"></div>
+          <div class="field"><label>分块大小</label><input id="setChunkSize" type="number" min="100" max="8000"></div>
+          <div class="field"><label>分块重叠</label><input id="setChunkOverlap" type="number" min="0" max="7999"></div>
+          <div class="field"><label>条目标题最大长度</label><input id="setTitleMax" type="number" min="4" max="60"></div>
+          <div class="field"><label>历史保留（过程版本）</label><input id="setHistoryKeep" type="number" min="1" max="200"></div>
+          <div class="field"><label>混合检索</label>
+            <label class="switch"><input type="checkbox" id="setHybrid"><span class="track"></span><span class="txt">BM25 + 向量</span></label>
           </div>
-          <div class="field"><label>Read-only entry tools</label>
-            <label class="switch"><input type="checkbox" id="setExtraTools"><span class="track"></span><span class="txt">list / get</span></label>
+          <div class="field"><label>只读条目工具</label>
+            <label class="switch"><input type="checkbox" id="setExtraTools"><span class="track"></span><span class="txt">列表 / 读取</span></label>
           </div>
-          <div class="field"><label>Auto sync other versions</label>
-            <label class="switch"><input type="checkbox" id="setAutoSync"><span class="track"></span><span class="txt">After edit</span></label>
+          <div class="field"><label>自动同步其它版本</label>
+            <label class="switch"><input type="checkbox" id="setAutoSync"><span class="track"></span><span class="txt">编辑后</span></label>
           </div>
-          <div class="field"><label>Stopwords</label>
-            <label class="switch"><input type="checkbox" id="setStopwords"><span class="track"></span><span class="txt">BM25 filter</span></label>
+          <div class="field"><label>停用词</label>
+            <label class="switch"><input type="checkbox" id="setStopwords"><span class="track"></span><span class="txt">BM25 过滤</span></label>
           </div>
-          <div class="field"><label>Rerank</label>
-            <label class="switch"><input type="checkbox" id="setRerank"><span class="track"></span><span class="txt">Default model</span></label>
+          <div class="field"><label>重排序</label>
+            <label class="switch"><input type="checkbox" id="setRerank"><span class="track"></span><span class="txt">默认模型</span></label>
           </div>
         </div>
       </div>
@@ -735,59 +736,59 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="panel" style="margin-bottom:22px">
         <div class="panel-head">
           <span data-icon="radar" data-size="16"></span>
-          <h2>Passive recall</h2>
-          <span class="count">master switch + tuning</span>
+          <h2>被动召回</h2>
+          <span class="count">总开关与参数</span>
         </div>
         <div class="form-grid">
-          <div class="field"><label>Master switch</label>
-            <label class="switch"><input type="checkbox" id="setRecallEnabled"><span class="track"></span><span class="txt">Enabled</span></label>
+          <div class="field"><label>总开关</label>
+            <label class="switch"><input type="checkbox" id="setRecallEnabled"><span class="track"></span><span class="txt">启用</span></label>
           </div>
-          <div class="field"><label>Mode</label>
+          <div class="field"><label>模式</label>
             <select class="select" id="setRecallMode">
-              <option value="hybrid">hybrid</option>
-              <option value="mention">mention</option>
-              <option value="semantic">semantic</option>
+              <option value="hybrid">混合</option>
+              <option value="mention">词面</option>
+              <option value="semantic">语义</option>
             </select>
           </div>
-          <div class="field"><label>Top K</label><input id="setRecallTopK" type="number" min="1" max="10"></div>
-          <div class="field"><label>Min score (cosine)</label><input id="setRecallMin" type="number" min="0" max="1" step="0.01"></div>
-          <div class="field"><label>Strong score (no lexical hit)</label><input id="setRecallStrong" type="number" min="0" max="1" step="0.01"></div>
-          <div class="field"><label>Max chars</label><input id="setRecallChars" type="number" min="100" max="8000"></div>
-          <div class="field"><label>Timeout (ms)</label><input id="setRecallTimeout" type="number" min="200" max="10000"></div>
-          <div class="field"><label>Dedupe turns</label><input id="setRecallDedupe" type="number" min="0" max="20"></div>
-          <div class="field"><label>Max KBs per turn</label><input id="setRecallMaxKbs" type="number" min="1" max="20"></div>
-          <div class="field"><label>Min query chars</label><input id="setRecallMinQuery" type="number" min="1" max="32"></div>
+          <div class="field"><label>条数</label><input id="setRecallTopK" type="number" min="1" max="10"></div>
+          <div class="field"><label>最低相似度（余弦）</label><input id="setRecallMin" type="number" min="0" max="1" step="0.01"></div>
+          <div class="field"><label>强门槛（无词面命中）</label><input id="setRecallStrong" type="number" min="0" max="1" step="0.01"></div>
+          <div class="field"><label>字符上限</label><input id="setRecallChars" type="number" min="100" max="8000"></div>
+          <div class="field"><label>超时（毫秒）</label><input id="setRecallTimeout" type="number" min="200" max="10000"></div>
+          <div class="field"><label>去重回合</label><input id="setRecallDedupe" type="number" min="0" max="20"></div>
+          <div class="field"><label>单轮最多知识库</label><input id="setRecallMaxKbs" type="number" min="1" max="20"></div>
+          <div class="field"><label>最小消息长度</label><input id="setRecallMinQuery" type="number" min="1" max="32"></div>
         </div>
       </div>
 
       <div class="panel" style="margin-bottom:22px">
         <div class="panel-head">
           <span data-icon="shield-check" data-size="16"></span>
-          <h2>Default permissions</h2>
-          <span class="count">applies to knowledge bases without explicit policy</span>
+          <h2>默认权限</h2>
+          <span class="count">未单独配置的知识库使用</span>
         </div>
         <div class="form-grid">
-          <div class="field"><label>Add</label><select class="select" id="setAddPolicy"></select></div>
-          <div class="field"><label>Edit</label><select class="select" id="setEditPolicy"></select></div>
-          <div class="field"><label>Delete</label><select class="select" id="setDeletePolicy"></select></div>
-          <div class="field wide"><label>Global allow list (one user id per line)</label><textarea id="setOwnerWhitelist" rows="3"></textarea></div>
+          <div class="field"><label>新增</label><select class="select" id="setAddPolicy"></select></div>
+          <div class="field"><label>编辑</label><select class="select" id="setEditPolicy"></select></div>
+          <div class="field"><label>删除</label><select class="select" id="setDeletePolicy"></select></div>
+          <div class="field wide"><label>全局允许名单（每行一个用户 ID）</label><textarea id="setOwnerWhitelist" rows="3"></textarea></div>
         </div>
       </div>
 
       <div class="panel">
         <div class="panel-head">
           <span data-icon="alert-triangle" data-size="16"></span>
-          <h2>Requires restart</h2>
-          <span class="count">read only here</span>
+          <h2>需要重启</h2>
+          <span class="count">此处只读</span>
         </div>
         <div class="form-grid">
-          <div class="field"><label>Knowledge base directory</label><input id="setKbDir" type="text" disabled></div>
-          <div class="field"><label>Standalone host</label><input id="setWebHost" type="text" disabled></div>
-          <div class="field"><label>Standalone port</label><input id="setWebPort" type="number" disabled></div>
+          <div class="field"><label>知识库目录</label><input id="setKbDir" type="text" disabled></div>
+          <div class="field"><label>独立服务地址</label><input id="setWebHost" type="text" disabled></div>
+          <div class="field"><label>独立服务端口</label><input id="setWebPort" type="number" disabled></div>
         </div>
         <div class="panel-foot">
           <button type="button" class="btn solid" data-action="save-settings">
-            <span data-icon="save" data-size="14"></span><span>Apply settings</span>
+            <span data-icon="save" data-size="14"></span><span>应用设置</span>
           </button>
         </div>
       </div>
@@ -798,7 +799,7 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
       <div class="hero" style="padding-bottom:26px">
         <div class="eyebrow">Archive / jobs</div>
         <h1 style="font-size:clamp(42px,6vw,84px)">Tasks</h1>
-        <p>She is sorting knowledge in the background.</p>
+        <p>她在后台整理知识，进度会在这里。</p>
       </div>
       <div class="panel"><div id="taskList"></div></div>
     </section>
@@ -809,10 +810,10 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
 <div class="modal small" id="modalConfirm" aria-hidden="true">
   <div class="backdrop" data-action="close-modal" data-modal="modalConfirm"></div>
   <div class="sheet" role="dialog" aria-modal="true">
-    <div class="modal-head"><div><h3 id="confirmTitle">Confirm</h3><p id="confirmText"></p></div></div>
+    <div class="modal-head"><div><h3 id="confirmTitle">确认</h3><p id="confirmText"></p></div></div>
     <div class="modal-foot">
-      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalConfirm">Cancel</button>
-      <button type="button" class="btn solid" id="confirmOk">Confirm</button>
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalConfirm">取消</button>
+      <button type="button" class="btn solid" id="confirmOk">确认</button>
     </div>
   </div>
 </div>
@@ -820,11 +821,11 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
 <div class="modal small" id="modalPrompt" aria-hidden="true">
   <div class="backdrop" data-action="close-modal" data-modal="modalPrompt"></div>
   <div class="sheet" role="dialog" aria-modal="true">
-    <div class="modal-head"><div><h3 id="promptTitle">Input</h3><p id="promptText"></p></div></div>
+    <div class="modal-head"><div><h3 id="promptTitle">输入</h3><p id="promptText"></p></div></div>
     <div class="field"><input id="promptInput" type="text" autocomplete="off"></div>
     <div class="modal-foot">
-      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalPrompt">Cancel</button>
-      <button type="button" class="btn solid" id="promptOk">OK</button>
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalPrompt">取消</button>
+      <button type="button" class="btn solid" id="promptOk">确定</button>
     </div>
   </div>
 </div>
@@ -833,17 +834,17 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
   <div class="backdrop" data-action="close-modal" data-modal="modalKbInfo"></div>
   <div class="sheet" role="dialog" aria-modal="true">
     <div class="modal-head">
-      <div><h3>Knowledge base</h3><p>Display name and description shown in the archive.</p></div>
+      <div><h3>知识库信息</h3><p>在档案里显示的标题与描述。</p></div>
       <button type="button" class="icon-btn" data-action="close-modal" data-modal="modalKbInfo"><span data-icon="x" data-size="16"></span></button>
     </div>
     <div class="form-grid">
-      <div class="field wide"><label>Display name</label><input id="kbInfoName" type="text"></div>
-      <div class="field wide"><label>Description</label><textarea id="kbInfoDesc" rows="4"></textarea></div>
-      <div class="field"><label>History keep (intermediate revisions)</label><input id="kbInfoHistoryKeep" type="number" min="1" max="200"></div>
+      <div class="field wide"><label>显示名称</label><input id="kbInfoName" type="text"></div>
+      <div class="field wide"><label>描述</label><textarea id="kbInfoDesc" rows="4"></textarea></div>
+      <div class="field"><label>历史保留（过程版本数）</label><input id="kbInfoHistoryKeep" type="number" min="1" max="200"></div>
     </div>
     <div class="modal-foot">
-      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalKbInfo">Cancel</button>
-      <button type="button" class="btn solid" data-action="save-kb-info"><span data-icon="save" data-size="14"></span><span>Save</span></button>
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalKbInfo">取消</button>
+      <button type="button" class="btn solid" data-action="save-kb-info"><span data-icon="save" data-size="14"></span><span>保存</span></button>
     </div>
   </div>
 </div>
@@ -852,14 +853,14 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
   <div class="backdrop" data-action="close-modal" data-modal="modalDoc"></div>
   <div class="sheet" role="dialog" aria-modal="true">
     <div class="modal-head">
-      <div><h3 id="docModalTitle">Entry</h3><p id="docModalMeta"></p></div>
+      <div><h3 id="docModalTitle">条目</h3><p id="docModalMeta"></p></div>
       <button type="button" class="icon-btn" data-action="close-modal" data-modal="modalDoc"><span data-icon="x" data-size="16"></span></button>
     </div>
-    <div class="field" style="margin-bottom:14px"><label>Title</label><input id="docName" type="text"></div>
-    <div class="field"><label>Content</label><textarea id="docContent" class="doc-text"></textarea></div>
+    <div class="field" style="margin-bottom:14px"><label>标题</label><input id="docName" type="text"></div>
+    <div class="field"><label>内容</label><textarea id="docContent" class="doc-text"></textarea></div>
     <div class="modal-foot">
-      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalDoc">Cancel</button>
-      <button type="button" class="btn solid" data-action="save-doc"><span data-icon="save" data-size="14"></span><span>Save and re-index</span></button>
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalDoc">取消</button>
+      <button type="button" class="btn solid" data-action="save-doc"><span data-icon="save" data-size="14"></span><span>保存并重建索引</span></button>
     </div>
   </div>
 </div>
@@ -868,20 +869,20 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
   <div class="backdrop" data-action="close-modal" data-modal="modalVersion"></div>
   <div class="sheet" role="dialog" aria-modal="true">
     <div class="modal-head">
-      <div><h3>New version</h3><p>Select an embedding model, probe its dimension, then build.</p></div>
+      <div><h3>新建版本</h3><p>选择嵌入模型，探测维度后创建。</p></div>
       <button type="button" class="icon-btn" data-action="close-modal" data-modal="modalVersion"><span data-icon="x" data-size="16"></span></button>
     </div>
     <div class="form-grid">
-      <div class="field wide"><label>Embedding model</label><select class="select" id="versionModel"></select></div>
+      <div class="field wide"><label>嵌入模型</label><select class="select" id="versionModel"></select></div>
       <div class="field wide" id="modelHint"></div>
-      <div class="field"><label>Label</label><input id="versionName" type="text" placeholder="version label"></div>
-      <div class="field"><label>Dimension</label><input id="versionDim" type="number" min="1"></div>
-      <div class="field"><label>&nbsp;</label><button type="button" class="btn" data-action="probe"><span data-icon="zap" data-size="14"></span><span>Probe</span></button></div>
-      <div class="field wide"><label>Documents (empty = all)</label><div class="check-list" id="versionDocs"></div></div>
+      <div class="field"><label>版本标签</label><input id="versionName" type="text" placeholder="例如 bge-m3"></div>
+      <div class="field"><label>维度</label><input id="versionDim" type="number" min="1"></div>
+      <div class="field"><label>&nbsp;</label><button type="button" class="btn" data-action="probe"><span data-icon="zap" data-size="14"></span><span>探测</span></button></div>
+      <div class="field wide"><label>文档（留空 = 全部）</label><div class="check-list" id="versionDocs"></div></div>
     </div>
     <div class="modal-foot">
-      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalVersion">Cancel</button>
-      <button type="button" class="btn solid" data-action="create-version-submit"><span data-icon="plus" data-size="14"></span><span>Build version</span></button>
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalVersion">取消</button>
+      <button type="button" class="btn solid" data-action="create-version-submit"><span data-icon="plus" data-size="14"></span><span>创建版本</span></button>
     </div>
   </div>
 </div>
@@ -890,12 +891,12 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
   <div class="backdrop" data-action="close-modal" data-modal="modalDeleted"></div>
   <div class="sheet" role="dialog" aria-modal="true">
     <div class="modal-head">
-      <div><h3>Deleted entries</h3><p>Soft-deleted entries keep their raw content and can be restored into every version.</p></div>
+      <div><h3>已删除条目</h3><p>软删除会保留原始内容，可恢复到所有可用版本。</p></div>
       <button type="button" class="icon-btn" data-action="close-modal" data-modal="modalDeleted"><span data-icon="x" data-size="16"></span></button>
     </div>
     <div id="deletedList"></div>
     <div class="modal-foot">
-      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalDeleted">Close</button>
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalDeleted">关闭</button>
     </div>
   </div>
 </div>
@@ -904,19 +905,19 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
   <div class="backdrop" data-action="close-modal" data-modal="modalEntry"></div>
   <div class="sheet" role="dialog" aria-modal="true">
     <div class="modal-head">
-      <div><h3 id="entryModalTitle">Entry settings</h3><p>Permissions and passive recall for a single entry.</p></div>
+      <div><h3 id="entryModalTitle">条目设置</h3><p>单个条目的权限与被动召回。</p></div>
       <button type="button" class="icon-btn" data-action="close-modal" data-modal="modalEntry"><span data-icon="x" data-size="16"></span></button>
     </div>
     <div class="form-grid">
-      <div class="field"><label>Edit policy</label><select class="select" id="entryPolicyEdit"></select></div>
-      <div class="field"><label>Delete policy</label><select class="select" id="entryPolicyDelete"></select></div>
-      <div class="field"><label>Recall</label><select class="select" id="entryRecallEnabled"></select></div>
-      <div class="field wide"><label>Entry allow list (empty = inherit KB)</label><textarea id="entryAllowUsers" rows="2"></textarea></div>
-      <div class="field wide"><label>Recall keywords (comma separated)</label><input id="entryKeywords" type="text" placeholder="安装, deploy"></div>
+      <div class="field"><label>编辑策略</label><select class="select" id="entryPolicyEdit"></select></div>
+      <div class="field"><label>删除策略</label><select class="select" id="entryPolicyDelete"></select></div>
+      <div class="field"><label>召回</label><select class="select" id="entryRecallEnabled"></select></div>
+      <div class="field wide"><label>条目允许名单（留空 = 跟随知识库）</label><textarea id="entryAllowUsers" rows="2"></textarea></div>
+      <div class="field wide"><label>召回关键词（逗号分隔）</label><input id="entryKeywords" type="text" placeholder="安装, 部署"></div>
     </div>
     <div class="modal-foot">
-      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalEntry">Cancel</button>
-      <button type="button" class="btn solid" data-action="save-entry-settings"><span data-icon="save" data-size="14"></span><span>Save settings</span></button>
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalEntry">取消</button>
+      <button type="button" class="btn solid" data-action="save-entry-settings"><span data-icon="save" data-size="14"></span><span>保存设置</span></button>
     </div>
   </div>
 </div>
@@ -925,7 +926,7 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
   <div class="backdrop" data-action="close-modal" data-modal="modalHistory"></div>
   <div class="sheet" role="dialog" aria-modal="true">
     <div class="modal-head">
-      <div><h3 id="historyTitle">History</h3><p id="historyMeta"></p></div>
+      <div><h3 id="historyTitle">修订历史</h3><p id="historyMeta"></p></div>
       <button type="button" class="icon-btn" data-action="close-modal" data-modal="modalHistory"><span data-icon="x" data-size="16"></span></button>
     </div>
     <div id="historyPanel">
@@ -933,13 +934,13 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
     </div>
     <div id="historyViewer" class="hidden">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-        <button type="button" class="btn ghost" data-action="history-back"><span data-icon="arrow-left" data-size="13"></span><span>Back</span></button>
+        <button type="button" class="btn ghost" data-action="history-back"><span data-icon="arrow-left" data-size="13"></span><span>返回</span></button>
         <span id="historyViewMeta" class="mono faint"></span>
       </div>
       <pre id="historyContent" class="doc-text" style="white-space:pre-wrap;max-height:48vh;overflow:auto;resize:none"></pre>
     </div>
     <div class="modal-foot">
-      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalHistory">Close</button>
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalHistory">关闭</button>
     </div>
   </div>
 </div>
@@ -947,14 +948,14 @@ html[data-theme="dark"] .switch .track::after{background:var(--paper);box-shadow
 <div class="modal small" id="modalBulk" aria-hidden="true">
   <div class="backdrop" data-action="close-modal" data-modal="modalBulk"></div>
   <div class="sheet" role="dialog" aria-modal="true">
-    <div class="modal-head"><div><h3>Bulk policy</h3><p id="bulkSubtitle">Apply to selected entries.</p></div></div>
+    <div class="modal-head"><div><h3>批量策略</h3><p id="bulkSubtitle">应用到选中的条目。</p></div></div>
     <div class="form-grid">
-      <div class="field wide"><label>Edit policy</label><select class="select" id="bulkEditPolicy"></select></div>
-      <div class="field wide"><label>Delete policy</label><select class="select" id="bulkDeletePolicy"></select></div>
+      <div class="field wide"><label>编辑策略</label><select class="select" id="bulkEditPolicy"></select></div>
+      <div class="field wide"><label>删除策略</label><select class="select" id="bulkDeletePolicy"></select></div>
     </div>
     <div class="modal-foot">
-      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalBulk">Cancel</button>
-      <button type="button" class="btn solid" data-action="bulk-apply"><span data-icon="check" data-size="14"></span><span>Apply</span></button>
+      <button type="button" class="btn ghost" data-action="close-modal" data-modal="modalBulk">取消</button>
+      <button type="button" class="btn solid" data-action="bulk-apply"><span data-icon="check" data-size="14"></span><span>应用</span></button>
     </div>
   </div>
 </div>
@@ -1019,20 +1020,20 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
 const POLICY_LABELS = {
-  open: "Open",
-  whitelist: "Whitelist",
-  admin: "WebUI only",
-  off: "Frozen",
-  inherit: "Inherit"
+  open: "开放",
+  whitelist: "名单",
+  admin: "仅人工",
+  off: "冻结",
+  inherit: "继承"
 };
 const POLICY_OPTIONS_SCOPE = [
-  ["open", "open — anyone"],
-  ["whitelist", "whitelist — listed users"],
-  ["admin", "admin — WebUI only"],
-  ["off", "off — frozen"]
+  ["open", "开放 — 任何人"],
+  ["whitelist", "名单 — 指定用户"],
+  ["admin", "仅人工 — WebUI"],
+  ["off", "冻结 — 不可修改"]
 ];
-const POLICY_OPTIONS_ENTRY = [["inherit", "inherit — follow KB"]].concat(POLICY_OPTIONS_SCOPE);
-const RECALL_OPTIONS = [["inherit", "inherit — follow KB"], ["on", "force on"], ["off", "opt out"]];
+const POLICY_OPTIONS_ENTRY = [["inherit", "继承 — 跟随知识库"]].concat(POLICY_OPTIONS_SCOPE);
+const RECALL_OPTIONS = [["inherit", "继承 — 跟随知识库"], ["on", "强制开启"], ["off", "排除"]];
 
 const state = {
   kbs: [], current: null, docs: [], versions: [], tasks: [], deleted: [],
@@ -1074,7 +1075,7 @@ async function api(path, opts = {}) {
     if (!bridgeCtx) {
       bridgeCtx = await Promise.race([
         window.PluginPageContext.ready(),
-        new Promise((_, rej) => setTimeout(() => rej(new Error("Bridge timeout")), 8000))
+        new Promise((_, rej) => setTimeout(() => rej(new Error("页面桥接超时")), 8000))
       ]);
     }
     if (method === "GET") data = await window.PluginPageContext.api.get(path);
@@ -1094,7 +1095,7 @@ async function api(path, opts = {}) {
     const headers = { "Content-Type": "application/json" };
     if (token) headers.Authorization = "Bearer " + token;
     const res = await fetch(base + path, { ...opts, headers });
-    data = await res.json().catch(() => ({ error: "Invalid JSON response" }));
+    data = await res.json().catch(() => ({ error: "返回内容不是有效 JSON" }));
   }
   if (data && data.error && !opts.allowError) throw new Error(data.error);
   return data;
@@ -1175,7 +1176,7 @@ function closeModal(id) {
 function closeAllModals() {
   $$(".modal.is-open").forEach(el => closeModal(el.id));
 }
-function askConfirm(title, text, confirmText = "Confirm", danger = false) {
+function askConfirm(title, text, confirmText = "确认", danger = false) {
   return new Promise(resolve => {
     $("#confirmTitle").textContent = title;
     $("#confirmText").textContent = text || "";
@@ -1244,10 +1245,10 @@ function badge(text, cls = "") {
   return `<span class="badge ${cls}"><span class="dot"></span>${esc(text)}</span>`;
 }
 function policyBadge(policy) {
-  if (policy === "admin") return badge("WebUI only", "violet");
-  if (policy === "off") return badge("Frozen", "danger");
-  if (policy === "whitelist") return badge("Whitelist", "warn");
-  return badge("Open", "cyan");
+  if (policy === "admin") return badge("仅人工", "violet");
+  if (policy === "off") return badge("冻结", "danger");
+  if (policy === "whitelist") return badge("名单", "warn");
+  return badge("开放", "cyan");
 }
 
 /* ---------- rendering ---------- */
@@ -1272,14 +1273,14 @@ function renderSelect() {
   const sel = $("#kbSelect");
   sel.innerHTML = state.kbs.length
     ? state.kbs.map(k => `<option value="${esc(k.kb_id)}">${esc(k.display_name)} · ${k.entry_count || 0}</option>`).join("")
-    : `<option value="">No knowledge base</option>`;
+    : `<option value="">还没有知识库</option>`;
   if (state.current) sel.value = state.current;
 }
 
 function renderTopbar() {
   const kb = currentKb();
   const ver = activeVersion();
-  $("#activeBadgeText").textContent = ver ? ver.model_name : "No version";
+  $("#activeBadgeText").textContent = ver ? ver.model_name : "无激活版本";
   $("#activeBadge").className = "badge " + (ver ? "acid" : "");
   $$("#railNav button").forEach(b => b.classList.toggle("is-active", b.dataset.view === state.view));
 }
@@ -1294,13 +1295,13 @@ function renderHero() {
   $("#metaVersions").textContent = String(state.versions.length).padStart(2, "0");
   $("#metaModel").textContent = ver ? ver.model_name : "—";
   const recallOn = (kb && kb.recall && kb.recall.enabled) || false;
-  $("#metaRecall").textContent = recallOn ? "ON" : "OFF";
+  $("#metaRecall").textContent = recallOn ? "开" : "关";
   $("#heroIndex").textContent = String(Math.max(1, state.kbs.findIndex(k => k.kb_id === state.current) + 1)).padStart(2, "0");
 
   animateNumber($("#statEntries"), state.docs.length);
   animateNumber($("#statVersions"), state.versions.length);
   $("#statChunks").textContent = ver ? String(ver.dimension) : "—";
-  $("#statRecall").textContent = recallOn ? "ON" : "OFF";
+  $("#statRecall").textContent = recallOn ? "开启" : "关闭";
   $("#statRecall").style.color = recallOn ? "var(--acid)" : "";
 }
 
@@ -1328,22 +1329,22 @@ function renderOverviewLists() {
       <div class="doc-row reveal" style="--i:${i}">
         <span class="mono faint">${String(i + 1).padStart(2, "0")}</span>
         <div><div class="doc-name">${esc(d.name)}</div><div class="doc-meta">${fmtBytes(d.size)} · ${fmtTime(d.updated_at)}</div></div>
-        <div class="badges">${policyBadge(entryPolicyValue(d, "edit"))}${d.recall && d.recall.enabled === true ? badge("Recall on", "acid") : ""}</div>
+        <div class="badges">${policyBadge(entryPolicyValue(d, "edit"))}${d.recall && d.recall.enabled === true ? badge("召回开", "acid") : ""}</div>
         <span></span>
       </div>`).join("")
-    : `<div class="empty"><div class="big">Empty</div>No entries yet.</div>`;
+    : `<div class="empty"><div class="big">空空如也</div>还没有条目。</div>`;
 
   const vlist = state.versions.slice(0, 4);
   $("#versionCount").textContent = String(state.versions.length);
   $("#overviewVersions").innerHTML = vlist.length
     ? vlist.map((v, i) => `
       <div class="doc-row reveal" style="--i:${i}">
-        <span class="mono faint">${v.is_active ? "ON" : String(i + 1).padStart(2, "0")}</span>
-        <div><div class="doc-name">${esc(v.model_name)}</div><div class="doc-meta">${v.dimension} dim · ${fmtTime(v.created_at)}</div></div>
-        <div class="badges">${v.is_active ? badge("Active", "acid") : badge("Standby", "")}${v.outdated ? badge(v.outdated + " to sync", "warn") : ""}</div>
+        <span class="mono faint">${v.is_active ? "当前" : String(i + 1).padStart(2, "0")}</span>
+        <div><div class="doc-name">${esc(v.model_name)}</div><div class="doc-meta">${v.dimension} 维 · ${fmtTime(v.created_at)}</div></div>
+        <div class="badges">${v.is_active ? badge("使用中", "acid") : badge("待用", "")}${v.outdated ? badge(v.outdated + " 条待同步", "warn") : ""}</div>
         <span></span>
       </div>`).join("")
-    : `<div class="empty"><div class="big">No index</div>Create a version to enable search.</div>`;
+    : `<div class="empty"><div class="big">还没有索引</div>创建一个版本后才能检索。</div>`;
 }
 
 function renderDocs() {
@@ -1356,7 +1357,7 @@ function renderDocs() {
     if (kind === "recall") return d.recall && d.recall.enabled === true;
     return true;
   });
-  $("#docCountBadge").textContent = state.docs.length + " entries";
+  $("#docCountBadge").textContent = state.docs.length + " 个条目";
   $("#docList").innerHTML = docs.length
     ? docs.map((d, i) => {
       const edit = entryPolicyValue(d, "edit");
@@ -1366,52 +1367,52 @@ function renderDocs() {
         <label class="check"><input type="checkbox" data-check="doc" value="${esc(d.doc_id)}" ${state.selected.has(d.doc_id) ? "checked" : ""}></label>
         <div>
           <div class="doc-name">${esc(d.name)}</div>
-          <div class="doc-meta">${fmtBytes(d.size)} · updated ${fmtTime(d.updated_at)}</div>
+          <div class="doc-meta">${fmtBytes(d.size)} · 更新于 ${fmtTime(d.updated_at)}</div>
         </div>
         <div class="badges">
           ${policyBadge(edit)}
           ${del !== edit ? policyBadge(del) : ""}
-          ${d.recall && d.recall.enabled === true ? badge("Recall on", "acid") : ""}
-          ${d.recall && d.recall.enabled === false ? badge("Recall off", "") : ""}
-          ${d.history && d.history.count > 1 ? badge("H" + d.history.count, "violet") : ""}
-          ${d.history && d.history.ai_edited ? badge("AI edited", "warn") : ""}
+          ${d.recall && d.recall.enabled === true ? badge("召回开", "acid") : ""}
+          ${d.recall && d.recall.enabled === false ? badge("召回关", "") : ""}
+          ${d.history && d.history.count > 1 ? badge("历史 " + d.history.count, "violet") : ""}
+          ${d.history && d.history.ai_edited ? badge("AI 改过", "warn") : ""}
         </div>
         <div class="row-actions">
-          <button type="button" class="icon-btn" title="Read / edit" data-action="edit-doc" data-id="${esc(d.doc_id)}">${icon("pencil-line", 15)}</button>
-          <button type="button" class="icon-btn" title="History" data-action="history" data-id="${esc(d.doc_id)}">${icon("history", 15)}</button>
-          <button type="button" class="icon-btn acid" title="Settings" data-action="entry-settings" data-id="${esc(d.doc_id)}">${icon("sliders-horizontal", 15)}</button>
-          <button type="button" class="icon-btn danger" title="Delete" data-action="delete-doc" data-id="${esc(d.doc_id)}">${icon("trash-2", 15)}</button>
+          <button type="button" class="icon-btn" title="查看 / 编辑" data-action="edit-doc" data-id="${esc(d.doc_id)}">${icon("pencil-line", 15)}</button>
+          <button type="button" class="icon-btn" title="修订历史" data-action="history" data-id="${esc(d.doc_id)}">${icon("history", 15)}</button>
+          <button type="button" class="icon-btn acid" title="设置" data-action="entry-settings" data-id="${esc(d.doc_id)}">${icon("sliders-horizontal", 15)}</button>
+          <button type="button" class="icon-btn danger" title="删除" data-action="delete-doc" data-id="${esc(d.doc_id)}">${icon("trash-2", 15)}</button>
         </div>
       </div>`;
     }).join("")
-    : `<div class="empty"><div class="big">Nothing here</div>${state.docs.length ? "No entry matches the filter." : "Upload a file or create a version to begin."}</div>`;
+    : `<div class="empty"><div class="big">这里空空如也</div>${state.docs.length ? "没有匹配的条目。" : "上传文件，或先创建一个版本。"}</div>`;
   updateBulkBar();
   settleReveals();
 }
 
 function renderVersions() {
   const grid = $("#versionGrid");
-  $("#versionHeadCount").textContent = state.versions.length + " total";
+  $("#versionHeadCount").textContent = "共 " + state.versions.length + " 个";
   grid.innerHTML = state.versions.length
     ? state.versions.map((v, i) => `
       <article class="version-card reveal ${v.is_active ? "is-active" : ""}" style="--i:${i}">
         <div style="display:flex;align-items:flex-start;gap:10px">
           <h3>${esc(v.model_name)}</h3>
-          <div style="margin-left:auto">${v.is_active ? badge("Active", "acid") : badge("Standby", "")}</div>
+          <div style="margin-left:auto">${v.is_active ? badge("使用中", "acid") : badge("待用", "")}</div>
         </div>
         <div class="v-meta">
-          <span>${v.dimension} dimensions</span>
+          <span>${v.dimension} 维</span>
           <span>${fmtTime(v.created_at)}</span>
-          <span>${v.status === "ready" ? "Ready" : "Incomplete"}</span>
-          ${v.outdated ? `<span style="color:var(--warn,#ffb35c)">${v.outdated} entries to sync</span>` : `<span>Up to date</span>`}
+          <span>${v.status === "ready" ? "完整" : "不完整"}</span>
+          ${v.outdated ? `<span style="color:var(--warn,#ffb35c)">${v.outdated} 条待同步</span>` : `<span>已是最新</span>`}
         </div>
         <div class="v-actions">
-          ${!v.is_active && v.status === "ready" ? `<button type="button" class="btn" data-action="activate-version" data-id="${esc(v.version_id)}">${icon("check", 13)}<span>Activate</span></button>` : ""}
-          ${v.status === "ready" ? `<button type="button" class="btn ghost" data-action="sync-version" data-id="${esc(v.version_id)}">${icon("refresh-cw", 13)}<span>Sync</span></button>` : ""}
+          ${!v.is_active && v.status === "ready" ? `<button type="button" class="btn" data-action="activate-version" data-id="${esc(v.version_id)}">${icon("check", 13)}<span>激活</span></button>` : ""}
+          ${v.status === "ready" ? `<button type="button" class="btn ghost" data-action="sync-version" data-id="${esc(v.version_id)}">${icon("refresh-cw", 13)}<span>同步</span></button>` : ""}
           ${!v.is_active || v.status !== "ready" ? `<button type="button" class="btn ghost danger" data-action="delete-version" data-id="${esc(v.version_id)}">${icon("trash-2", 13)}</button>` : ""}
         </div>
       </article>`).join("")
-    : `<div class="empty" style="grid-column:1/-1"><div class="big">No index yet</div>Create a version to make the archive searchable.</div>`;
+    : `<div class="empty" style="grid-column:1/-1"><div class="big">还没有索引</div>创建一个版本后才能检索。</div>`;
 }
 
 function renderAccess() {
@@ -1421,7 +1422,7 @@ function renderAccess() {
   $("#policyEdit").value = perms.edit || defaultPolicy("edit");
   $("#policyDelete").value = perms.delete || defaultPolicy("delete");
   $("#kbAllowUsers").value = (perms.allow_users || []).join("\n");
-  $("#entryOverrideCount").textContent = state.docs.length + " entries";
+  $("#entryOverrideCount").textContent = state.docs.length + " 个条目";
   $("#entryPolicyList").innerHTML = state.docs.length
     ? state.docs.map((d, i) => {
       const edit = entryPolicyRaw(d, "edit");
@@ -1437,14 +1438,14 @@ function renderAccess() {
         </select>
       </div>`;
     }).join("")
-    : `<div class="empty">No entries to configure.</div>`;
+    : `<div class="empty">没有可配置的条目。</div>`;
 }
 
 function renderRecall() {
   const kb = currentKb();
   const recall = (kb && kb.recall) || {};
   const globalOn = state.globalRecall.enabled;
-  $("#globalRecallBadge").textContent = globalOn ? "Global on" : "Global off";
+  $("#globalRecallBadge").textContent = globalOn ? "总开关 开" : "总开关 关";
   $("#globalRecallBadge").className = "badge " + (globalOn ? "acid" : "");
   $("#kbRecallEnabled").checked = !!recall.enabled;
   $("#kbRecallTopK").value = recall.top_k == null ? "" : recall.top_k;
@@ -1462,7 +1463,7 @@ function renderRecall() {
           ${RECALL_OPTIONS.map(o => `<option value="${o[0]}" ${o[0] === value ? "selected" : ""}>${o[1]}</option>`).join("")}
         </select>
         <div class="kw">
-          <input type="text" data-entry-recall="keywords" data-id="${esc(d.doc_id)}" value="${esc((r.keywords || []).join(", "))}" placeholder="keywords">
+          <input type="text" data-entry-recall="keywords" data-id="${esc(d.doc_id)}" value="${esc((r.keywords || []).join(", "))}" placeholder="关键词">
           <button type="button" class="btn ghost" data-action="save-entry-recall" data-id="${esc(d.doc_id)}">${icon("save", 13)}</button>
         </div>
       </div>`;
@@ -1473,14 +1474,14 @@ function renderRecall() {
 function renderTasks() {
   const list = $("#taskList");
   if (!state.tasks.length) {
-    list.innerHTML = `<div class="empty"><div class="big">Idle</div>No background jobs.</div>`;
+    list.innerHTML = `<div class="empty"><div class="big">空闲</div>还没有后台任务。</div>`;
     return;
   }
   list.innerHTML = state.tasks.slice().reverse().map((t, i) => `
     <div class="task">
       <div class="task-head">
         <span class="name">${esc(t.description)}</span>
-        <span class="st ${esc(t.status)}">${esc(t.status)}</span>
+        <span class="st ${esc(t.status)}">${({running:"进行中",pending:"等待中",completed:"已完成",failed:"失败"}[t.status] || t.status)}</span>
       </div>
       <div class="progress"><i style="width:${Number(t.progress) || 0}%"></i></div>
       <div class="msg">${esc(t.message || "")} ${t.progress ? "· " + t.progress + "%" : ""}</div>
@@ -1492,7 +1493,7 @@ function updateBulkBar() {
   const bar = $("#bulkBar");
   const count = state.selected.size;
   bar.classList.toggle("is-on", count > 0);
-  $("#bulkText").textContent = count + " selected";
+  $("#bulkText").textContent = "已选 " + count + " 条";
 }
 
 /* ---------- data loading ---------- */
@@ -1516,7 +1517,7 @@ async function refresh(options = {}) {
     state.selected = new Set(Array.from(state.selected).filter(id => ids.has(id)));
     if (!options.quiet) renderAll();
   } catch (e) {
-    toast("Load failed: " + e.message, "err");
+    toast("加载失败：" + e.message, "err");
   } finally {
     state.busy = false;
   }
@@ -1569,7 +1570,7 @@ async function selectKb(kbId) {
     await Promise.all([loadDocs(), loadVersions()]);
     renderAll();
   } catch (e) {
-    toast("Switch failed: " + e.message, "err");
+    toast("切换失败：" + e.message, "err");
   }
 }
 
@@ -1590,33 +1591,33 @@ function switchView(view) {
 }
 
 async function createKb() {
-  const name = await askPrompt("New knowledge base", "Lowercase letters, numbers, underscore or hyphen.", "", "kira_notes");
+  const name = await askPrompt("新建知识库", "只能使用字母、数字、下划线或连字符。", "", "kira_notes");
   if (!name) return;
-  if (!/^[-_a-zA-Z0-9]+$/.test(name)) { toast("Invalid id. Use letters, numbers, _ or -.", "err"); return; }
+  if (!/^[-_a-zA-Z0-9]+$/.test(name)) { toast("ID 只能包含字母、数字、下划线或连字符。", "err"); return; }
   try {
     await api("/kbs", { method: "POST", body: JSON.stringify({ kb_id: name }) });
     state.current = name;
     await refresh();
-    toast("Knowledge base created.");
-  } catch (e) { toast("Create failed: " + e.message, "err"); }
+    toast("知识库已创建。");
+  } catch (e) { toast("创建失败：" + e.message, "err"); }
 }
 
 async function deleteKb() {
   const kb = currentKb();
   if (!kb) return;
-  const ok = await askConfirm("Delete knowledge base", `Delete "${kb.display_name}" and every entry, version and index? This cannot be undone.`, "Delete", true);
+  const ok = await askConfirm("删除知识库", `删除「${kb.display_name}」以及全部条目、版本和索引？此操作不可恢复。`, "删除", true);
   if (!ok) return;
   try {
     await api(`/kbs/${encodeURIComponent(kb.kb_id)}`, { method: "DELETE" });
     state.current = null;
     await refresh();
-    toast("Knowledge base deleted.");
-  } catch (e) { toast("Delete failed: " + e.message, "err"); }
+    toast("知识库已删除。");
+  } catch (e) { toast("删除失败：" + e.message, "err"); }
 }
 
 async function openKbInfo() {
   const kb = currentKb();
-  if (!kb) { toast("Create a knowledge base first.", "err"); return; }
+  if (!kb) { toast("请先创建知识库。", "err"); return; }
   $("#kbInfoName").value = kb.display_name || "";
   $("#kbInfoDesc").value = kb.description || "";
   $("#kbInfoHistoryKeep").value = kb.history_keep || 5;
@@ -1637,12 +1638,12 @@ async function saveKbInfo() {
     });
     closeModal("modalKbInfo");
     await refresh();
-    toast("Saved.");
-  } catch (e) { toast("Save failed: " + e.message, "err"); }
+    toast("已保存。");
+  } catch (e) { toast("保存失败：" + e.message, "err"); }
 }
 
 async function uploadFiles(files) {
-  if (!state.current) { toast("Create a knowledge base first.", "err"); return; }
+  if (!state.current) { toast("请先创建知识库。", "err"); return; }
   if (!files || !files.length) return;
   let ok = 0;
   for (const file of files) {
@@ -1652,18 +1653,18 @@ async function uploadFiles(files) {
       await apiUpload(`/kbs/${encodeURIComponent(state.current)}/documents`, fd);
       ok += 1;
     } catch (e) {
-      toast(`Upload ${file.name} failed: ${e.message}`, "err");
+      toast(`上传 ${file.name} 失败：${e.message}`, "err");
     }
   }
-  if (ok) toast(`${ok} file(s) uploaded.`);
+  if (ok) toast(`已上传 ${ok} 个文件。`);
   await refresh();
 }
 
 function openDocEditor(doc) {
   if (!doc) return;
   state.editingDoc = doc.doc_id;
-  $("#docModalTitle").textContent = doc.name || "Entry";
-  $("#docModalMeta").textContent = `${fmtBytes(doc.size)} · updated ${fmtTime(doc.updated_at)}`;
+  $("#docModalTitle").textContent = doc.name || "条目";
+  $("#docModalMeta").textContent = `${fmtBytes(doc.size)} · 更新于 ${fmtTime(doc.updated_at)}`;
   $("#docName").value = doc.name || "";
   $("#docContent").value = "";
   openModal("modalDoc");
@@ -1672,14 +1673,14 @@ function openDocEditor(doc) {
       $("#docContent").value = data.content || "";
       if (data.name) $("#docName").value = data.name;
     })
-    .catch(e => toast("Read failed: " + e.message, "err"));
+    .catch(e => toast("读取失败：" + e.message, "err"));
 }
 
 async function saveDoc() {
   const id = state.editingDoc;
   if (!id) return;
   const name = $("#docName").value.trim();
-  if (!name) { toast("Title cannot be empty.", "err"); return; }
+  if (!name) { toast("标题不能为空。", "err"); return; }
   try {
     await api(`/kbs/${encodeURIComponent(state.current)}/documents/${id}`, {
       method: "PUT",
@@ -1687,26 +1688,26 @@ async function saveDoc() {
     });
     closeModal("modalDoc");
     await refresh();
-    toast("Entry saved and re-indexed.");
-  } catch (e) { toast("Save failed: " + e.message, "err"); }
+    toast("条目已保存并重建索引。");
+  } catch (e) { toast("保存失败：" + e.message, "err"); }
 }
 
 async function deleteDoc(id) {
   const doc = state.docs.find(d => d.doc_id === id);
-  const ok = await askConfirm("Delete entry", `Soft delete "${doc ? doc.name : id}"? It can be restored later.`, "Delete", true);
+  const ok = await askConfirm("删除条目", `软删除「${doc ? doc.name : id}」？之后可以恢复。`, "删除", true);
   if (!ok) return;
   try {
     await api(`/kbs/${encodeURIComponent(state.current)}/documents/${id}`, { method: "DELETE" });
     state.selected.delete(id);
     await refresh();
-    toast("Entry deleted.");
-  } catch (e) { toast("Delete failed: " + e.message, "err"); }
+    toast("条目已删除。");
+  } catch (e) { toast("删除失败：" + e.message, "err"); }
 }
 
 function openEntrySettings(doc) {
   if (!doc) return;
   state.entryDoc = doc.doc_id;
-  $("#entryModalTitle").textContent = doc.name || "Entry settings";
+  $("#entryModalTitle").textContent = doc.name || "条目设置";
   const perms = doc.permissions || {};
   const recall = doc.recall || { enabled: null, keywords: [] };
   const fill = (sel, options, value) => {
@@ -1743,8 +1744,8 @@ async function saveEntrySettings() {
     });
     closeModal("modalEntry");
     await refresh();
-    toast("Entry settings saved.");
-  } catch (e) { toast("Save failed: " + e.message, "err"); }
+    toast("条目设置已保存。");
+  } catch (e) { toast("保存失败：" + e.message, "err"); }
 }
 
 async function saveKbPerms() {
@@ -1759,8 +1760,8 @@ async function saveKbPerms() {
       })
     });
     await refresh();
-    toast("Policy saved.");
-  } catch (e) { toast("Save failed: " + e.message, "err"); }
+    toast("策略已保存。");
+  } catch (e) { toast("保存失败：" + e.message, "err"); }
 }
 
 async function saveKbRecall() {
@@ -1776,8 +1777,8 @@ async function saveKbRecall() {
       })
     });
     await refresh();
-    toast("Recall settings saved.");
-  } catch (e) { toast("Save failed: " + e.message, "err"); }
+    toast("召回设置已保存。");
+  } catch (e) { toast("保存失败：" + e.message, "err"); }
 }
 
 async function saveEntryRecall(id) {
@@ -1792,8 +1793,8 @@ async function saveEntryRecall(id) {
         keywords: kw.value.split(/[,，]/).map(s => s.trim()).filter(Boolean)
       })
     });
-    toast("Recall saved.");
-  } catch (e) { toast("Save failed: " + e.message, "err"); }
+    toast("召回已保存。");
+  } catch (e) { toast("保存失败：" + e.message, "err"); }
 }
 
 async function openDeleted() {
@@ -1804,15 +1805,15 @@ async function openDeleted() {
       ? state.deleted.map((d, i) => `
         <div class="doc-row reveal" style="--i:${i}">
           <span class="mono faint">${String(i + 1).padStart(2, "0")}</span>
-          <div><div class="doc-name">${esc(d.name)}</div><div class="doc-meta">deleted ${fmtTime(d.updated_at)}</div></div>
+          <div><div class="doc-name">${esc(d.name)}</div><div class="doc-meta">删除于 ${fmtTime(d.updated_at)}</div></div>
           <div></div>
-          <button type="button" class="btn" data-action="restore-doc" data-id="${esc(d.doc_id)}">${icon("rotate-ccw", 13)}<span>Restore</span></button>
+          <button type="button" class="btn" data-action="restore-doc" data-id="${esc(d.doc_id)}">${icon("rotate-ccw", 13)}<span>恢复</span></button>
         </div>`).join("")
-      : `<div class="empty">No deleted entries.</div>`;
+      : `<div class="empty">没有已删除的条目。</div>`;
     hydrateIcons($("#deletedList"));
     settleReveals();
     openModal("modalDeleted");
-  } catch (e) { toast("Load failed: " + e.message, "err"); }
+  } catch (e) { toast("加载失败：" + e.message, "err"); }
 }
 
 async function restoreDoc(id) {
@@ -1820,33 +1821,33 @@ async function restoreDoc(id) {
     await api(`/kbs/${encodeURIComponent(state.current)}/documents/${id}/restore`, { method: "POST" });
     closeModal("modalDeleted");
     await refresh();
-    toast("Entry restored into every version.");
-  } catch (e) { toast("Restore failed: " + e.message, "err"); }
+    toast("条目已恢复到所有可用版本。");
+  } catch (e) { toast("恢复失败：" + e.message, "err"); }
 }
 
 async function openVersionModal() {
-  if (!state.current) { toast("Create a knowledge base first.", "err"); return; }
+  if (!state.current) { toast("请先创建知识库。", "err"); return; }
   $("#versionName").value = "";
   $("#versionDim").value = "";
-  $("#modelHint").innerHTML = `<span class="faint" style="font-size:11px">Loading models…</span>`;
+  $("#modelHint").innerHTML = `<span class="faint" style="font-size:11px">正在加载模型…</span>`;
   try {
     const data = await api("/embedding-models");
     state.models = data.models || [];
     const sel = $("#versionModel");
-    sel.innerHTML = `<option value="">Default embedding model</option>` + state.models.map(m =>
+    sel.innerHTML = `<option value="">KiraAI 默认嵌入模型</option>` + state.models.map(m =>
       `<option value="${esc(m.uuid)}">${esc(m.label)}</option>`).join("");
     if (data.default_uuid && !state.models.some(m => m.uuid === data.default_uuid)) {
       sel.innerHTML += `<option value="${esc(data.default_uuid)}">${esc(data.default_uuid)}</option>`;
     }
     $("#modelHint").innerHTML = data.default_available
-      ? `<span class="faint" style="font-size:11px">Leave the model empty to use the KiraAI default. Probe fills the real dimension.</span>`
-      : `<span style="font-size:11px;color:#ffb35c">No usable embedding model detected. Configure default_embedding first.</span>`;
+      ? `<span class="faint" style="font-size:11px">留空则使用 KiraAI 默认嵌入模型；点“探测”可获取真实维度。</span>`
+      : `<span style="font-size:11px;color:#ffb35c">未检测到可用嵌入模型，请先配置 default_embedding。</span>`;
     const docs = state.docs;
     $("#versionDocs").innerHTML = docs.length
       ? docs.map(d => `<label><input type="checkbox" value="${esc(d.doc_id)}"> ${esc(d.name)}</label>`).join("")
-      : `<span class="faint" style="font-size:11px;padding:6px">No documents. The version will be empty but valid.</span>`;
+      : `<span class="faint" style="font-size:11px;padding:6px">没有文档。版本仍可创建，但内容为空。</span>`;
     openModal("modalVersion");
-  } catch (e) { toast("Load models failed: " + e.message, "err"); }
+  } catch (e) { toast("加载模型失败：" + e.message, "err"); }
 }
 
 async function probeDimension() {
@@ -1857,16 +1858,16 @@ async function probeDimension() {
     const res = await api("/embedding-models/probe", { method: "POST", body: JSON.stringify({ model_uuid: uuid }), allowError: true });
     if (res.error) { toast(res.error, "err"); return; }
     $("#versionDim").value = res.dimension;
-    $("#modelHint").innerHTML = `<span style="font-size:11px;color:var(--acid)">Dimension ${res.dimension} detected.</span>`;
-  } catch (e) { toast("Probe failed: " + e.message, "err"); }
+    $("#modelHint").innerHTML = `<span style="font-size:11px;color:var(--acid)">已探测到 ${res.dimension} 维。</span>`;
+  } catch (e) { toast("探测失败：" + e.message, "err"); }
   finally { if (btn) btn.disabled = false; }
 }
 
 async function createVersionSubmit() {
   const name = $("#versionName").value.trim();
   const dim = Number($("#versionDim").value);
-  if (!name) { toast("Give the version a label.", "err"); return; }
-  if (!dim || dim <= 0) { toast("Probe or enter the dimension.", "err"); return; }
+  if (!name) { toast("请填写版本标签。", "err"); return; }
+  if (!dim || dim <= 0) { toast("请探测或填写维度。", "err"); return; }
   const selected = $$("#versionDocs input:checked").map(i => i.value);
   const payload = { model_name: name, dimension: dim };
   const uuid = $("#versionModel").value;
@@ -1877,58 +1878,58 @@ async function createVersionSubmit() {
       method: "POST", body: JSON.stringify(payload)
     });
     closeModal("modalVersion");
-    if (res.task_id) { toast("Version build queued."); switchView("tasks"); }
-    else toast("Version created.");
+    if (res.task_id) { toast("版本构建已排队。"); switchView("tasks"); }
+    else toast("版本已创建。");
     await refresh();
-  } catch (e) { toast("Create failed: " + e.message, "err"); }
+  } catch (e) { toast("创建失败：" + e.message, "err"); }
 }
 
 async function activateVersion(id) {
   try {
     await api(`/kbs/${encodeURIComponent(state.current)}/versions/${id}/activate`, { method: "POST" });
     await refresh();
-    toast("Version activated.");
-  } catch (e) { toast("Activate failed: " + e.message, "err"); }
+    toast("版本已激活。");
+  } catch (e) { toast("激活失败：" + e.message, "err"); }
 }
 
 async function deleteVersion(id) {
-  const ok = await askConfirm("Delete version", "Delete this index? The raw entries stay; only the vectors are removed.", "Delete", true);
+  const ok = await askConfirm("删除版本", "删除这个索引？原始条目会保留，只移除向量。", "删除", true);
   if (!ok) return;
   try {
     await api(`/kbs/${encodeURIComponent(state.current)}/versions/${id}`, { method: "DELETE" });
     await refresh();
-    toast("Version deleted.");
-  } catch (e) { toast("Delete failed: " + e.message, "err"); }
+    toast("版本已删除。");
+  } catch (e) { toast("删除失败：" + e.message, "err"); }
 }
 
 async function syncVersion(id) {
   try {
     const res = await api(`/kbs/${encodeURIComponent(state.current)}/versions/${id}/sync`, { method: "POST", body: "{}" });
-    if (res.task_id) { toast("Sync queued."); switchView("tasks"); }
-    else toast("Sync finished.");
+    if (res.task_id) { toast("同步已排队。"); switchView("tasks"); }
+    else toast("同步完成。");
     await refresh();
-  } catch (e) { toast("Sync failed: " + e.message, "err"); }
+  } catch (e) { toast("同步失败：" + e.message, "err"); }
 }
 
 async function runSearch() {
   const query = $("#searchInput").value.trim();
   if (!query) return;
-  if (!state.current) { toast("Select a knowledge base first.", "err"); return; }
+  if (!state.current) { toast("请先选择知识库。", "err"); return; }
   const box = $("#searchResults");
-  box.innerHTML = `<div class="empty">Searching…</div>`;
+  box.innerHTML = `<div class="empty">检索中…</div>`;
   try {
     const res = await api(`/kbs/${encodeURIComponent(state.current)}/search`, {
       method: "POST", body: JSON.stringify({ query, top_k: 8 }), allowError: true
     });
     if (res.error) { box.innerHTML = `<div class="empty">${esc(res.error)}</div>`; return; }
-    if (!Array.isArray(res) || !res.length) { box.innerHTML = `<div class="empty">No match.</div>`; return; }
+    if (!Array.isArray(res) || !res.length) { box.innerHTML = `<div class="empty">没有找到相关内容。</div>`; return; }
     settleReveals();
     box.innerHTML = res.map((r, i) => {
       const score = Math.max(0, Math.min(1, Number(r.score) || 0));
       return `<div class="result reveal" style="--i:${i}">
         <div class="result-head">
           <span class="name">${esc(r.doc_name || r.doc_id)}</span>
-          ${r.metadata && r.metadata.chunk_index != null ? `<span class="badge">chunk ${Number(r.metadata.chunk_index) + 1}</span>` : ""}
+          ${r.metadata && r.metadata.chunk_index != null ? `<span class="badge">第 ${Number(r.metadata.chunk_index) + 1} 段</span>` : ""}
           <span class="score">${score.toFixed(2)}</span>
         </div>
         <div class="score-bar"><i style="width:${Math.round(score * 100)}%"></i></div>
@@ -1943,7 +1944,7 @@ async function runSearch() {
 function openBulk(mode) {
   if (!state.selected.size) return;
   state.bulkMode = mode;
-  $("#bulkSubtitle").textContent = `Apply to ${state.selected.size} selected entries.`;
+  $("#bulkSubtitle").textContent = `应用到选中的 ${state.selected.size} 个条目。`;
   const fill = (sel, value) => {
     sel.innerHTML = POLICY_OPTIONS_ENTRY.map(o => `<option value="${o[0]}" ${o[0] === value ? "selected" : ""}>${o[1]}</option>`).join("");
   };
@@ -1967,8 +1968,8 @@ async function applyBulk() {
     closeModal("modalBulk");
     state.selected.clear();
     await refresh();
-    toast("Bulk policy applied.");
-  } catch (e) { toast("Apply failed: " + e.message, "err"); }
+    toast("批量策略已应用。");
+  } catch (e) { toast("应用失败：" + e.message, "err"); }
 }
 
 /* ---------- runtime settings ---------- */
@@ -2074,16 +2075,16 @@ async function saveSettings() {
     await refresh({ quiet: true });
     renderAll();
     if (res.warnings && res.warnings.length) toast(res.warnings.join(" "), "err");
-    else toast("Settings applied.");
-  } catch (e) { toast("Settings failed: " + e.message, "err"); }
+    else toast("设置已应用。");
+  } catch (e) { toast("设置失败：" + e.message, "err"); }
 }
 
 /* ---------- revision history ---------- */
 async function openHistory(doc) {
   if (!doc) return;
   state.historyDoc = doc.doc_id;
-  $("#historyTitle").textContent = doc.name || "History";
-  $("#historyMeta").textContent = "Loading…";
+  $("#historyTitle").textContent = doc.name || "修订历史";
+  $("#historyMeta").textContent = "加载中…";
   $("#historyList").innerHTML = "";
   $("#historyPanel").classList.remove("hidden");
   $("#historyViewer").classList.add("hidden");
@@ -2101,28 +2102,28 @@ async function openHistory(doc) {
 function renderHistory(data) {
   const rows = data.revisions || [];
   $("#historyMeta").textContent =
-    `${rows.length} revisions · original is permanent · keeping the latest ${data.keep}`;
+    `共 ${rows.length} 个版本 · 原始版本永久保留 · 最近保留 ${data.keep} 份`;
   $("#historyList").innerHTML = rows.length
     ? rows.map((r, i) => `
       <div class="doc-row" style="grid-template-columns:36px minmax(0,1fr) auto auto">
         <span class="mono faint">${String(i + 1).padStart(2, "0")}</span>
         <div>
           <div class="doc-name">${fmtTime(r.created_at)}</div>
-          <div class="doc-meta">${r.size} chars · ${r.actor === "ai" ? "AI" : r.actor === "human" ? "Human" : "System"} · ${esc(r.source)}${r.restored_from ? " · from " + esc(r.restored_from) : ""}${r.last_restored_at ? " · restored " + fmtTime(r.last_restored_at) : ""}</div>
+          <div class="doc-meta">${r.size} 字符 · ${r.actor === "ai" ? "AI" : r.actor === "human" ? "人工" : "系统"} · ${({create:"创建",edit:"编辑",restore:"回退"}[r.source] || esc(r.source))}${r.restored_from ? " · 来自 " + esc(r.restored_from) : ""}${r.last_restored_at ? " · 回退于 " + fmtTime(r.last_restored_at) : ""}</div>
         </div>
         <div class="badges">
-          ${r.is_original ? badge("Original", "acid") : ""}
-          ${r.is_current ? badge("Current", "cyan") : ""}
+          ${r.is_original ? badge("原始", "acid") : ""}
+          ${r.is_current ? badge("当前", "cyan") : ""}
           ${r.actor === "ai" ? badge("AI", "violet") : ""}
-          ${r.actor === "human" && !r.is_original ? badge("Human", "") : ""}
-          ${r.last_restored_at ? badge("Restored", "warn") : ""}
+          ${r.actor === "human" && !r.is_original ? badge("人工", "") : ""}
+          ${r.last_restored_at ? badge("已回退", "warn") : ""}
         </div>
         <div class="row-actions" style="opacity:1">
-          <button type="button" class="icon-btn" title="View" data-action="history-view" data-id="${esc(r.rev_id)}">${icon("eye", 15)}</button>
-          ${!r.is_current ? `<button type="button" class="icon-btn acid" title="Restore this revision" data-action="history-restore" data-id="${esc(r.rev_id)}">${icon("rotate-ccw", 15)}</button>` : ""}
+          <button type="button" class="icon-btn" title="查看" data-action="history-view" data-id="${esc(r.rev_id)}">${icon("eye", 15)}</button>
+          ${!r.is_current ? `<button type="button" class="icon-btn acid" title="回退到此版本" data-action="history-restore" data-id="${esc(r.rev_id)}">${icon("rotate-ccw", 15)}</button>` : ""}
         </div>
       </div>`).join("")
-    : `<div class="empty"><div class="big">No history</div>The original is archived on the first edit.</div>`;
+    : `<div class="empty"><div class="big">还没有历史</div>第一次编辑时会保存原始版本。</div>`;
   hydrateIcons($("#historyList"));
   settleReveals();
 }
@@ -2131,11 +2132,11 @@ async function viewRevision(revId) {
   if (!state.historyDoc || !revId) return;
   try {
     const data = await api(`/kbs/${encodeURIComponent(state.current)}/documents/${state.historyDoc}/history/${revId}`);
-    $("#historyViewMeta").textContent = `${revId} · ${fmtTime(data.created_at)} · ${data.actor}`;
+    $("#historyViewMeta").textContent = `${revId} · ${fmtTime(data.created_at)} · ${({ai:"AI",human:"人工",system:"系统"}[data.actor] || data.actor)}`;
     $("#historyContent").textContent = data.content || "";
     $("#historyPanel").classList.add("hidden");
     $("#historyViewer").classList.remove("hidden");
-  } catch (e) { toast("Read failed: " + e.message, "err"); }
+  } catch (e) { toast("读取失败：" + e.message, "err"); }
 }
 
 function historyBack() {
@@ -2145,7 +2146,7 @@ function historyBack() {
 
 async function restoreRevision(revId) {
   if (!state.historyDoc || !revId) return;
-  const ok = await askConfirm("Restore revision", "Move the current pointer to this revision? No new revision is added and no backup slot is consumed.", "Restore");
+  const ok = await askConfirm("回退版本", "把当前指针移到这个版本？不会新增修订，也不占用备份名额。", "回退");
   if (!ok) return;
   try {
     await api(`/kbs/${encodeURIComponent(state.current)}/documents/${state.historyDoc}/history/${revId}/restore`, {
@@ -2153,8 +2154,8 @@ async function restoreRevision(revId) {
     });
     closeModal("modalHistory");
     await refresh();
-    toast("Revision restored and re-indexed.");
-  } catch (e) { toast("Restore failed: " + e.message, "err"); }
+    toast("版本已回退并重建索引。");
+  } catch (e) { toast("回退失败：" + e.message, "err"); }
 }
 
 /* ---------- task polling ---------- */
@@ -2244,8 +2245,8 @@ document.addEventListener("change", (event) => {
     const op = el.dataset.entryPolicy;
     api(`/kbs/${encodeURIComponent(state.current)}/documents/${id}/permissions`, {
       method: "PUT", body: JSON.stringify({ [op]: el.value })
-    }).then(() => { toast("Entry policy updated."); refresh({ quiet: true }).then(renderAll); })
-      .catch(e => toast("Update failed: " + e.message, "err"));
+    }).then(() => { toast("条目策略已更新。"); refresh({ quiet: true }).then(renderAll); })
+      .catch(e => toast("更新失败：" + e.message, "err"));
     return;
   }
   if (el.id === "kbSelect") { selectKb(el.value); }
