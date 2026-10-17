@@ -1234,3 +1234,10 @@ body[data-theme="pink"] {
 .recall-grid .control-row .switch > span::after { content:""; position:absolute; left:3px; top:3px; width:10px; height:10px; background:var(--dim); transition:.18s; }
 .recall-grid .control-row .switch input:checked + span { border-color: var(--accent); background: rgba(var(--accent-rgb),.15); }
 .recall-grid .control-row .switch input:checked + span::after { transform: translateX(16px); background: var(--accent); box-shadow: 0 0 7px var(--accent); }
+
+/* keep entry metadata legible at 1440 */
+.entry-kb { color: var(--muted) !important; font-size: 9px; }
+.entry-time { color: var(--muted) !important; font-size: 8.5px; }
+.entry-status { color: var(--ok) !important; font-size: 8.5px; }
+.entry-status i { box-shadow: 0 0 5px currentColor; }
+.entry-main b { color: var(--ink) !important; }
