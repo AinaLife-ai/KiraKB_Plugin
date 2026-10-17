@@ -617,3 +617,17 @@ input[type="checkbox"] { accent-color: var(--acid); }
 .field > .switch { align-self: flex-start; }
 .modal .sheet .check-list { background: rgba(0,0,0,.18); border-color: var(--line); }
 .modal .sheet .check-list label { color: var(--paper); }
+
+.hero h1 { line-height: 1.16 !important; }
+@media (max-width: 900px) { .hero h1 { line-height: 1.12 !important; } }
+
+/* readability over spectacle: headline separation + gentler idle glitch */
+.hero h1 { line-height: 1.24 !important; }
+.hero h1.fx-idle-radio { animation: fx-idle-pulse 6.8s ease-in-out infinite; }
+@keyframes fx-idle-radio {
+  0%, 17%, 18%, 47%, 48%, 82%, 100% { text-shadow: none; transform: none; filter: none; }
+  17.4% { text-shadow: 1px 0 rgba(255,54,98,.28), -1px 0 rgba(50,190,255,.2); transform: translateX(1px); }
+  47.4% { text-shadow: -1px 0 rgba(255,54,98,.22), 1px 0 rgba(50,190,255,.18); transform: translateX(-1px); }
+  82.4% { text-shadow: 1px 0 rgba(255,54,98,.18), -1px 0 rgba(50,190,255,.14); }
+}
+@media (max-width: 900px) { .hero h1 { line-height: 1.18 !important; } }
