@@ -546,7 +546,7 @@
   function startWallRotation() {
     clearInterval(state.wallTimer);
     const secs = Math.max(5, Number(state.ui.wall_interval) || 18);
-    if (!state.ui.wall_rotate) return;
+    if (!state.ui.wall_rotate || state.ui.performance) return;
     state.wallTimer = setInterval(() => {
       if (document.hidden || state.apprOpen) return;
       const pool = enabledWallsFor(state.ui.theme);
@@ -836,7 +836,7 @@
     const boot = $("#boot");
     if (!boot) return;
     const skip = $("#bootSkip");
-    if (!state.ui.splash || new URLSearchParams(location.search).has("skipboot")) {
+    if (!state.ui.splash || state.ui.performance || new URLSearchParams(location.search).has("skipboot")) {
       boot.classList.add("is-off"); document.body.classList.remove("boot-hold"); return;
     }
     document.body.classList.add("boot-hold");
