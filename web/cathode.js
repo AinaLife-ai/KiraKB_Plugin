@@ -947,7 +947,7 @@
           <div class="org-title">
             <div class="org-chapter">CHAPTER ${org.chapter} // ${esc(org.en)}</div>
             <h3>${esc(org.name)}</h3>
-            <small>${esc(org.motto)}</small>
+            <small>${fxText(org.motto, true)}</small>
           </div>
           <span class="badge" style="margin-left:auto;color:${safeColor(org.color)};border-color:${safeColor(org.color)}">${enabled ? "IN USE" : "MUTED"}</span>
         </div>
