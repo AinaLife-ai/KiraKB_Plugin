@@ -489,6 +489,14 @@
     const checked = $$("#setUiQuoteKbs input:checked").map(x => x.value);
     return checked.length === state.kbs.length ? [] : checked;
   }
+  function syncQuoteButton() {
+    const b = $("#quoteToggleBtn");
+    if (!b) return;
+    const on = !!state.ui.quote_enabled;
+    b.setAttribute("aria-pressed", String(on));
+    b.classList.toggle("is-off", !on);
+    const i = b.querySelector("i"); if (i) i.textContent = on ? "ON" : "OFF";
+  }
   function syncUiControls() {
     const set = (id, v) => { const el = $("#" + id); if (el) el.value = v; };
     const chk = (id, v) => { const el = $("#" + id); if (el) el.checked = !!v; };
@@ -502,7 +510,7 @@
     chk("setUiParallax", state.ui.wall_parallax);
     const ql = $("#setUiQuoteLines"); if (ql) ql.value = (state.ui.quote_custom_lines || []).join("\n");
     const qm = $("#setUiQuoteMottos"); if (qm) qm.value = (state.ui.quote_custom_mottos || []).join("\n");
-    renderQuoteKbs(); renderBgGrid(); renderWallVault();
+    renderQuoteKbs(); renderBgGrid(); renderWallVault(); syncQuoteButton();
   }
   function renderQuoteKbs() {
     const box = $("#setUiQuoteKbs");
@@ -1610,7 +1618,14 @@
       if (e.target.closest("#saveSettingsBtn")) return saveAllSettings();
       if (e.target.closest("#refreshTasksBtn")) { await loadTasks(); renderTasks(); return; }
       if (e.target.closest("#drawQuoteBtn") || e.target.closest("#tickerNext")) return broadcastQuote(true);
-      if (e.target.closest("#quoteToggleBtn")) { state.ui.quote_enabled = !state.ui.quote_enabled; if (state.ui.quote_enabled) startQuoteTimer(); else stopQuoteTimer(); syncUiControls(); queueUiSave(); return; }
+      if (e.target.closest("#quoteToggleBtn")) {
+        state.ui.quote_enabled = !state.ui.quote_enabled;
+        syncQuoteButton();
+        if (state.ui.quote_enabled) { startQuoteTimer(); broadcastQuote(true); }
+        else stopQuoteTimer();
+        syncUiControls(); queueUiSave();
+        return;
+      }
       if (e.target.closest("#quickCrt")) { applyCrt(state.ui.crt === "off" ? "high" : "off"); queueUiSave(); return; }
       if (e.target.closest("#searchBtn")) return runSearch();
     });

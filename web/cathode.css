@@ -2025,3 +2025,6 @@ body.perf .signal-meter i { transition: none; }
   -webkit-text-fill-color: transparent; color: transparent !important;
   text-shadow: none !important;
 }
+/* subtitle toggle must visibly reflect ON/OFF */
+.hud-btn#quoteToggleBtn[aria-pressed="false"], .hud-btn#quoteToggleBtn.is-off { color: var(--dim); border-color: var(--line); }
+.hud-btn#quoteToggleBtn[aria-pressed="false"] i, .hud-btn#quoteToggleBtn.is-off i { color: var(--dim); }
