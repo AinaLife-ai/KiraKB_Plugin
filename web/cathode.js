@@ -609,7 +609,7 @@
   }
   function renderApprThemes() {
     const box = $("#apprThemes"); if (!box) return;
-    box.innerHTML = Object.keys(ORGS).map(t => {
+    box.innerHTML = Object.keys(ORGS).filter(t => orgEnabled(t)).map(t => {
       const org = orgFor(t);
       const badge = badgeFor(t, false);
       return `<button type="button" class="appr-badge ${state.apprTheme === t ? "is-on" : ""}" data-appr-theme="${t}" title="${esc(org?.name || t)}">
@@ -733,13 +733,15 @@
     armIdle(true);
   }
   function armIdle(force = false) {
+    const ae = document.activeElement;
+    const blocked = document.querySelector(".modal-root") || document.body.classList.contains("boot-hold") ||
+      (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName));
+    if (!force && blocked) { clearTimeout(state.idleTimer); state.idleTimer = null; return; }
     if (!force && state.idleTimer && Date.now() - state.lastArm < 1200) return;
     state.lastArm = Date.now();
     clearTimeout(state.idleTimer);
     if (state.apprOpen || document.hidden) return;
-    if (document.querySelector(".modal-root") || document.body.classList.contains("boot-hold")) return;
-    const ae = document.activeElement;
-    if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;
+    if (blocked) return;
     state.idleTimer = setTimeout(() => {
       if (state.apprOpen || document.hidden) return;
       if (document.querySelector(".modal-root") || document.body.classList.contains("boot-hold")) return;
