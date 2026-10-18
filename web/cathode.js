@@ -179,19 +179,10 @@
         const el = nodes[Math.floor(Math.random() * nodes.length)];
         if (el.classList.contains("anom-word") || el.classList.contains("anom-link")) {
           if (Math.random() < .5) {
-            const original = el.dataset.origText || el.textContent || "";
-            el.dataset.origText = original;
-            const chars = Math.max(2, Math.min(7, Math.ceil(original.length / 2)));
-            el.textContent = "口".repeat(chars);
+            const chars = Math.max(2, Math.min(7, Math.ceil((el.textContent || "").length / 2)));
             el.dataset.redact = "口".repeat(chars);
             el.classList.add("is-redact");
-            setTimeout(() => {
-              if (el.isConnected && el.dataset.origText === original) {
-                el.textContent = original;
-                delete el.dataset.redact;
-                el.classList.remove("is-redact");
-              }
-            }, 420 + Math.random() * 260);
+            setTimeout(() => el.classList.remove("is-redact"), 420 + Math.random() * 260);
             continue;
           }
         }

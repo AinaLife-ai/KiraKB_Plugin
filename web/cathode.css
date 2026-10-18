@@ -1899,9 +1899,9 @@ body.perf .appr-head h2, body.perf .appr-meta, body.perf .appr-caption p, body.p
 /* keep inline flow so English tokens do not disturb CJK wrapping */
 .anom-word, .anom-link { display: inline; }
 .anom-word.is-redact, .anom-link.is-redact {
-  color: var(--accent) !important; border-color: rgba(var(--accent-rgb), .45) !important;
-  background: rgba(var(--accent-rgb), .08); letter-spacing: .02em;
+  color: transparent !important; border-color: transparent !important;
+  background: transparent !important; text-shadow: none !important;
 }
-.anom-word.is-redact::after, .anom-link.is-redact::after { content: none !important; display: none !important; }
+.anom-word.is-redact::after, .anom-link.is-redact::after { content: attr(data-redact) !important; display: flex !important; }
 /* all anomaly tokens must stay in normal inline flow (CJK line breaking) */
 .anom-quote { display: inline; }
