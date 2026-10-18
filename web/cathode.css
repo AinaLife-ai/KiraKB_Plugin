@@ -1997,3 +1997,8 @@ body.perf .appr-head h2, body.perf .appr-meta, body.perf .appr-caption p, body.p
   .rail-alias { font-size: 7px; letter-spacing: .08em; }
   .rail-sub { font-size: 7px; letter-spacing: .08em; }
 }
+/* restore the animated brand lamp between KB and 知识库 */
+.rail-kb-lamp { display: inline-block !important; flex: 0 0 5px; }
+@media (max-width: 1180px) {
+  .rail-kb-lamp { display: inline-block !important; width: 5px; height: 5px; flex-basis: 5px; }
+}
