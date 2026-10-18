@@ -1896,3 +1896,12 @@ body.perf .appr-head h2, body.perf .appr-meta, body.perf .appr-caption p, body.p
   opacity: 0; width: 0; min-width: 0; padding: 0; border-width: 0; transform: scale(.6); pointer-events: none; overflow: hidden;
 }
 .appreciate.appr-collapsed .appr-badge.is-on { box-shadow: 0 0 0 1px var(--accent), 0 0 18px rgba(var(--accent-rgb), .35); }
+/* keep inline flow so English tokens do not disturb CJK wrapping */
+.anom-word, .anom-link { display: inline; }
+.anom-word.is-redact, .anom-link.is-redact {
+  color: var(--accent) !important; border-color: rgba(var(--accent-rgb), .45) !important;
+  background: rgba(var(--accent-rgb), .08); letter-spacing: .02em;
+}
+.anom-word.is-redact::after, .anom-link.is-redact::after { content: none !important; display: none !important; }
+/* all anomaly tokens must stay in normal inline flow (CJK line breaking) */
+.anom-quote { display: inline; }

@@ -119,7 +119,7 @@
     return String(value == null ? "" : value).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
   const QUOTE_FX_RE = /「[^」\n]{1,80}」|“[^”\n]{1,80}”|"[^"\n]{1,80}"|《[^》\n]{1,80}》|<[^<>\n]{1,80}>/g;
-  const FX_TOKEN_RE = /https?:\/\/[^\s<>"']+|《[^》\n]{1,80}》|<[^<>\n]{1,80}>|「[^」\n]{1,80}」|“[^”\n]{1,80}”|"[^"\n]{1,80}"|[A-Za-z]{3,}/g;
+  const FX_TOKEN_RE = /https?:\/\/[^\s<>"']+|《[^》\n]{1,80}》|<[^<>\n]{1,80}>|「[^」\n]{1,80}」|“[^”\n]{1,80}”|"[^"\n]{1,80}"|[A-Za-z][A-Za-z0-9_]{2,}/g;
   function fxLink(url, cls = "") {
     const safe = /^https?:\/\//i.test(url) ? esc(url) : "#";
     return `<a class="${cls}" href="${safe}" target="_blank" rel="noopener noreferrer">${esc(url)}</a>`;
@@ -179,10 +179,19 @@
         const el = nodes[Math.floor(Math.random() * nodes.length)];
         if (el.classList.contains("anom-word") || el.classList.contains("anom-link")) {
           if (Math.random() < .5) {
-            const chars = Math.max(2, Math.min(7, Math.ceil((el.textContent || "").length / 2)));
+            const original = el.dataset.origText || el.textContent || "";
+            el.dataset.origText = original;
+            const chars = Math.max(2, Math.min(7, Math.ceil(original.length / 2)));
+            el.textContent = "口".repeat(chars);
             el.dataset.redact = "口".repeat(chars);
             el.classList.add("is-redact");
-            setTimeout(() => el.classList.remove("is-redact"), 420 + Math.random() * 260);
+            setTimeout(() => {
+              if (el.isConnected && el.dataset.origText === original) {
+                el.textContent = original;
+                delete el.dataset.redact;
+                el.classList.remove("is-redact");
+              }
+            }, 420 + Math.random() * 260);
             continue;
           }
         }
