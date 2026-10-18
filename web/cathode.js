@@ -4,7 +4,7 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduced = false; // effects are force-enabled; performance mode is the opt-out
 
   const THEMES = ["violet", "pink", "blue", "amber", "sg", "green", "red", "gray"];
   const ORGS = window.LINJI_ORGS || {};
@@ -375,7 +375,7 @@
     if (!strip) return;
     strip.innerHTML = THEMES.map(t => {
       const org = orgFor(t);
-      const badge = badgeFor(t);
+      const badge = badgeFor(t, false);
       return `<button class="swatch ${t === state.ui.theme ? "is-active" : ""}" type="button" data-theme-set="${t}" title="${org ? esc(org.name) : t}" aria-label="${org ? esc(org.name) : t}" ${org ? `style="--sw:${safeColor(org.color)}"` : ""}>${badge ? `<img class="swatch-badge" src="${esc(badge)}" alt="">` : ""}</button>`;
     }).join("") + `<button class="swatch random" type="button" data-theme-set="random" title="随机配色" aria-label="随机配色"></button>`;
   }
@@ -836,7 +836,7 @@
     const boot = $("#boot");
     if (!boot) return;
     const skip = $("#bootSkip");
-    if (!state.ui.splash || reduced || new URLSearchParams(location.search).has("skipboot")) {
+    if (!state.ui.splash || new URLSearchParams(location.search).has("skipboot")) {
       boot.classList.add("is-off"); document.body.classList.remove("boot-hold"); return;
     }
     document.body.classList.add("boot-hold");
@@ -1702,6 +1702,20 @@
     initParallax();
     await loadSettings();
     if (state.settings?.ui) state.ui = { ...state.ui, ...state.settings.ui };
+    try {
+      if (!localStorage.getItem("linji-effects-forced-v151")) {
+        state.ui.performance = false;
+        state.ui.splash = true;
+        state.ui.crt = "high";
+        state.ui.text_fx = "mix";
+        state.ui.fx_loop = true;
+        state.ui.quote_enabled = true;
+        state.ui.quote_fx = true;
+        state.ui.wall_parallax = true;
+        state.ui.wall_rotate = true;
+        localStorage.setItem("linji-effects-forced-v151", "1");
+      }
+    } catch (_) {}
     try { if (!localStorage.getItem("linji-theme-choice")) state.ui.theme = "random"; } catch (_) {}
     state.ui.theme = (state.ui.theme === "random" || !THEMES.includes(state.ui.theme)) ? "random" : state.ui.theme;
     state.ui.text_fx = ["mix", "radio", "pulse", "type", "decode", "scan", "glitch"].includes(state.ui.text_fx) ? state.ui.text_fx : "mix";

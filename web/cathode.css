@@ -629,12 +629,7 @@ body.perf .screen::before, body.perf .screen::after, body.perf .screen-glass { d
 body.perf .view { animation: none; }
 body.perf .screen.is-cutting .channel-wipe { animation-duration: .18s; }
 body.perf .panel { backdrop-filter: none; }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
-  .boot { display: none; }
-  .screen.is-cutting .channel-wipe { display: none; }
-  .view { animation: none; }
-}
+
 
 
 /* ==========================================================================
@@ -907,10 +902,7 @@ body.perf .fx-ch, body.perf .fx-title, body.perf .fx-heading::after,
 body.perf .fx-title.fx-idle-radio, body.perf .fx-title.fx-idle-pulse,
 body.perf .fx-burst-radio, body.perf .fx-burst-pulse, body.perf .fx-burst-scan { animation: none !important; }
 body.perf .fx-hidden { opacity: 1 !important; }
-@media (prefers-reduced-motion: reduce) {
-  .fx-ch, .fx-title, .fx-heading::after, .fx-caret { animation: none !important; }
-  .fx-hidden { opacity: 1 !important; }
-}
+
 
 
 /* fixed panel titles: entrance + persistent scan line */
@@ -984,9 +976,7 @@ body.perf .fx-heading { animation: none; }
 }
 body.perf .quote-bars i, body.perf .channel.is-active .ch-pip,
 body.perf .version-card.is-active::before, body.perf .entry-row.is-selected { animation: none !important; }
-@media (prefers-reduced-motion: reduce) {
-  .quote-bars i, .channel.is-active .ch-pip, .version-card.is-active::before, .entry-row.is-selected { animation: none !important; }
-}
+
 
 /* ==========================================================================
    Integrated WebUI additions — real data, real actions
@@ -1347,9 +1337,7 @@ body { font-family: var(--serif); font-feature-settings: "kern" 1, "liga" 1; }
 body.perf .rail-kb-lamp, body.perf .rail-kb::before, body.perf .rail-kb::after,
 body.perf .rail-kb, body.perf .rail-title, body.perf #railBrandRow::after { animation: none !important; opacity: 0 !important; }
 body.perf .rail-kb-lamp { opacity: .5 !important; }
-@media (prefers-reduced-motion: reduce) {
-  .rail-kb-lamp, .rail-kb::before, .rail-kb::after, .rail-kb, .rail-title, #railBrandRow::after { animation: none !important; }
-}
+
 
 /* 临极档案 alias */
 .rail-alias {
@@ -1393,9 +1381,7 @@ body[data-theme="sg"] {
 }
 .fx-heading { animation: fx-heading-in .55s var(--ease-out) both, title-idle-breathe 7.2s ease-in-out infinite 1s; }
 body.perf .fx-title.fx-idle-scan, body.perf .fx-heading { animation: none !important; }
-@media (prefers-reduced-motion: reduce) {
-  .fx-title.fx-idle-scan, .fx-heading { animation: none !important; }
-}
+
 
 /* SG teal secondary accents */
 body[data-theme="sg"] .rail-kb-lamp,
@@ -1677,9 +1663,7 @@ body.appreciating { overflow: hidden; }
 /* reduce gratuitous motion when the machine is in performance mode */
 body.perf .appr-art, body.perf .view-art { transform: none !important; }
 body.perf .view-art::before, body.perf .appr-art::before { animation: none !important; opacity: .3; }
-@media (prefers-reduced-motion: reduce) {
-  .view-art::before, .appr-art::before { animation: none !important; }
-}
+
 body.perf .wall-fx, body.perf .appr-fx { display: none !important; }
 
 @media (max-width: 760px) {
@@ -1818,9 +1802,7 @@ body.appr-auto .appr-head:hover ~ .appr-caption { opacity: 1; }
   100% { transform: translateX(-2px); opacity: 0; }
 }
 body.perf .anom-quote, body.perf .anom-quote::before, body.perf .anom-quote::after { animation: none !important; }
-@media (prefers-reduced-motion: reduce) {
-  .anom-quote, .anom-quote::before, .anom-quote::after { animation: none !important; }
-}
+
 /* English tokens and links share the anomaly layer; redaction uses 口 blocks */
 .anom-word, .anom-link { position: relative; display: inline-block; padding: 0 1px; }
 .anom-word { color: var(--ink-2); border-bottom: 1px dotted rgba(var(--accent-rgb), .26); }
@@ -1877,9 +1859,7 @@ body.perf .anom-word, body.perf .anom-link { animation: none !important; }
   to { opacity: 1; transform: none; clip-path: inset(0); }
 }
 body.perf .appr-head h2, body.perf .appr-meta, body.perf .appr-caption p, body.perf .appr-caption-in { animation: none !important; }
-@media (prefers-reduced-motion: reduce) {
-  .appr-head h2, .appr-meta, .appr-caption p, .appr-caption-in { animation: none !important; }
-}
+
 .appr-tools .appr-badge { width: 32px; height: 32px; min-width: 32px; padding: 0; border-radius: 50%; overflow: hidden; display: grid; place-items: center; }
 .appr-tools .appr-badge img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; mix-blend-mode: screen; }
 .appr-tools .appr-badge span { font-family: var(--mono); font-size: 10px; color: var(--accent); }
@@ -1905,3 +1885,23 @@ body.perf .appr-head h2, body.perf .appr-meta, body.perf .appr-caption p, body.p
 .anom-word.is-redact::after, .anom-link.is-redact::after { content: attr(data-redact) !important; display: flex !important; }
 /* all anomaly tokens must stay in normal inline flow (CJK line breaking) */
 .anom-quote { display: inline; }
+/* 1.5.1 responsive hardening for embedded admin panels / narrow desktops */
+@media (max-width: 1200px) {
+  .cabinet-serial { display: none; }
+  .hud { gap: 10px; padding: 0 14px; }
+  .hud-left { min-width: 0; }
+  .hud-left .hud-meta { display: none; }
+  .hud-right { gap: 5px; }
+  .hud-btn { padding: 0 7px; font-size: 7.5px; }
+  .theme-strip { gap: 3px; padding: 0 6px; }
+  .swatch { width: 14px; height: 14px; }
+  .view-inner { padding-left: 24px; padding-right: 24px; }
+}
+@media (min-width: 901px) and (max-width: 1040px) {
+  .hud { flex-wrap: wrap; min-height: 62px; padding: 7px 14px; }
+  .hud-left, .hud-right { width: 100%; }
+  .hud-left { justify-content: space-between; }
+  .hud-right { justify-content: flex-start; }
+  .theme-strip { border-left: 0; border-right: 0; padding-left: 0; }
+  .view-inner { padding-left: 20px; padding-right: 20px; }
+}
