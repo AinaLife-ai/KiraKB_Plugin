@@ -55,7 +55,7 @@
     zero: (window.linjiZero ? window.linjiZero() : null),
     zeroRandomPick: false, wallVaultTheme: "violet",
     apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null,
-    apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null, quoteFxTimer: null, apprTextTimer: null, apprControlsTimer: null,
+    apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null, lastArm: 0, quoteFxTimer: null, apprTextTimer: null, apprControlsTimer: null,
     parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0, aimX: 0, aimY: 0, breath: 0, breathAppr: 0
   };
 
@@ -192,6 +192,9 @@
         setTimeout(() => el.classList.remove("is-burst"), 1400 + Math.random() * 600);
       }
     }, 4200);
+  }
+  function safeColor(value) {
+    return /^#[0-9a-f]{3,8}$/i.test(String(value || "")) ? String(value) : "var(--accent)";
   }
   function icon(name, size = 14) {
     return `<svg style="width:${size}px;height:${size}px"><use href="#i-${name}"></use></svg>`;
@@ -333,7 +336,7 @@
       const badge = badgeFor(theme, false);
       if (!org) return "";
       return `<button type="button" data-theme-set="${theme}" class="${theme === state.ui.theme ? "is-active" : ""}" title="${esc(org.name)}">
-        ${badge ? `<img src="${badge}" alt="">` : ""}<span>${esc(org.name)}</span></button>`;
+        ${badge ? `<img src="${esc(badge)}" alt="">` : ""}<span>${esc(org.name)}</span></button>`;
     }).join("");
   }
   function applyOrgIdentity() {
@@ -372,7 +375,7 @@
     strip.innerHTML = THEMES.map(t => {
       const org = orgFor(t);
       const badge = badgeFor(t);
-      return `<button class="swatch ${t === state.ui.theme ? "is-active" : ""}" type="button" data-theme-set="${t}" title="${org ? org.name : t}" aria-label="${org ? org.name : t}" ${org ? `style="--sw:${org.color}"` : ""}>${badge ? `<img class="swatch-badge" src="${badge}" alt="">` : ""}</button>`;
+      return `<button class="swatch ${t === state.ui.theme ? "is-active" : ""}" type="button" data-theme-set="${t}" title="${org ? esc(org.name) : t}" aria-label="${org ? esc(org.name) : t}" ${org ? `style="--sw:${safeColor(org.color)}"` : ""}>${badge ? `<img class="swatch-badge" src="${esc(badge)}" alt="">` : ""}</button>`;
     }).join("") + `<button class="swatch random" type="button" data-theme-set="random" title="随机配色" aria-label="随机配色"></button>`;
   }
   function setTheme(theme, save = true) {
@@ -485,7 +488,7 @@
     if (!grid) return;
     grid.innerHTML = BG_SLOTS.map(([key, label]) => {
       const img = state.backgrounds[key];
-      return `<div class="bg-slot" data-bg="${key}" style="background-image:${img ? "none" : "linear-gradient(135deg,rgba(181,140,255,.13),rgba(0,0,0,.35))"}">${img ? `<img src="${img}" alt="">` : ""}<span>${label}</span><div><button type="button" data-bg-upload="${key}">上传</button><button type="button" data-bg-reset="${key}">清除</button></div><input type="file" accept="image/*" data-bg-file="${key}" hidden></div>`;
+      return `<div class="bg-slot" data-bg="${key}" style="background-image:${img ? "none" : "linear-gradient(135deg,rgba(181,140,255,.13),rgba(0,0,0,.35))"}">${img ? `<img src="${esc(img)}" alt="">` : ""}<span>${label}</span><div><button type="button" data-bg-upload="${key}">上传</button><button type="button" data-bg-reset="${key}">清除</button></div><input type="file" accept="image/*" data-bg-file="${key}" hidden></div>`;
     }).join("");
   }
   function renderWallVault() {
@@ -727,9 +730,11 @@
       el.setAttribute("aria-hidden", "true");
       setTimeout(() => { if (!state.apprOpen) { el.hidden = true; el.classList.remove("is-closing"); } }, 620);
     }
-    armIdle();
+    armIdle(true);
   }
-  function armIdle() {
+  function armIdle(force = false) {
+    if (!force && state.idleTimer && Date.now() - state.lastArm < 1200) return;
+    state.lastArm = Date.now();
     clearTimeout(state.idleTimer);
     if (state.apprOpen || document.hidden) return;
     if (document.querySelector(".modal-root") || document.body.classList.contains("boot-hold")) return;
@@ -846,7 +851,7 @@
       clearInterval(boot.timer);
       boot.classList.add("is-off"); document.body.classList.remove("boot-hold");
       setTimeout(() => { boot.style.display = "none"; }, 600);
-      replayText(); replayBrand(); startQuoteTimer(); armIdle();
+      replayText(); replayBrand(); startQuoteTimer(); armIdle(true);
     }
   }
 
@@ -904,7 +909,7 @@
       return `<div class="field ${span ? "span-2" : ""}"><label>${label}</label><input data-zero-field="${key}" type="${type}" value="${esc(val)}"></div>`;
     };
     box.innerHTML = `
-      <div class="field span-2 zero-preview"><img src="${z.badge || ""}" alt=""><div><b>${esc(z.name || "第零章")}</b><small>${esc(z.en || "CHAPTER ZERO")} · ${(z.walls || []).length} 张插画</small></div><label class="switch"><input id="zeroEnabled" type="checkbox" ${z.enabled ? "checked" : ""}><span></span><b>启用第零章</b></label></div>
+      <div class="field span-2 zero-preview"><img src="${esc(z.badge || "")}" alt=""><div><b>${esc(z.name || "第零章")}</b><small>${esc(z.en || "CHAPTER ZERO")} · ${(z.walls || []).length} 张插画</small></div><label class="switch"><input id="zeroEnabled" type="checkbox" ${z.enabled ? "checked" : ""}><span></span><b>启用第零章</b></label></div>
       <div class="field span-2"><label>代替哪些配色 <small>选中的主题会显示第零章的徽章、文字与插画；“随机色”表示随机时有机会出现</small></label><div class="zero-targets">${targets.map(t => `<label class="${tset.has(t) ? "is-on" : ""}"><input type="checkbox" data-zero-target="${t}" ${tset.has(t) ? "checked" : ""}>${t === "random" ? "随机色" : esc(ORGS[t]?.name || t)}</label>`).join("")}</div></div>
       ${field("name", "名称")}
       ${field("en", "英文副题")}
@@ -916,7 +921,7 @@
       ${field("relations", "关系")}
       ${field("quote", "台词")}
       ${field("tags", "标签 <small>逗号分隔</small>")}
-      <div class="field span-2"><label>素材</label><div class="zero-upload-row"><label class="btn ghost zero-upload">上传徽章<input id="zeroBadgeFile" type="file" accept="image/*" hidden></label><label class="btn ghost zero-upload">上传插画（可多选）<input id="zeroWallsFile" type="file" accept="image/*" multiple hidden></label><button class="btn small ghost" id="zeroClearWalls" type="button">清空插画</button></div><div class="zero-thumbs">${z.badge ? `<img class="zero-badge-thumb" src="${z.badge}" alt="">` : ""}${(z.walls || []).map((w, i) => `<img src="${esc(w)}" alt="" title="插画 ${i + 1}">`).join("")}</div></div>
+      <div class="field span-2"><label>素材</label><div class="zero-upload-row"><label class="btn ghost zero-upload">上传徽章<input id="zeroBadgeFile" type="file" accept="image/*" hidden></label><label class="btn ghost zero-upload">上传插画（可多选）<input id="zeroWallsFile" type="file" accept="image/*" multiple hidden></label><button class="btn small ghost" id="zeroClearWalls" type="button">清空插画</button></div><div class="zero-thumbs">${z.badge ? `<img class="zero-badge-thumb" src="${esc(z.badge)}" alt="">` : ""}${(z.walls || []).map((w, i) => `<img src="${esc(w)}" alt="" title="插画 ${i + 1}">`).join("")}</div></div>
       <div class="field span-2"><span class="hint">第零章只保存在本机（localStorage），不会上传服务器。启用后可在主题、壁纸库和欣赏模式中看到。</span></div>`;
     const st = $("#zeroState"); if (st) st.textContent = z.enabled ? "IN USE" : "UNWRITTEN";
     const tset2 = new Set(zeroTargets());
@@ -934,15 +939,15 @@
       const badge = badgeFor(theme, false);
       const walls = wallsFor(theme);
       const enabled = orgEnabled(theme);
-      return `<article class="org-card" id="org-${theme}" style="--org:${org.color}">
+      return `<article class="org-card" id="org-${theme}" style="--org:${safeColor(org.color)}">
         <div class="org-top">
-          <img class="org-badge" src="${badge}" alt="${esc(org.name)}">
+          <img class="org-badge" src="${esc(badge)}" alt="${esc(org.name)}">
           <div class="org-title">
             <div class="org-chapter">CHAPTER ${org.chapter} // ${esc(org.en)}</div>
             <h3>${esc(org.name)}</h3>
             <small>${esc(org.motto)}</small>
           </div>
-          <span class="badge" style="margin-left:auto;color:${org.color};border-color:${org.color}">${enabled ? "IN USE" : "MUTED"}</span>
+          <span class="badge" style="margin-left:auto;color:${safeColor(org.color)};border-color:${safeColor(org.color)}">${enabled ? "IN USE" : "MUTED"}</span>
         </div>
         <p class="org-motto">${fxText(`「${org.quote}」`, true)}</p>
         <p class="org-summary">${fxText(org.summary, true)}</p>
@@ -953,7 +958,7 @@
           <span>TAGS / 标签<b>${org.tags.map(esc).join(" · ")}</b></span>
         </div>
         <details class="org-details"><summary>展开档案全文 / LORE</summary><p class="org-lore">${fxText(org.lore, true)}</p>${org.extraLore ? `<p class="org-lore">${fxText(org.extraLore, true)}</p>` : ""}${org.finalStory?.length ? `<div class="org-final-story"><span class="mini-label">ARCHIVE STORY / 组织故事</span>${org.finalStory.map(x => `<p>${fxText(x, true)}</p>`).join("")}</div>` : ""}${org.chronicle?.length ? `<div class="org-chronicle">${org.chronicle.map((x, i) => `<p><b>${String(i + 1).padStart(2, "0")}</b>${fxText(x, true)}</p>`).join("")}</div>` : ""}${org.cases?.length ? `<div class="org-cases"><span class="mini-label">CASE FILES / 未结案</span>${org.cases.map(x => `<p>${fxText(x, true)}</p>`).join("")}</div>` : ""}</details>
-        <div class="org-gallery">${walls.map((wall, index) => { const meta = wallMetaFor(theme, wall, index); return `<button type="button" data-org-wall="${theme}" data-org-wall-index="${index}" title="${esc(meta.title)} — ${esc(meta.caption)}"><img src="${wall}" alt="" loading="lazy"><span>${esc(meta.title)}</span></button>`; }).join("")}</div>
+        <div class="org-gallery">${walls.map((wall, index) => { const meta = wallMetaFor(theme, wall, index); return `<button type="button" data-org-wall="${theme}" data-org-wall-index="${index}" title="${esc(meta.title)} — ${esc(meta.caption)}"><img src="${esc(wall)}" alt="" loading="lazy"><span>${esc(meta.title)}</span></button>`; }).join("")}</div>
         <div class="org-actions">
           <button type="button" class="btn" data-org-theme="${theme}">应用此主题</button>
           <label class="switch" title="关闭后不使用该组织的徽章与壁纸"><input type="checkbox" data-org-enabled="${theme}" ${enabled ? "checked" : ""}><span></span><b>启用组织外观</b></label>
@@ -1624,7 +1629,7 @@
         startQuoteTimer(); queueUiSave();
       }
     });
-    document.addEventListener("visibilitychange", () => { if (document.hidden) { stopQuoteTimer(); clearTimeout(state.idleTimer); } else { if (state.ui.quote_enabled) startQuoteTimer(); armIdle(); } });
+    document.addEventListener("visibilitychange", () => { if (document.hidden) { stopQuoteTimer(); clearTimeout(state.idleTimer); state.idleTimer = null; } else { if (state.ui.quote_enabled) startQuoteTimer(); armIdle(true); } });
     ["pointerdown","keydown","wheel","touchstart"].forEach(evt => window.addEventListener(evt, (e) => {
       if (state.apprOpen) {
         const inside = e.target && e.target.closest && e.target.closest("#appreciate .appr-tools, #appreciate .appr-bottom");
@@ -1712,7 +1717,7 @@
     initTextFx();
     startBrandModes();
     if (state.ui.quote_enabled) { broadcastQuote(true); startQuoteTimer(); }
-    armIdle();
+    armIdle(true);
     startQuoteFxLoop();
     setInterval(() => { if (!document.hidden) { loadTasks().then(renderTasks).catch(() => {}); } }, 5000);
   }
