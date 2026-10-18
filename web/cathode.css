@@ -1905,3 +1905,52 @@ body.perf .appr-head h2, body.perf .appr-meta, body.perf .appr-caption p, body.p
   .theme-strip { border-left: 0; border-right: 0; padding-left: 0; }
   .view-inner { padding-left: 20px; padding-right: 20px; }
 }
+/* 1.5.1: tighter shell, more central canvas, scrollable rail */
+:root { --rail: 170px; --console: 42px; }
+.rail { overflow: hidden; }
+.rail-top { padding: 20px 14px 15px; }
+.rail-eyebrow { font-size: 7.5px; }
+.rail-title { font-size: 24px; }
+.rail-kb { font-size: 23px; }
+.rail-sub { font-size: 7px; }
+.channel-nav {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
+  scrollbar-width: thin; scrollbar-color: var(--line-2) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+.channel-nav::-webkit-scrollbar { width: 4px; }
+.channel-nav::-webkit-scrollbar-thumb { background: var(--line-2); }
+.channel { padding: 9px 8px; gap: 8px; }
+.ch-no { width: 14px; font-size: 7.5px; }
+.channel svg { width: 14px; height: 14px; flex-basis: 14px; }
+.ch-label b { font-size: 13px; }
+.ch-label small { font-size: 6.5px; }
+.rail-archive { margin: 0 12px; padding: 12px 0 14px; }
+.rail-foot { padding: 9px 12px; }
+.hud { min-height: 46px; padding: 0 18px; }
+.cabinet-head { min-height: 28px; }
+.cabinet-foot { min-height: 24px; }
+.ticker { min-height: 58px; padding: 0 18px; gap: 12px; }
+.ticker-side { flex-basis: 100px; }
+.ticker-text { font-size: clamp(12px, 1.3vw, 17px); }
+.view-inner { padding: 22px 28px 92px; }
+@media (max-width: 1180px) {
+  :root { --rail: 150px; --console: 40px; }
+  .rail-top { padding: 17px 11px 13px; }
+  .rail-kb { font-size: 20px; }
+  .rail-title { font-size: 21px; }
+  .channel { padding: 8px 7px; gap: 7px; }
+  .ch-label b { font-size: 12px; }
+  .ch-label small { font-size: 6px; }
+  .view-inner { padding: 20px 22px 88px; }
+}
+@media (min-width: 901px) and (max-width: 1040px) {
+  .hud { min-height: 62px; }
+}
+@media (max-width: 900px) {
+  .channel-nav { flex: 0 0 auto; overflow-y: hidden; overflow-x: auto; }
+  .rail-top { padding: 13px 16px 9px; }
+  .rail-title, .rail-kb { font-size: 20px; }
+  .view-inner { padding: 20px 16px 92px; }
+  .ticker { min-height: 60px; padding: 0 14px; }
+}
