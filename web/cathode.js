@@ -119,15 +119,31 @@
     return String(value == null ? "" : value).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
   const QUOTE_FX_RE = /「[^」\n]{1,80}」|“[^”\n]{1,80}”|"[^"\n]{1,80}"/g;
+  const FX_TOKEN_RE = /https?:\/\/[^\s<>"']+|「[^」\n]{1,80}」|“[^”\n]{1,80}”|"[^"\n]{1,80}"|[A-Za-z]{3,}/g;
+  function fxLink(url, cls = "") {
+    const safe = /^https?:\/\//i.test(url) ? esc(url) : "#";
+    return `<a class="${cls}" href="${safe}" target="_blank" rel="noopener noreferrer">${esc(url)}</a>`;
+  }
   function fxText(value, force = false) {
     const raw = String(value == null ? "" : value);
-    if (!force && !state.ui.quote_fx) return esc(raw);
+    const enabled = force || state.ui.quote_fx;
     let out = "", last = 0, m;
-    QUOTE_FX_RE.lastIndex = 0;
-    while ((m = QUOTE_FX_RE.exec(raw))) {
+    FX_TOKEN_RE.lastIndex = 0;
+    while ((m = FX_TOKEN_RE.exec(raw))) {
       out += esc(raw.slice(last, m.index));
-      const token = m[0], inner = token.slice(1, -1);
-      out += `<span class="anom-quote" data-anom="${esc(inner)}" style="--anom-delay:-${(Math.random() * 7).toFixed(2)}s">${esc(token)}</span>`;
+      const token = m[0];
+      if (/^https?:\/\//i.test(token)) {
+        out += fxLink(token, enabled ? "anom-link" : "");
+      } else if (/^[「“"]/.test(token)) {
+        const inner = token.slice(1, -1);
+        out += enabled
+          ? `<span class="anom-quote" data-anom="${esc(inner)}" style="--anom-delay:-${(Math.random() * 7).toFixed(2)}s">${esc(token)}</span>`
+          : esc(token);
+      } else {
+        out += enabled
+          ? `<span class="anom-word" data-anom="${esc(token)}" style="--anom-delay:-${(Math.random() * 7).toFixed(2)}s">${esc(token)}</span>`
+          : esc(token);
+      }
       last = m.index + token.length;
     }
     return out + esc(raw.slice(last));
@@ -144,8 +160,8 @@
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach(node => {
-      QUOTE_FX_RE.lastIndex = 0;
-      if (!QUOTE_FX_RE.test(node.nodeValue)) return;
+      FX_TOKEN_RE.lastIndex = 0;
+      if (!FX_TOKEN_RE.test(node.nodeValue)) return;
       const span = document.createElement("span");
       span.innerHTML = fxText(node.nodeValue, true);
       node.replaceWith(span);
@@ -156,17 +172,26 @@
     if (reduced) return;
     state.quoteFxTimer = setInterval(() => {
       if (document.hidden || state.ui.performance) return;
-      const nodes = [...document.querySelectorAll(".anom-quote")];
+      const nodes = [...document.querySelectorAll(".anom-quote, .anom-word, .anom-link")];
       if (!nodes.length) return;
       const count = 1 + Math.floor(Math.random() * Math.min(3, nodes.length));
       for (let i = 0; i < count; i++) {
         const el = nodes[Math.floor(Math.random() * nodes.length)];
+        if (el.classList.contains("anom-word") || el.classList.contains("anom-link")) {
+          if (Math.random() < .5) {
+            const chars = Math.max(2, Math.min(7, Math.ceil((el.textContent || "").length / 2)));
+            el.dataset.redact = "口".repeat(chars);
+            el.classList.add("is-redact");
+            setTimeout(() => el.classList.remove("is-redact"), 420 + Math.random() * 260);
+            continue;
+          }
+        }
         el.classList.remove("is-burst");
         void el.offsetWidth;
         el.classList.add("is-burst");
         setTimeout(() => el.classList.remove("is-burst"), 1400 + Math.random() * 600);
       }
-    }, 6200);
+    }, 4200);
   }
   function icon(name, size = 14) {
     return `<svg style="width:${size}px;height:${size}px"><use href="#i-${name}"></use></svg>`;

@@ -1821,3 +1821,34 @@ body.perf .anom-quote, body.perf .anom-quote::before, body.perf .anom-quote::aft
 @media (prefers-reduced-motion: reduce) {
   .anom-quote, .anom-quote::before, .anom-quote::after { animation: none !important; }
 }
+/* English tokens and links share the anomaly layer; redaction uses 口 blocks */
+.anom-word, .anom-link { position: relative; display: inline-block; padding: 0 1px; }
+.anom-word { color: var(--ink-2); border-bottom: 1px dotted rgba(var(--accent-rgb), .26); }
+.anom-link { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(var(--accent-rgb), .45); }
+.anom-word.is-redact, .anom-link.is-redact { color: transparent !important; border-color: transparent !important; text-shadow: none !important; }
+.anom-word.is-redact::after, .anom-link.is-redact::after {
+  content: attr(data-redact); position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; background: #050407; color: var(--accent);
+  font-family: var(--mono); font-size: .9em; letter-spacing: .08em;
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), .35), 0 0 12px rgba(var(--accent-rgb), .2);
+  pointer-events: none;
+}
+.anom-word.is-burst { animation: anom-word-pulse .72s steps(2) both; }
+@keyframes anom-word-pulse {
+  0%, 100% { color: var(--ink-2); }
+  18% { color: #ff5f8f; transform: translateX(-1px); }
+  42% { color: #66e0ff; transform: translateX(1px); }
+  68% { color: var(--accent); }
+}
+body.perf .anom-word.is-burst { animation: none !important; }
+/* low-level ambient for English tokens; bursts are layered on top */
+.anom-word, .anom-link {
+  animation: anom-word-ambient 8s steps(1) infinite;
+  animation-delay: var(--anom-delay, 0s);
+}
+@keyframes anom-word-ambient {
+  0%, 91%, 94%, 100% { opacity: 1; }
+  92% { opacity: .68; text-shadow: 1px 0 rgba(255,60,120,.28), -1px 0 rgba(60,200,255,.22); }
+  93% { opacity: .9; }
+}
+body.perf .anom-word, body.perf .anom-link { animation: none !important; }
