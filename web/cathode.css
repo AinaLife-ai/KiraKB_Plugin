@@ -1954,3 +1954,29 @@ body.perf .appr-head h2, body.perf .appr-meta, body.perf .appr-caption p, body.p
   .view-inner { padding: 20px 16px 92px; }
   .ticker { min-height: 60px; padding: 0 14px; }
 }
+/* 1.5.1: frame touches all four viewport edges */
+.page { padding: 0; }
+.cabinet { border-radius: 0; }
+@media (min-width: 901px) {
+  .cabinet { border-left: 1px solid var(--line-2); border-right: 1px solid var(--line-2); }
+}
+
+/* 1.5.1: brand lockup must stay one line and scale instead of wrapping */
+.rail-title-row { flex-wrap: nowrap; align-items: center; gap: 4px; min-width: 0; }
+.rail-kb, .rail-title { white-space: nowrap; flex-shrink: 0; }
+.rail-badge { flex: 0 0 22px; width: 22px; height: 22px; }
+.rail-kb { font-size: 18px; }
+.rail-title { font-size: 18px; }
+@media (max-width: 1180px) {
+  .rail-title-row { gap: 3px; }
+  .rail-badge { flex-basis: 20px; width: 20px; height: 20px; }
+  .rail-kb { font-size: 17px; }
+  .rail-title { font-size: 17px; }
+  .rail-kb-lamp { display: none; }
+}
+@media (max-width: 900px) {
+  .rail-title-row { gap: 6px; }
+  .rail-badge { flex-basis: 25px; width: 25px; height: 25px; }
+  .rail-kb { font-size: 20px; }
+  .rail-title { font-size: 20px; }
+}
