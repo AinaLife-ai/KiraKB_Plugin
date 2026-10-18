@@ -236,6 +236,7 @@ async def main_async():
         ("section_ui", "fx_loop"): ("ui", "fx_loop"),
         ("section_ui", "fx_interval"): ("ui", "fx_interval"),
         ("section_ui", "quote_enabled"): ("ui", "quote_enabled"),
+        ("section_ui", "quote_fx"): ("ui", "quote_fx"),
         ("section_ui", "quote_interval"): ("ui", "quote_interval"),
         ("section_ui", "quote_kb_ids"): ("ui", "quote_kb_ids"),
         ("section_ui", "quote_custom_lines"): ("ui", "quote_custom_lines"),

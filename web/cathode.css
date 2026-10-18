@@ -1772,3 +1772,52 @@ body.appr-auto .appr-head:hover ~ .appr-caption { opacity: 1; }
   .view-art { inset: -12%; }
   .appr-art { inset: -14%; }
 }
+/* anomaly quotes: 「」 “” — signal interference / SCP-ish ambient */
+.anom-quote {
+  position: relative; display: inline-block; color: var(--accent);
+  text-shadow: 0 0 7px rgba(var(--accent-rgb), .34);
+  border-bottom: 1px solid rgba(var(--accent-rgb), .32);
+  animation: anom-ambient 11s steps(1) infinite;
+  animation-delay: var(--anom-delay, 0s);
+  isolation: isolate;
+}
+.anom-quote::before, .anom-quote::after {
+  content: attr(data-anom); position: absolute; left: 0; top: 0; width: 100%;
+  pointer-events: none; opacity: 0; white-space: nowrap; mix-blend-mode: screen;
+}
+.anom-quote::before { color: #ff5f8f; clip-path: inset(0 0 52% 0); transform: translateX(1px); }
+.anom-quote::after  { color: #66e0ff; clip-path: inset(48% 0 0 0); transform: translateX(-1px); }
+.anom-quote.is-burst { animation: anom-jitter .72s steps(2) both; }
+.anom-quote.is-burst::before { opacity: .82; animation: anom-slice-a .72s steps(3) both; }
+.anom-quote.is-burst::after  { opacity: .72; animation: anom-slice-b .72s steps(3) both; }
+@keyframes anom-ambient {
+  0%, 86%, 92%, 100% { opacity: 1; text-shadow: 0 0 7px rgba(var(--accent-rgb), .34); }
+  87% { opacity: .72; text-shadow: 2px 0 rgba(255,60,120,.28), -2px 0 rgba(60,200,255,.22); }
+  89% { opacity: .94; text-shadow: -1px 0 rgba(255,60,120,.2), 1px 0 rgba(60,200,255,.2); }
+  91% { opacity: .82; }
+}
+@keyframes anom-jitter {
+  0%, 100% { transform: none; }
+  20% { transform: translateX(-2px) skewX(-2deg); }
+  42% { transform: translateX(3px) skewX(2deg); }
+  63% { transform: translateX(-1px); }
+  78% { transform: translateX(2px) skewX(-1deg); }
+}
+@keyframes anom-slice-a {
+  0% { transform: translateX(2px); clip-path: inset(0 0 52% 0); opacity: 0; }
+  25% { transform: translateX(-6px); opacity: .8; }
+  50% { transform: translateX(4px); clip-path: inset(26% 0 42% 0); opacity: .5; }
+  75% { transform: translateX(-2px); opacity: .7; }
+  100% { transform: translateX(2px); opacity: 0; }
+}
+@keyframes anom-slice-b {
+  0% { transform: translateX(-2px); clip-path: inset(48% 0 0 0); opacity: 0; }
+  30% { transform: translateX(5px); opacity: .7; }
+  55% { transform: translateX(-5px); clip-path: inset(36% 0 18% 0); opacity: .45; }
+  80% { transform: translateX(2px); opacity: .6; }
+  100% { transform: translateX(-2px); opacity: 0; }
+}
+body.perf .anom-quote, body.perf .anom-quote::before, body.perf .anom-quote::after { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .anom-quote, .anom-quote::before, .anom-quote::after { animation: none !important; }
+}

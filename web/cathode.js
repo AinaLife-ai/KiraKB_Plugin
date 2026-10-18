@@ -35,7 +35,7 @@
     wiki: ["08", "WIKI"]
   };
   const UI_DEFAULT = {
-    theme: "random", crt: "high", performance: false, splash: true,
+    theme: "random", crt: "high", performance: false, splash: true, quote_fx: true,
     text_fx: "mix", fx_loop: true, fx_interval: 6,
     quote_enabled: true, quote_interval: 9, quote_kb_ids: [],
     quote_custom_lines: [], quote_custom_mottos: [],
@@ -55,7 +55,7 @@
     zero: (window.linjiZero ? window.linjiZero() : null),
     zeroRandomPick: false, wallVaultTheme: "violet",
     apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null,
-    apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null,
+    apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null, quoteFxTimer: null,
     parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0, aimX: 0, aimY: 0, breath: 0, breathAppr: 0
   };
 
@@ -117,6 +117,56 @@
   /* ---------- utilities ---------- */
   function esc(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+  const QUOTE_FX_RE = /「[^」\n]{1,80}」|“[^”\n]{1,80}”|"[^"\n]{1,80}"/g;
+  function fxText(value, force = false) {
+    const raw = String(value == null ? "" : value);
+    if (!force && !state.ui.quote_fx) return esc(raw);
+    let out = "", last = 0, m;
+    QUOTE_FX_RE.lastIndex = 0;
+    while ((m = QUOTE_FX_RE.exec(raw))) {
+      out += esc(raw.slice(last, m.index));
+      const token = m[0], inner = token.slice(1, -1);
+      out += `<span class="anom-quote" data-anom="${esc(inner)}" style="--anom-delay:-${(Math.random() * 7).toFixed(2)}s">${esc(token)}</span>`;
+      last = m.index + token.length;
+    }
+    return out + esc(raw.slice(last));
+  }
+  function enhanceQuotes(root) {
+    if (!root) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        if (node.parentElement && node.parentElement.closest(".anom-quote, script, style, textarea, code")) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node => {
+      QUOTE_FX_RE.lastIndex = 0;
+      if (!QUOTE_FX_RE.test(node.nodeValue)) return;
+      const span = document.createElement("span");
+      span.innerHTML = fxText(node.nodeValue, true);
+      node.replaceWith(span);
+    });
+  }
+  function startQuoteFxLoop() {
+    clearInterval(state.quoteFxTimer);
+    if (reduced) return;
+    state.quoteFxTimer = setInterval(() => {
+      if (document.hidden || state.ui.performance) return;
+      const nodes = [...document.querySelectorAll(".anom-quote")];
+      if (!nodes.length) return;
+      const count = 1 + Math.floor(Math.random() * Math.min(3, nodes.length));
+      for (let i = 0; i < count; i++) {
+        const el = nodes[Math.floor(Math.random() * nodes.length)];
+        el.classList.remove("is-burst");
+        void el.offsetWidth;
+        el.classList.add("is-burst");
+        setTimeout(() => el.classList.remove("is-burst"), 1400 + Math.random() * 600);
+      }
+    }, 6200);
   }
   function icon(name, size = 14) {
     return `<svg style="width:${size}px;height:${size}px"><use href="#i-${name}"></use></svg>`;
@@ -371,6 +421,7 @@
       quote_kb_ids: selectedQuoteKbs(), quote_custom_lines: lines("#setUiQuoteLines"),
       quote_custom_mottos: lines("#setUiQuoteMottos"),
       wall_rotate: !!$("#setUiWallRotate")?.checked, wall_interval: Number($("#setUiWallInterval")?.value) || state.ui.wall_interval,
+      quote_fx: !!$("#setUiQuoteFx")?.checked,
       wall_parallax: !!$("#setUiParallax")?.checked
     };
   }
@@ -388,6 +439,7 @@
     set("setUiFxInterval", state.ui.fx_interval); chk("setUiQuoteEnabled", state.ui.quote_enabled);
     set("setUiQuoteInterval", state.ui.quote_interval);
     chk("setUiWallRotate", state.ui.wall_rotate); set("setUiWallInterval", state.ui.wall_interval);
+    chk("setUiQuoteFx", state.ui.quote_fx !== false);
     chk("setUiParallax", state.ui.wall_parallax);
     const ql = $("#setUiQuoteLines"); if (ql) ql.value = (state.ui.quote_custom_lines || []).join("\n");
     const qm = $("#setUiQuoteMottos"); if (qm) qm.value = (state.ui.quote_custom_mottos || []).join("\n");
@@ -813,7 +865,7 @@
     if (!grid) return;
     renderZeroPanel();
     const tl = $("#wikiTimeline");
-    if (tl && window.LINJI_STORY) tl.innerHTML = window.LINJI_STORY.map(s => `<div><b>${esc(s.year)}</b><p>${esc(s.text)}</p></div>`).join("");
+    if (tl && window.LINJI_STORY) tl.innerHTML = window.LINJI_STORY.map(s => `<div><b>${esc(s.year)}</b><p>${fxText(s.text, true)}</p></div>`).join("");
     const themes = Object.keys(ORGS);
     grid.innerHTML = themes.map(theme => {
       const org = orgFor(theme);
@@ -830,15 +882,15 @@
           </div>
           <span class="badge" style="margin-left:auto;color:${org.color};border-color:${org.color}">${enabled ? "IN USE" : "MUTED"}</span>
         </div>
-        <p class="org-motto">「${esc(org.quote)}」</p>
-        <p class="org-summary">${esc(org.summary)}</p>
+        <p class="org-motto">${fxText(`「${org.quote}」`, true)}</p>
+        <p class="org-summary">${fxText(org.summary, true)}</p>
         <div class="org-meta">
-          <span>DOCTRINE / 信条<b>${esc(org.doctrine)}</b></span>
-          <span>UNIFORM / 制服<b>${esc(org.uniform)}</b></span>
-          <span>RELATIONS / 关系<b>${esc(org.relations)}</b></span>
+          <span>DOCTRINE / 信条<b>${fxText(org.doctrine, true)}</b></span>
+          <span>UNIFORM / 制服<b>${fxText(org.uniform, true)}</b></span>
+          <span>RELATIONS / 关系<b>${fxText(org.relations, true)}</b></span>
           <span>TAGS / 标签<b>${org.tags.map(esc).join(" · ")}</b></span>
         </div>
-        <details class="org-details"><summary>展开档案全文 / LORE</summary><p class="org-lore">${esc(org.lore)}</p>${org.extraLore ? `<p class="org-lore">${esc(org.extraLore)}</p>` : ""}${org.finalStory?.length ? `<div class="org-final-story"><span class="mini-label">ARCHIVE STORY / 组织故事</span>${org.finalStory.map(x => `<p>${esc(x)}</p>`).join("")}</div>` : ""}${org.chronicle?.length ? `<div class="org-chronicle">${org.chronicle.map((x, i) => `<p><b>${String(i + 1).padStart(2, "0")}</b>${esc(x)}</p>`).join("")}</div>` : ""}${org.cases?.length ? `<div class="org-cases"><span class="mini-label">CASE FILES / 未结案</span>${org.cases.map(x => `<p>${esc(x)}</p>`).join("")}</div>` : ""}</details>
+        <details class="org-details"><summary>展开档案全文 / LORE</summary><p class="org-lore">${fxText(org.lore, true)}</p>${org.extraLore ? `<p class="org-lore">${fxText(org.extraLore, true)}</p>` : ""}${org.finalStory?.length ? `<div class="org-final-story"><span class="mini-label">ARCHIVE STORY / 组织故事</span>${org.finalStory.map(x => `<p>${fxText(x, true)}</p>`).join("")}</div>` : ""}${org.chronicle?.length ? `<div class="org-chronicle">${org.chronicle.map((x, i) => `<p><b>${String(i + 1).padStart(2, "0")}</b>${fxText(x, true)}</p>`).join("")}</div>` : ""}${org.cases?.length ? `<div class="org-cases"><span class="mini-label">CASE FILES / 未结案</span>${org.cases.map(x => `<p>${fxText(x, true)}</p>`).join("")}</div>` : ""}</details>
         <div class="org-gallery">${walls.map((wall, index) => { const meta = wallMetaFor(theme, wall, index); return `<button type="button" data-org-wall="${theme}" data-org-wall-index="${index}" title="${esc(meta.title)} — ${esc(meta.caption)}"><img src="${wall}" alt="" loading="lazy"><span>${esc(meta.title)}</span></button>`; }).join("")}</div>
         <div class="org-actions">
           <button type="button" class="btn" data-org-theme="${theme}">应用此主题</button>
@@ -931,7 +983,7 @@
     $("#inspectStatus").textContent = d.recall?.enabled === true ? "召回开启" : "已索引";
     try {
       const full = await api(`/kbs/${encodeURIComponent(state.current)}/documents/${encodeURIComponent(id)}`);
-      if (state.selectedDoc === id) $("#inspectContent").textContent = full.content || "（空正文）";
+      if (state.selectedDoc === id) $("#inspectContent").innerHTML = full.content ? fxText(full.content, false) : "（空正文）";
     } catch (e) { $("#inspectContent").textContent = "读取失败：" + e.message; }
   }
   function renderInspector() {
@@ -1460,6 +1512,9 @@
         } catch (err) { toast("上传失败：" + err.message, "err"); }
         return;
       }
+      if (e.target.id === "setUiQuoteFx") {
+        state.ui.quote_fx = e.target.checked; queueUiSave(); renderWiki(); if (state.selectedDoc) selectDoc(state.selectedDoc); return;
+      }
       if (e.target.matches("#setUiTheme, #setUiCrt, #setUiTextFx, #setUiPerf, #setUiSplash, #setUiFxLoop, #setUiFxInterval, #setUiQuoteEnabled, #setUiQuoteInterval")) {
         state.ui.theme = $("#setUiTheme").value; state.ui.crt = $("#setUiCrt").value;
         state.ui.performance = $("#setUiPerf").checked; state.ui.splash = $("#setUiSplash").checked;
@@ -1573,11 +1628,13 @@
     try {
       await refreshAll();
       renderAll();
+      enhanceQuotes(document.querySelector(".wiki-intro"));
     } catch (e) { toast("加载失败：" + e.message, "err"); }
     initTextFx();
     startBrandModes();
     if (state.ui.quote_enabled) { broadcastQuote(true); startQuoteTimer(); }
     armIdle();
+    startQuoteFxLoop();
     setInterval(() => { if (!document.hidden) { loadTasks().then(renderTasks).catch(() => {}); } }, 5000);
   }
 

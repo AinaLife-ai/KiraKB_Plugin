@@ -93,7 +93,7 @@ class KiraKBPlugin(BasePlugin):
         self.auto_install_dependencies = bool(sec_basic.get("auto_install_dependencies", True))
         self.lexical_min_score = max(0, min(20, int(sec_recall.get("lexical_min_score", 2))))
 
-        self.ui_theme = str(sec_ui.get("theme", "violet") or "violet")
+        self.ui_theme = str(sec_ui.get("theme", "random") or "random")
         self.ui_crt = str(sec_ui.get("crt", "high") or "high")
         self.ui_performance = bool(sec_ui.get("performance", False))
         self.ui_splash = bool(sec_ui.get("splash", True))
@@ -101,6 +101,7 @@ class KiraKBPlugin(BasePlugin):
         self.ui_fx_loop = bool(sec_ui.get("fx_loop", True))
         self.ui_fx_interval = max(4, min(15, int(sec_ui.get("fx_interval", 6) or 6)))
         self.ui_quote_enabled = bool(sec_ui.get("quote_enabled", True))
+        self.ui_quote_fx = bool(sec_ui.get("quote_fx", True))
         self.ui_quote_interval = max(4, min(30, int(sec_ui.get("quote_interval", 9) or 9)))
         self.ui_quote_kb_ids = [str(v).strip() for v in (sec_ui.get("quote_kb_ids") or []) if str(v).strip()]
         self.ui_quote_custom_lines = [str(v).strip() for v in (sec_ui.get("quote_custom_lines") or []) if str(v).strip()]
@@ -446,6 +447,7 @@ class KiraKBPlugin(BasePlugin):
                 "fx_loop": self.ui_fx_loop,
                 "fx_interval": self.ui_fx_interval,
                 "quote_enabled": self.ui_quote_enabled,
+                "quote_fx": self.ui_quote_fx,
                 "quote_interval": self.ui_quote_interval,
                 "quote_kb_ids": list(self.ui_quote_kb_ids),
                 "quote_custom_lines": list(self.ui_quote_custom_lines),
@@ -637,11 +639,11 @@ class KiraKBPlugin(BasePlugin):
 
         ui = payload.get("ui") or {}
         if isinstance(ui, dict):
-            themes = ("violet", "pink", "blue", "amber", "sg", "green", "red", "gray")
+            themes = ("random", "violet", "pink", "blue", "amber", "sg", "green", "red", "gray")
             if "theme" in ui:
-                self.ui_theme = str(ui.get("theme") or "violet")
+                self.ui_theme = str(ui.get("theme") or "random")
                 if self.ui_theme not in themes:
-                    self.ui_theme = "violet"
+                    self.ui_theme = "random"
             if "crt" in ui:
                 self.ui_crt = str(ui.get("crt") or "high")
                 if self.ui_crt not in ("off", "low", "medium", "high"):
@@ -660,6 +662,8 @@ class KiraKBPlugin(BasePlugin):
                 self.ui_fx_interval = clamp_int(ui.get("fx_interval"), self.ui_fx_interval, 4, 15)
             if "quote_enabled" in ui:
                 self.ui_quote_enabled = bool(ui.get("quote_enabled"))
+            if "quote_fx" in ui:
+                self.ui_quote_fx = bool(ui.get("quote_fx"))
             if "quote_interval" in ui:
                 self.ui_quote_interval = clamp_int(ui.get("quote_interval"), self.ui_quote_interval, 4, 30)
             if "quote_kb_ids" in ui:
@@ -790,6 +794,7 @@ class KiraKBPlugin(BasePlugin):
                 "fx_loop": self.ui_fx_loop,
                 "fx_interval": self.ui_fx_interval,
                 "quote_enabled": self.ui_quote_enabled,
+                "quote_fx": self.ui_quote_fx,
                 "quote_interval": self.ui_quote_interval,
                 "quote_kb_ids": list(self.ui_quote_kb_ids),
                 "quote_custom_lines": list(self.ui_quote_custom_lines),
