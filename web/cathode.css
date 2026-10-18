@@ -2013,3 +2013,15 @@ body.perf .appr-head h2, body.perf .appr-meta, body.perf .appr-caption p, body.p
 .signal-meter i:nth-child(4).is-on, .signal-meter i:nth-child(5).is-on { background: var(--accent); box-shadow: 0 0 7px rgba(var(--accent-rgb), .55); }
 .signal-meter span { min-width: 48px; }
 body.perf .signal-meter i { transition: none; }
+/* occasional partial theme-color dye on the organisation name */
+.appr-head h2 .fx-ch.appr-accent {
+  color: var(--appr-accent) !important;
+  text-shadow: 0 0 18px var(--appr-accent), 0 2px 26px rgba(0,0,0,.9) !important;
+  transition: color .5s ease, text-shadow .5s ease;
+}
+.appr-head h2 .fx-ch.appr-accent-gradient {
+  background: linear-gradient(100deg, var(--appr-accent), #fff 43%, var(--appr-accent));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent !important;
+  text-shadow: none !important;
+}

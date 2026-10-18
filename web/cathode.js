@@ -56,6 +56,7 @@
     zeroRandomPick: false, wallVaultTheme: "violet",
     apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null,
     apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null, lastArm: 0, quoteFxTimer: null, apprTextTimer: null, apprControlsTimer: null, signalTimer: null,
+    apprTitleAccentTimer: null, apprTitleAccentLoopTimer: null,
     parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0, aimX: 0, aimY: 0, breath: 0, breathAppr: 0
   };
 
@@ -658,6 +659,45 @@
     clearTimeout(state.apprControlsTimer);
     state.apprControlsTimer = setTimeout(() => { if (state.apprOpen) el.classList.add("appr-collapsed"); }, 5000);
   }
+  const APPR_ACCENT_NAMES = {
+    violet: "紫垣", pink: "绯灯", blue: "青盾", amber: "燧火",
+    sg: "时计", green: "苍叶", red: "赤烬", gray: "灰庭", zero: "零章"
+  };
+  function clearApprTitleAccent() {
+    clearTimeout(state.apprTitleAccentTimer);
+    document.querySelectorAll("#apprTitle .appr-accent, #apprTitle .appr-accent-gradient").forEach(el => {
+      el.classList.remove("appr-accent", "appr-accent-gradient");
+    });
+  }
+  function applyApprTitleAccent() {
+    if (!state.apprOpen || state.ui.performance) return;
+    const title = $("#apprTitle"); if (!title) return;
+    const chars = [...title.querySelectorAll(".fx-ch")];
+    if (!chars.length) { state.apprTitleAccentTimer = setTimeout(applyApprTitleAccent, 450); return; }
+    const theme = state.apprTheme === "all" ? state.ui.theme : (state.apprTheme || state.ui.theme);
+    const target = APPR_ACCENT_NAMES[theme] || "零章";
+    const text = chars.map(c => c.dataset.final || c.textContent).join("");
+    const start = text.indexOf(target);
+    if (start < 0) return;
+    clearApprTitleAccent();
+    const count = Math.random() < .62 ? 1 : 2;
+    const positions = [start, start + 1].slice(0, Math.min(count, target.length));
+    const gradient = Math.random() < .45;
+    positions.forEach(i => {
+      const c = chars[i];
+      if (!c) return;
+      c.style.setProperty("--appr-accent", orgFor(theme)?.color || "var(--accent)");
+      c.classList.add(gradient ? "appr-accent-gradient" : "appr-accent");
+    });
+    state.apprTitleAccentTimer = setTimeout(clearApprTitleAccent, 4300 + Math.random() * 3600);
+  }
+  function startApprTitleAccentLoop() {
+    clearInterval(state.apprTitleAccentLoopTimer);
+    if (state.ui.performance) return;
+    state.apprTitleAccentLoopTimer = setInterval(() => {
+      if (state.apprOpen && !document.hidden && Math.random() < .58) applyApprTitleAccent();
+    }, 7600);
+  }
   function apprTextIntro() {
     if (!state.apprOpen || reduced || state.ui.performance || !window.KBTextFX) return;
     const title = $("#apprTitle"), meta = $("#apprMeta"), kicker = $("#apprCaptionKicker"), cap = $("#apprCaption");
@@ -668,6 +708,8 @@
       if (el) window.KBTextFX.playText(el, el.textContent, effect);
     });
     if (cap) { cap.classList.remove("appr-caption-in"); void cap.offsetWidth; cap.classList.add("appr-caption-in"); }
+    clearTimeout(state.apprTitleAccentTimer);
+    state.apprTitleAccentTimer = setTimeout(() => { if (Math.random() < .62) applyApprTitleAccent(); }, 650);
   }
   function startApprTextLoop() {
     clearInterval(state.apprTextTimer);
@@ -742,6 +784,7 @@
     renderApprThemes(); apprShow(false);
     startApprRotation();
     startApprTextLoop();
+    startApprTitleAccentLoop();
     armApprControls();
     // carry the current subtitle into the appreciation ticker immediately
     const prefix = $("#tickerPrefix")?.textContent || "记录";
@@ -759,7 +802,9 @@
     document.body.classList.remove("appreciating");
     clearInterval(state.apprTimer);
     clearInterval(state.apprTextTimer);
-    clearTimeout(state.apprControlsTimer);
+    clearInterval(state.apprTitleAccentLoopTimer);
+    clearTimeout(state.apprTitleAccentTimer);
+    clearApprTitleAccent();
     const el = $("#appreciate");
     if (el) el.classList.remove("appr-collapsed");
     if (el) {
