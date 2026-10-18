@@ -51,7 +51,7 @@
     quoteTimer: null, quoteBusy: false, tickerTimer: null,
     uiSaveTimer: null, backgrounds: loadBackgrounds(),
     orgWallpaper: "", custom: loadCustomAssets(),
-    wallDisabled: loadWallDisabled(), wallTimer: null, wallFxTimer: null,
+    wallDisabled: loadWallDisabled(), wallTimer: null, wallFxTimer: null, wallToken: 0, wallPreload: new Map(), apprToken: 0,
     zero: (window.linjiZero ? window.linjiZero() : null),
     zeroRandomPick: false, wallVaultTheme: "violet",
     apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null,
@@ -372,7 +372,9 @@
     const theme = state.ui.theme;
     const org = orgFor(theme);
     const badge = badgeFor(theme, true);
+    const token = ++state.wallToken;
     state.orgWallpaper = pickOrgWallpaper(theme);
+    preloadWallpaper(state.orgWallpaper).then(() => { if (token === state.wallToken) applyBackgrounds(); });
     const rail = $("#railBadge");
     if (rail) {
       rail.src = badge || "";
@@ -386,7 +388,6 @@
     const bootOrg = $("#bootOrg");
     if (bootOrg && org) bootOrg.textContent = `CHAPTER ${org.chapter} // ${org.name}`;
     renderThemeBadges();
-    applyBackgrounds();
   }
 
   /* ---------- theme / splash ---------- */
@@ -554,6 +555,22 @@
   }
 
   /* ---------- wallpaper motion / transitions ---------- */
+  function preloadWallpaper(url) {
+    if (!url) return Promise.resolve();
+    const old = state.wallPreload.get(url);
+    if (old) return old;
+    const p = new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        if (img.decode) img.decode().then(resolve).catch(resolve);
+        else resolve();
+      };
+      img.onerror = resolve;
+      img.src = url;
+    });
+    state.wallPreload.set(url, p);
+    return p;
+  }
   function wallFxClass(name) {
     const fx = $("#wallFx"); if (!fx) return;
     const host = document.querySelector(".view.is-active");
@@ -565,12 +582,16 @@
   }
   function setOrgWallpaper(url, animate = true) {
     if (!url) return;
+    const token = ++state.wallToken;
     state.orgWallpaper = url;
-    if (!animate || state.ui.performance || reduced) { applyBackgrounds(); return; }
-    const fx = ["fx-scan", "fx-tear", "fx-iris", "fx-shutter"][Math.floor(Math.random() * 4)];
-    wallFxClass(fx);
-    setTimeout(applyBackgrounds, 190);
-    if (state.apprOpen) setTimeout(() => syncApprArt(url), 190);
+    preloadWallpaper(url).then(() => {
+      if (token !== state.wallToken) return;
+      if (!animate || state.ui.performance || reduced) { applyBackgrounds(); return; }
+      const fx = ["fx-scan", "fx-tear", "fx-iris", "fx-shutter"][Math.floor(Math.random() * 4)];
+      wallFxClass(fx);
+      setTimeout(applyBackgrounds, 190);
+      if (state.apprOpen) setTimeout(() => syncApprArt(url), 190);
+    });
   }
   function startWallRotation() {
     clearInterval(state.wallTimer);
@@ -728,8 +749,9 @@
     if (state.apprIndex < 0) state.apprIndex = pool.length - 1;
     state.apprIndex %= pool.length;
     const item = pool[state.apprIndex];
+    const token = ++state.apprToken;
     const set = () => {
-      const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${item.url}")`;
+      if (token !== state.apprToken) return;
       $("#apprTitle").textContent = item.org?.name || "第零章";
       $("#apprMeta").textContent = `CHAPTER ${item.org?.chapter || "00"} // ${item.org?.en || "LINJI"} · ${String(state.apprIndex + 1).padStart(2, "0")} / ${String(pool.length).padStart(2, "0")}`;
       $("#apprCaptionKicker").textContent = item.meta.title;
@@ -745,7 +767,9 @@
       setTimeout(() => { fx.className = "appr-fx"; }, 850);
     }
     setTimeout(set, 170);
-    setTimeout(() => { const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${item.url}")`; }, 170);
+    preloadWallpaper(item.url).then(() => {
+      if (token === state.apprToken && state.apprOpen) { const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${item.url}")`; }
+    });
   }
   function apprMove(delta) { state.apprIndex += delta; apprShow(true); }
   function apprRandomNext() {
