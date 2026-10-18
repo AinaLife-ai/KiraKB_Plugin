@@ -180,7 +180,8 @@
         if (el.classList.contains("anom-word") || el.classList.contains("anom-link")) {
           if (Math.random() < .5) {
             const chars = Math.max(2, Math.min(7, Math.ceil((el.textContent || "").length / 2)));
-            el.dataset.redact = "口".repeat(chars);
+            const mark = Math.random() < .68 ? "█" : "口";
+            el.dataset.redact = mark.repeat(chars);
             el.classList.add("is-redact");
             setTimeout(() => el.classList.remove("is-redact"), 420 + Math.random() * 260);
             continue;
