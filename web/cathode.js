@@ -56,7 +56,7 @@
     zeroRandomPick: false, wallVaultTheme: "violet",
     apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null,
     apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null,
-    parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0, aimX: 0, aimY: 0
+    parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0, aimX: 0, aimY: 0, breath: 0, breathAppr: 0
   };
 
   /* ---------- API ---------- */
@@ -479,6 +479,8 @@
     const x = enabled ? state.px : 0, y = enabled ? state.py : 0;
     document.documentElement.style.setProperty("--wall-px", x.toFixed(2) + "px");
     document.documentElement.style.setProperty("--wall-py", y.toFixed(2) + "px");
+    document.documentElement.style.setProperty("--wall-scale", (1.045 + (enabled ? state.breath : 0)).toFixed(4));
+    document.documentElement.style.setProperty("--wall-scale-appr", (1.035 + (enabled ? state.breathAppr : 0)).toFixed(4));
   }
   function initParallax() {
     if (state.parallaxBound) return;
@@ -491,6 +493,8 @@
       const dy = Math.cos(sec / 13.7) * 18 + Math.sin(sec / 6.1) * 6;
       state.tx = dx + state.aimX;
       state.ty = dy + state.aimY;
+      state.breath = Math.sin(sec / 17.3) * 0.004 + Math.sin(sec / 29.1) * 0.002;
+      state.breathAppr = Math.sin(sec / 23.7 + 1.4) * 0.005;
       state.px += (state.tx - state.px) * .12;
       state.py += (state.ty - state.py) * .12;
       applyParallax();

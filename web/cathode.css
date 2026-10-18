@@ -1518,9 +1518,20 @@ body.perf .rail-badge { animation: none; }
 
 /* parallax layers: the JS writes --wall-px / --wall-py */
 .view-art {
-  transform: translate3d(var(--wall-px, 0px), var(--wall-py, 0px), 0) scale(1.045);
+  transform: translate3d(var(--wall-px, 0px), var(--wall-py, 0px), 0) scale(var(--wall-scale, 1.045));
   transition: opacity .35s ease;
   will-change: transform;
+}
+.view-art::before {
+  content: ""; position: absolute; inset: -8%; pointer-events: none; z-index: 0;
+  background: radial-gradient(circle at 22% 34%, rgba(255,255,255,.12), transparent 38%),
+              radial-gradient(circle at 78% 62%, rgba(var(--accent-rgb), .10), transparent 36%);
+  mix-blend-mode: screen; opacity: .55;
+  animation: wall-light-drift 24s ease-in-out infinite alternate;
+}
+@keyframes wall-light-drift {
+  from { transform: translate3d(-1.8%, -1.2%, 0) scale(1.02); opacity: .38; }
+  to   { transform: translate3d(1.8%, 1.4%, 0) scale(1.06); opacity: .62; }
 }
 body.perf .view-art { transform: none !important; }
 
@@ -1560,8 +1571,14 @@ body.perf .view-art { transform: none !important; }
 @keyframes appr-in { from { opacity: 0; } to { opacity: 1; } }
 .appr-art {
   position: absolute; inset: -3.5%; background: #050407 center / cover no-repeat;
-  transform: translate3d(var(--wall-px, 0px), var(--wall-py, 0px), 0) scale(1.035);
+  transform: translate3d(var(--wall-px, 0px), var(--wall-py, 0px), 0) scale(var(--wall-scale-appr, 1.035));
   transition: opacity .5s ease; will-change: transform;
+}
+.appr-art::before {
+  content: ""; position: absolute; inset: -8%; pointer-events: none;
+  background: radial-gradient(circle at 25% 30%, rgba(255,255,255,.12), transparent 40%),
+              radial-gradient(circle at 76% 66%, rgba(var(--accent-rgb), .10), transparent 38%);
+  mix-blend-mode: screen; opacity: .55; animation: wall-light-drift 24s ease-in-out infinite alternate;
 }
 .appr-tint { position: absolute; inset: 0; background:
   linear-gradient(90deg, rgba(0,0,0,.66), transparent 28%, transparent 70%, rgba(0,0,0,.58)),
@@ -1659,6 +1676,10 @@ body.appreciating { overflow: hidden; }
 
 /* reduce gratuitous motion when the machine is in performance mode */
 body.perf .appr-art, body.perf .view-art { transform: none !important; }
+body.perf .view-art::before, body.perf .appr-art::before { animation: none !important; opacity: .3; }
+@media (prefers-reduced-motion: reduce) {
+  .view-art::before, .appr-art::before { animation: none !important; }
+}
 body.perf .wall-fx, body.perf .appr-fx { display: none !important; }
 
 @media (max-width: 760px) {
