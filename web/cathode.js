@@ -55,7 +55,8 @@
     zero: (window.linjiZero ? window.linjiZero() : null),
     zeroRandomPick: false, wallVaultTheme: "violet",
     apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null,
-    apprTickerTimer: null, apprForcedQuote: false, parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0, aimX: 0, aimY: 0
+    apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null,
+    parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0, aimX: 0, aimY: 0
   };
 
   /* ---------- API ---------- */
@@ -570,9 +571,12 @@
     const secs = Math.max(5, Number(state.ui.wall_interval) || 18);
     state.apprTimer = setInterval(() => { if (!document.hidden && state.apprOpen) apprMove(1); }, secs * 1000);
   }
-  function openAppreciate(url) {
+  function openAppreciate(url, auto = false) {
     const all = apprAll();
     if (!all.length) { toast("还没有启用的壁纸。", "err"); return; }
+    clearTimeout(state.idleTimer);
+    state.apprAuto = !!auto;
+    document.body.classList.toggle("appr-auto", !!auto);
     state.apprTheme = "all"; state.apprPool = all;
     const found = url ? all.findIndex(x => x.url === url) : all.findIndex(x => x.url === state.orgWallpaper);
     state.apprIndex = found >= 0 ? found : 0;
@@ -580,7 +584,7 @@
     if (!state.ui.quote_enabled) { state.apprForcedQuote = true; state.ui.quote_enabled = true; startQuoteTimer(); broadcastQuote(true); }
     document.body.classList.add("appreciating");
     const el = $("#appreciate");
-    if (el) { el.hidden = false; el.classList.add("is-open"); el.setAttribute("aria-hidden", "false"); }
+    if (el) { el.hidden = false; el.classList.remove("is-closing"); el.classList.add("is-open"); el.setAttribute("aria-hidden", "false"); }
     renderApprThemes(); apprShow(false);
     startApprRotation();
     // carry the current subtitle into the appreciation ticker immediately
@@ -591,12 +595,35 @@
     if (ap) ap.textContent = prefix; if (at) at.textContent = text; if (as) as.textContent = source;
   }
   function closeAppreciate() {
+    if (!state.apprOpen) return;
     state.apprOpen = false;
+    state.apprAuto = false;
+    document.body.classList.remove("appr-auto");
     if (state.apprForcedQuote) { state.apprForcedQuote = false; state.ui.quote_enabled = false; stopQuoteTimer(); }
     document.body.classList.remove("appreciating");
     clearInterval(state.apprTimer);
     const el = $("#appreciate");
-    if (el) { el.classList.remove("is-open"); el.setAttribute("aria-hidden", "true"); setTimeout(() => { if (!state.apprOpen) el.hidden = true; }, 250); }
+    if (el) {
+      el.classList.remove("is-open");
+      el.classList.add("is-closing");
+      el.setAttribute("aria-hidden", "true");
+      setTimeout(() => { if (!state.apprOpen) { el.hidden = true; el.classList.remove("is-closing"); } }, 620);
+    }
+    armIdle();
+  }
+  function armIdle() {
+    clearTimeout(state.idleTimer);
+    if (state.apprOpen || document.hidden) return;
+    if (document.querySelector(".modal-root") || document.body.classList.contains("boot-hold")) return;
+    const ae = document.activeElement;
+    if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;
+    state.idleTimer = setTimeout(() => {
+      if (state.apprOpen || document.hidden) return;
+      if (document.querySelector(".modal-root") || document.body.classList.contains("boot-hold")) return;
+      const ae2 = document.activeElement;
+      if (ae2 && /^(INPUT|TEXTAREA|SELECT)$/.test(ae2.tagName)) return;
+      if (apprAll().length) openAppreciate(state.orgWallpaper, true);
+    }, 10000);
   }
   function updateApprTicker(quote) {
     if (!state.apprOpen) return;
@@ -701,7 +728,7 @@
       clearInterval(boot.timer);
       boot.classList.add("is-off"); document.body.classList.remove("boot-hold");
       setTimeout(() => { boot.style.display = "none"; }, 600);
-      replayText(); replayBrand(); startQuoteTimer();
+      replayText(); replayBrand(); startQuoteTimer(); armIdle();
     }
   }
 
@@ -807,7 +834,7 @@
           <span>RELATIONS / 关系<b>${esc(org.relations)}</b></span>
           <span>TAGS / 标签<b>${org.tags.map(esc).join(" · ")}</b></span>
         </div>
-        <details class="org-details"><summary>展开档案全文 / LORE</summary><p class="org-lore">${esc(org.lore)}</p>${org.extraLore ? `<p class="org-lore">${esc(org.extraLore)}</p>` : ""}${org.chronicle?.length ? `<div class="org-chronicle">${org.chronicle.map((x, i) => `<p><b>${String(i + 1).padStart(2, "0")}</b>${esc(x)}</p>`).join("")}</div>` : ""}${org.cases?.length ? `<div class="org-cases"><span class="mini-label">CASE FILES / 未结案</span>${org.cases.map(x => `<p>${esc(x)}</p>`).join("")}</div>` : ""}</details>
+        <details class="org-details"><summary>展开档案全文 / LORE</summary><p class="org-lore">${esc(org.lore)}</p>${org.extraLore ? `<p class="org-lore">${esc(org.extraLore)}</p>` : ""}${org.finalStory?.length ? `<div class="org-final-story"><span class="mini-label">ARCHIVE STORY / 组织故事</span>${org.finalStory.map(x => `<p>${esc(x)}</p>`).join("")}</div>` : ""}${org.chronicle?.length ? `<div class="org-chronicle">${org.chronicle.map((x, i) => `<p><b>${String(i + 1).padStart(2, "0")}</b>${esc(x)}</p>`).join("")}</div>` : ""}${org.cases?.length ? `<div class="org-cases"><span class="mini-label">CASE FILES / 未结案</span>${org.cases.map(x => `<p>${esc(x)}</p>`).join("")}</div>` : ""}</details>
         <div class="org-gallery">${walls.map((wall, index) => { const meta = wallMetaFor(theme, wall, index); return `<button type="button" data-org-wall="${theme}" data-org-wall-index="${index}" title="${esc(meta.title)} — ${esc(meta.caption)}"><img src="${wall}" alt="" loading="lazy"><span>${esc(meta.title)}</span></button>`; }).join("")}</div>
         <div class="org-actions">
           <button type="button" class="btn" data-org-theme="${theme}">应用此主题</button>
@@ -815,7 +842,7 @@
           <label class="btn ghost org-upload">上传徽章<input type="file" accept="image/*" data-org-badge="${theme}"></label>
           <label class="btn ghost org-upload">上传壁纸<input type="file" accept="image/*" multiple data-org-walls="${theme}"></label>
         </div>
-        <div class="org-note">${walls.length} 张壁纸 · 十九个场景 · 徽章与壁纸存于本机，不上传服务器</div>
+        <div class="org-note">${walls.length} 张壁纸 · 最终筛选 · 徽章与壁纸存于本机，不上传服务器</div>
       </article>`;
     }).join("");
   }
@@ -1460,7 +1487,16 @@
         startQuoteTimer(); queueUiSave();
       }
     });
-    document.addEventListener("visibilitychange", () => { if (document.hidden) stopQuoteTimer(); else if (state.ui.quote_enabled) startQuoteTimer(); });
+    document.addEventListener("visibilitychange", () => { if (document.hidden) { stopQuoteTimer(); clearTimeout(state.idleTimer); } else { if (state.ui.quote_enabled) startQuoteTimer(); armIdle(); } });
+    ["pointerdown","keydown","wheel","touchstart"].forEach(evt => window.addEventListener(evt, (e) => {
+      if (state.apprOpen) {
+        const inside = e.target && e.target.closest && e.target.closest("#appreciate .appr-tools, #appreciate .appr-bottom");
+        if (!inside) closeAppreciate();
+        return;
+      }
+      armIdle();
+    }, { passive: true, capture: true }));
+    window.addEventListener("pointermove", () => { if (!state.apprOpen) armIdle(); }, { passive: true });
     document.addEventListener("keydown", e => {
       if (e.key === "Escape") {
         if (state.apprOpen) { closeAppreciate(); return; }
@@ -1537,6 +1573,7 @@
     initTextFx();
     startBrandModes();
     if (state.ui.quote_enabled) { broadcastQuote(true); startQuoteTimer(); }
+    armIdle();
     setInterval(() => { if (!document.hidden) { loadTasks().then(renderTasks).catch(() => {}); } }, 5000);
   }
 

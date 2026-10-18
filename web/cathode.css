@@ -1735,3 +1735,15 @@ img[src=""] { visibility: hidden; }
 /* KIRAKB: KIRA white, KB accent */
 .boot-logo .char { color: #f5f0e8; }
 .boot-logo .char.kb { color: var(--accent); }
+.org-final-story { margin-top: 12px; padding: 10px 12px; border-left: 1px solid var(--accent); background: rgba(var(--accent-rgb), .04); }
+.org-final-story p { margin: 5px 0; font-size: 11.5px; line-height: 1.8; color: var(--muted); }
+/* idle appreciation: smooth enter/exit + calm auto mode */
+.appreciate.is-open { animation: appr-in .7s cubic-bezier(.16,1,.3,1) both; }
+.appreciate.is-closing { display: block; animation: appr-out .55s ease-in forwards; pointer-events: none; }
+@keyframes appr-out { from { opacity: 1; } to { opacity: 0; } }
+body.appr-auto .appr-tools { opacity: 0; transition: opacity .45s ease; }
+body.appr-auto .appr-head:hover .appr-tools,
+body.appr-auto .appr-tools:hover { opacity: 1; }
+body.appr-auto .appr-head h2 { opacity: .92; }
+body.appr-auto .appr-caption { opacity: 0; transition: opacity .45s ease; }
+body.appr-auto .appr-head:hover ~ .appr-caption { opacity: 1; }
