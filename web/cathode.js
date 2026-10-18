@@ -118,8 +118,8 @@
   function esc(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
-  const QUOTE_FX_RE = /「[^」\n]{1,80}」|“[^”\n]{1,80}”|"[^"\n]{1,80}"/g;
-  const FX_TOKEN_RE = /https?:\/\/[^\s<>"']+|「[^」\n]{1,80}」|“[^”\n]{1,80}”|"[^"\n]{1,80}"|[A-Za-z]{3,}/g;
+  const QUOTE_FX_RE = /「[^」\n]{1,80}」|“[^”\n]{1,80}”|"[^"\n]{1,80}"|《[^》\n]{1,80}》|<[^<>\n]{1,80}>/g;
+  const FX_TOKEN_RE = /https?:\/\/[^\s<>"']+|《[^》\n]{1,80}》|<[^<>\n]{1,80}>|「[^」\n]{1,80}」|“[^”\n]{1,80}”|"[^"\n]{1,80}"|[A-Za-z]{3,}/g;
   function fxLink(url, cls = "") {
     const safe = /^https?:\/\//i.test(url) ? esc(url) : "#";
     return `<a class="${cls}" href="${safe}" target="_blank" rel="noopener noreferrer">${esc(url)}</a>`;
@@ -134,7 +134,7 @@
       const token = m[0];
       if (/^https?:\/\//i.test(token)) {
         out += fxLink(token, enabled ? "anom-link" : "");
-      } else if (/^[「“"]/.test(token)) {
+      } else if (/^[「“"《<]/.test(token)) {
         const inner = token.slice(1, -1);
         out += enabled
           ? `<span class="anom-quote" data-anom="${esc(inner)}" style="--anom-delay:-${(Math.random() * 7).toFixed(2)}s">${esc(token)}</span>`
@@ -1325,9 +1325,15 @@
   function typeInto(el, text, timerKey) {
     if (!el) return;
     clearInterval(state[timerKey]);
-    if (reduced || state.ui.performance) { el.textContent = text; return; }
+    if (reduced || state.ui.performance) { el.innerHTML = fxText(text, false); return; }
     el.textContent = ""; let i = 0;
-    state[timerKey] = setInterval(() => { el.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(state[timerKey]); }, 18);
+    state[timerKey] = setInterval(() => {
+      el.textContent = text.slice(0, ++i);
+      if (i >= text.length) {
+        clearInterval(state[timerKey]);
+        el.innerHTML = fxText(text, false);
+      }
+    }, 18);
   }
   function typeTicker(text) {
     typeInto($("#tickerText"), text, "tickerTimer");
@@ -1346,8 +1352,11 @@
         card.classList.add("is-speaking"); setTimeout(() => card.classList.remove("is-speaking"), 1700);
         $("#heroQuoteIndex").textContent = `RECORD ${String((quote.source || "").length + (quote.text || "").length).slice(0, 3)} // ${quote.source.split(" // ")[0] || "ARCHIVE"}`;
         $("#heroSource").textContent = quote.source;
-        if (window.KBTextFX) window.KBTextFX.playText($("#heroQuote"), quote.text, state.ui.text_fx);
-        else $("#heroQuote").textContent = quote.text;
+        const hero = $("#heroQuote");
+        if (hero) hero.dataset.quote = quote.text;
+        if (window.KBTextFX) window.KBTextFX.playText(hero, quote.text, state.ui.text_fx);
+        else if (hero) hero.innerHTML = fxText(quote.text, false);
+        setTimeout(() => { if (hero && hero.dataset.quote === quote.text) hero.innerHTML = fxText(quote.text, false); }, 720);
       }
     } finally { state.quoteBusy = false; }
   }
