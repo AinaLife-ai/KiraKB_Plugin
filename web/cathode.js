@@ -589,33 +589,29 @@
   }
 
   /* ---------- appreciation / 欣赏模式 ---------- */
-  function apprAll() {
+  function apprAll(theme = state.ui.theme) {
+    const t = theme || state.ui.theme;
     const out = [];
     const seen = new Set();
-    const add = (theme, url, i) => {
+    if (!orgEnabled(t)) return out;
+    wallsFor(t).filter(wallEnabled).forEach((url, i) => {
       if (!url || seen.has(url)) return;
       seen.add(url);
-      out.push({ theme, url, meta: wallMetaFor(theme, url, i), org: orgFor(theme) });
-    };
-    Object.keys(ORGS).forEach(theme => {
-      if (!orgEnabled(theme)) return;
-      wallsFor(theme).filter(wallEnabled).forEach((url, i) => add(theme, url, i));
+      out.push({ theme: t, url, meta: wallMetaFor(t, url, i), org: orgFor(t) });
     });
-    if (zeroIsEnabled()) {
-      wallsFor("zero").filter(wallEnabled).forEach((url, i) => add("zero", url, i));
-    }
     return out;
   }
   function apprPool() {
-    const all = apprAll();
-    if (!state.apprTheme || state.apprTheme === "all") return all;
-    return all.filter(x => x.theme === state.apprTheme);
+    return apprAll(state.apprTheme === "all" ? state.ui.theme : (state.apprTheme || state.ui.theme));
   }
   function renderApprThemes() {
     const box = $("#apprThemes"); if (!box) return;
-    const themes = [...new Set(apprAll().map(x => x.theme))];
-    box.innerHTML = `<button type="button" data-appr-theme="all" class="${state.apprTheme === "all" ? "is-on" : ""}" style="--sw:var(--accent)" title="全部"></button>` +
-      themes.map(t => { const org = orgFor(t); return `<button type="button" data-appr-theme="${t}" class="${state.apprTheme === t ? "is-on" : ""}" style="--sw:${org?.color || "#fff"}" title="${esc(org?.name || t)}"></button>`; }).join("");
+    const t = state.ui.theme;
+    const org = orgFor(t);
+    const badge = badgeFor(t, false);
+    box.innerHTML = `<button type="button" class="appr-badge ${state.apprTheme === t ? "is-on" : ""}" data-appr-theme="${t}" title="${esc(org?.name || t)}">
+      ${badge ? `<img src="${esc(badge)}" alt="">` : `<span>${esc((org?.chapter || "0").replace(/^0+/, "") || "0")}</span>`}
+    </button>`;
   }
   function apprTextIntro() {
     if (!state.apprOpen || reduced || state.ui.performance || !window.KBTextFX) return;
@@ -681,7 +677,7 @@
     clearTimeout(state.idleTimer);
     state.apprAuto = !!auto;
     document.body.classList.toggle("appr-auto", !!auto);
-    state.apprTheme = "all"; state.apprPool = all;
+    state.apprTheme = state.ui.theme; state.apprPool = all;
     const found = url ? all.findIndex(x => x.url === url) : all.findIndex(x => x.url === state.orgWallpaper);
     state.apprIndex = found >= 0 ? found : 0;
     state.apprOpen = true;
