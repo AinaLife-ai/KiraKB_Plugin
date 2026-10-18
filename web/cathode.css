@@ -1980,3 +1980,20 @@ body.perf .appr-head h2, body.perf .appr-meta, body.perf .appr-caption p, body.p
   .rail-kb { font-size: 20px; }
   .rail-title { font-size: 20px; }
 }
+/* 1.5.1: scale the whole brand lockup, not just KB/知识库 */
+.rail-eyebrow, .rail-alias, .rail-sub {
+  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rail-eyebrow { font-size: 7px; letter-spacing: .16em; }
+.rail-alias { margin-top: 3px; font-size: 7px; letter-spacing: .09em; }
+.rail-sub { margin-top: 5px; font-size: 6.5px; letter-spacing: .07em; }
+@media (max-width: 1180px) {
+  .rail-eyebrow { font-size: 6.5px; letter-spacing: .13em; }
+  .rail-alias { font-size: 6.5px; letter-spacing: .06em; }
+  .rail-sub { font-size: 6px; letter-spacing: .04em; }
+}
+@media (max-width: 900px) {
+  .rail-eyebrow { font-size: 7px; letter-spacing: .12em; }
+  .rail-alias { font-size: 7px; letter-spacing: .08em; }
+  .rail-sub { font-size: 7px; letter-spacing: .08em; }
+}
