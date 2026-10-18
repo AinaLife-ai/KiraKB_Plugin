@@ -2002,3 +2002,14 @@ body.perf .appr-head h2, body.perf .appr-meta, body.perf .appr-caption p, body.p
 @media (max-width: 1180px) {
   .rail-kb-lamp { display: inline-block !important; width: 5px; height: 5px; flex-basis: 5px; }
 }
+/* 1.5.1 live signal meter */
+.signal-meter { align-items: flex-end; }
+.signal-meter i {
+  height: 20%; min-height: 2px; background: var(--line-2); box-shadow: none; opacity: .42;
+  transition: height .55s cubic-bezier(.16,1,.3,1), background .35s ease, box-shadow .35s ease, opacity .35s ease;
+}
+.signal-meter i.is-on { background: var(--accent); box-shadow: 0 0 7px rgba(var(--accent-rgb), .55); opacity: 1; }
+.signal-meter i:nth-child(4), .signal-meter i:nth-child(5) { background: var(--line-2); box-shadow: none; }
+.signal-meter i:nth-child(4).is-on, .signal-meter i:nth-child(5).is-on { background: var(--accent); box-shadow: 0 0 7px rgba(var(--accent-rgb), .55); }
+.signal-meter span { min-width: 48px; }
+body.perf .signal-meter i { transition: none; }

@@ -55,7 +55,7 @@
     zero: (window.linjiZero ? window.linjiZero() : null),
     zeroRandomPick: false, wallVaultTheme: "violet",
     apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null,
-    apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null, lastArm: 0, quoteFxTimer: null, apprTextTimer: null, apprControlsTimer: null,
+    apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null, lastArm: 0, quoteFxTimer: null, apprTextTimer: null, apprControlsTimer: null, signalTimer: null,
     parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0, aimX: 0, aimY: 0, breath: 0, breathAppr: 0
   };
 
@@ -196,6 +196,33 @@
   }
   function safeColor(value) {
     return /^#[0-9a-f]{3,8}$/i.test(String(value || "")) ? String(value) : "var(--accent)";
+  }
+  function startSignalMeter() {
+    const meter = document.querySelector(".signal-meter");
+    if (!meter) return;
+    clearInterval(state.signalTimer);
+    const bars = [...meter.querySelectorAll("i")];
+    const label = meter.querySelector("span");
+    if (!bars.length) return;
+    const draw = () => {
+      if (document.hidden) return;
+      if (state.ui.performance) {
+        bars.forEach((b, i) => { b.style.height = `${[20, 38, 56, 74, 92][i]}%`; b.classList.toggle("is-on", i >= 3); });
+        if (label) label.textContent = "STABLE";
+        return;
+      }
+      const t = performance.now() / 1000;
+      const base = .56 + Math.sin(t / 3.3) * .13 + Math.sin(t / 1.7) * .06 + Math.random() * .09;
+      const lit = Math.max(1, Math.min(5, Math.round(base * 5)));
+      bars.forEach((b, i) => {
+        const level = Math.max(.12, Math.min(1, base + (i - 2) * .08 + (Math.random() - .5) * .18));
+        b.style.height = `${Math.round(level * 100)}%`;
+        b.classList.toggle("is-on", i < lit);
+      });
+      if (label) label.textContent = ["WEAK", "STABLE", "LOCKED", "TRACKING", "STABLE"][Math.min(4, lit - 1)];
+    };
+    draw();
+    state.signalTimer = setInterval(draw, 900);
   }
   function icon(name, size = 14) {
     return `<svg style="width:${size}px;height:${size}px"><use href="#i-${name}"></use></svg>`;
@@ -428,6 +455,7 @@
     syncUiControls();
     startBrandModes();
     startWallRotation();
+    startSignalMeter();
     if (state.ui.quote_enabled) startQuoteTimer(); else stopQuoteTimer();
   }
   function queueUiSave() {
