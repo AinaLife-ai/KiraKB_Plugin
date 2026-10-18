@@ -568,12 +568,15 @@
     const old = state.wallPreload.get(url);
     if (old) return old;
     const p = new Promise(resolve => {
+      let done = false;
+      const finish = () => { if (done) return; done = true; clearTimeout(timer); resolve(); };
+      const timer = setTimeout(finish, 1600);
       const img = new Image();
       img.onload = () => {
-        if (img.decode) img.decode().then(resolve).catch(resolve);
-        else resolve();
+        if (img.decode) img.decode().then(finish).catch(finish);
+        else finish();
       };
-      img.onerror = resolve;
+      img.onerror = finish;
       img.src = url;
     });
     state.wallPreload.set(url, p);
@@ -760,6 +763,8 @@
     const token = ++state.apprToken;
     const set = () => {
       if (token !== state.apprToken) return;
+      const art0 = $("#apprArt");
+      if (art0 && !art0.style.backgroundImage) art0.style.backgroundImage = `url("${item.url}")`;
       $("#apprTitle").textContent = item.org?.name || "第零章";
       $("#apprMeta").textContent = `CHAPTER ${item.org?.chapter || "00"} // ${item.org?.en || "LINJI"} · ${String(state.apprIndex + 1).padStart(2, "0")} / ${String(pool.length).padStart(2, "0")}`;
       $("#apprCaptionKicker").textContent = item.meta.title;
@@ -778,6 +783,12 @@
     preloadWallpaper(item.url).then(() => {
       if (token === state.apprToken && state.apprOpen) { const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${item.url}")`; }
     });
+    setTimeout(() => {
+      if (token === state.apprToken && state.apprOpen) {
+        const art = $("#apprArt");
+        if (art && (!art.style.backgroundImage || art.style.backgroundImage === "none")) art.style.backgroundImage = `url("${item.url}")`;
+      }
+    }, 1100);
   }
   function apprMove(delta) { state.apprIndex += delta; apprShow(true); }
   function apprRandomNext() {
