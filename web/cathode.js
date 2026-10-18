@@ -55,7 +55,7 @@
     zero: (window.linjiZero ? window.linjiZero() : null),
     zeroRandomPick: false, wallVaultTheme: "violet",
     apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null,
-    apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null, quoteFxTimer: null, apprTextTimer: null,
+    apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null, quoteFxTimer: null, apprTextTimer: null, apprControlsTimer: null,
     parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0, aimX: 0, aimY: 0, breath: 0, breathAppr: 0
   };
 
@@ -606,12 +606,25 @@
   }
   function renderApprThemes() {
     const box = $("#apprThemes"); if (!box) return;
-    const t = state.ui.theme;
-    const org = orgFor(t);
-    const badge = badgeFor(t, false);
-    box.innerHTML = `<button type="button" class="appr-badge ${state.apprTheme === t ? "is-on" : ""}" data-appr-theme="${t}" title="${esc(org?.name || t)}">
-      ${badge ? `<img src="${esc(badge)}" alt="">` : `<span>${esc((org?.chapter || "0").replace(/^0+/, "") || "0")}</span>`}
-    </button>`;
+    box.innerHTML = Object.keys(ORGS).map(t => {
+      const org = orgFor(t);
+      const badge = badgeFor(t, false);
+      return `<button type="button" class="appr-badge ${state.apprTheme === t ? "is-on" : ""}" data-appr-theme="${t}" title="${esc(org?.name || t)}">
+        ${badge ? `<img src="${esc(badge)}" alt="">` : `<span>${esc((org?.chapter || "0").replace(/^0+/, "") || "0")}</span>`}
+      </button>`;
+    }).join("");
+  }
+  function armApprControls() {
+    const el = $("#appreciate"); if (!el) return;
+    clearTimeout(state.apprControlsTimer);
+    el.classList.remove("appr-collapsed");
+    state.apprControlsTimer = setTimeout(() => { if (state.apprOpen) el.classList.add("appr-collapsed"); }, 5000);
+  }
+  function expandApprControls() {
+    const el = $("#appreciate"); if (!el) return;
+    el.classList.remove("appr-collapsed");
+    clearTimeout(state.apprControlsTimer);
+    state.apprControlsTimer = setTimeout(() => { if (state.apprOpen) el.classList.add("appr-collapsed"); }, 5000);
   }
   function apprTextIntro() {
     if (!state.apprOpen || reduced || state.ui.performance || !window.KBTextFX) return;
@@ -688,6 +701,7 @@
     renderApprThemes(); apprShow(false);
     startApprRotation();
     startApprTextLoop();
+    armApprControls();
     // carry the current subtitle into the appreciation ticker immediately
     const prefix = $("#tickerPrefix")?.textContent || "记录";
     const text = $("#tickerText")?.textContent || "正在接收信号……";
@@ -704,7 +718,9 @@
     document.body.classList.remove("appreciating");
     clearInterval(state.apprTimer);
     clearInterval(state.apprTextTimer);
+    clearTimeout(state.apprControlsTimer);
     const el = $("#appreciate");
+    if (el) el.classList.remove("appr-collapsed");
     if (el) {
       el.classList.remove("is-open");
       el.classList.add("is-closing");
@@ -1415,7 +1431,14 @@
       if (e.target.closest("#apprPrev")) return apprMove(-1);
       if (e.target.closest("#apprNext")) return apprMove(1);
       const apprTheme = e.target.closest("[data-appr-theme]");
-      if (apprTheme) { state.apprTheme = apprTheme.dataset.apprTheme; state.apprIndex = 0; renderApprThemes(); apprShow(true); return; }
+      if (apprTheme) {
+        const el = $("#appreciate");
+        const target = apprTheme.dataset.apprTheme;
+        if (el && el.classList.contains("appr-collapsed") && target === state.apprTheme) { expandApprControls(); return; }
+        if (target !== state.apprTheme) { state.apprTheme = target; state.apprIndex = 0; renderApprThemes(); apprShow(true); }
+        expandApprControls();
+        return;
+      }
       const wallToggle = e.target.closest("[data-wall-toggle]");
       if (wallToggle) {
         const url = wallToggle.dataset.wallToggle;
@@ -1605,7 +1628,8 @@
     ["pointerdown","keydown","wheel","touchstart"].forEach(evt => window.addEventListener(evt, (e) => {
       if (state.apprOpen) {
         const inside = e.target && e.target.closest && e.target.closest("#appreciate .appr-tools, #appreciate .appr-bottom");
-        if (!inside) closeAppreciate();
+        if (inside) return;
+        if (state.apprAuto && (evt === "pointerdown" || evt === "touchstart")) closeAppreciate();
         return;
       }
       armIdle();
@@ -1621,7 +1645,7 @@
         if (e.key === "ArrowRight") { e.preventDefault(); apprMove(1); return; }
       }
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable;
-      if (!typing && (e.key === "f" || e.key === "F") && !e.metaKey && !e.ctrlKey) { e.preventDefault(); state.apprOpen ? closeAppreciate() : openAppreciate(); }
+      if (!typing && !state.apprOpen && (e.key === "f" || e.key === "F") && !e.metaKey && !e.ctrlKey) { e.preventDefault(); openAppreciate(); }
     });
   }
   function hideBoot() { const b = $("#boot"); if (!b) return; b.classList.add("is-off"); document.body.classList.remove("boot-hold"); setTimeout(() => b.style.display = "none", 600); }

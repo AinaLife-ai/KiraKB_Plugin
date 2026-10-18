@@ -1884,3 +1884,15 @@ body.perf .appr-head h2, body.perf .appr-meta, body.perf .appr-caption p, body.p
 .appr-tools .appr-badge img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; mix-blend-mode: screen; }
 .appr-tools .appr-badge span { font-family: var(--mono); font-size: 10px; color: var(--accent); }
 .appr-tools .appr-badge.is-on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 0 14px rgba(var(--accent-rgb), .35); }
+/* appreciation controls collapse after 5s: one current badge remains */
+.appr-tools, .appr-tools button, .appr-themes button { transition: opacity .45s ease, transform .45s ease, width .45s ease, padding .45s ease, border-color .45s ease, background .45s ease; }
+.appreciate.appr-collapsed .appr-tools { background: transparent; border-color: transparent; padding: 0; gap: 0; }
+.appreciate.appr-collapsed .appr-tools #apprPrev,
+.appreciate.appr-collapsed .appr-tools #apprNext,
+.appreciate.appr-collapsed .appr-tools #apprClose {
+  opacity: 0; width: 0; min-width: 0; padding: 0; border-width: 0; pointer-events: none; overflow: hidden;
+}
+.appreciate.appr-collapsed .appr-themes button:not(.is-on) {
+  opacity: 0; width: 0; min-width: 0; padding: 0; border-width: 0; transform: scale(.6); pointer-events: none; overflow: hidden;
+}
+.appreciate.appr-collapsed .appr-badge.is-on { box-shadow: 0 0 0 1px var(--accent), 0 0 18px rgba(var(--accent-rgb), .35); }
