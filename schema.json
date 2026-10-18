@@ -142,6 +142,26 @@
                 "default": true,
                 "hint": "为「」、“”和 3 字母以上英文词/链接添加信号干扰、脉冲与口口遮盖特效；关闭只影响真实条目，Wiki 正文始终保留。"
             },
+            "wall_rotate": {
+                "name": "壁纸自动轮换",
+                "type": "switch",
+                "default": true,
+                "hint": "在机台和欣赏模式中按间隔随机切换已启用的壁纸。"
+            },
+            "wall_interval": {
+                "name": "壁纸轮换间隔（秒）",
+                "type": "integer",
+                "default": 18,
+                "minimum": 5,
+                "maximum": 120,
+                "hint": "自动轮换和欣赏模式轮播的间隔。"
+            },
+            "wall_parallax": {
+                "name": "壁纸视点视差",
+                "type": "switch",
+                "default": true,
+                "hint": "壁纸自动漂移并跟随鼠标/触摸视点。"
+            },
             "fx_loop": {
                 "name": "随机复播",
                 "type": "switch",
