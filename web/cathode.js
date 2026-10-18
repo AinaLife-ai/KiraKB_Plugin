@@ -4,7 +4,7 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduced = false; // effects are force-enabled; performance mode is the opt-out
 
   const THEMES = ["violet", "pink", "blue", "amber", "sg", "green", "red", "gray"];
   const ORGS = window.LINJI_ORGS || {};
@@ -51,11 +51,12 @@
     quoteTimer: null, quoteBusy: false, tickerTimer: null,
     uiSaveTimer: null, backgrounds: loadBackgrounds(),
     orgWallpaper: "", custom: loadCustomAssets(),
-    wallDisabled: loadWallDisabled(), wallTimer: null, wallFxTimer: null,
+    wallDisabled: loadWallDisabled(), wallTimer: null, wallFxTimer: null, wallToken: 0, wallPreload: new Map(), apprToken: 0,
     zero: (window.linjiZero ? window.linjiZero() : null),
     zeroRandomPick: false, wallVaultTheme: "violet",
     apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null,
-    apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null, lastArm: 0, quoteFxTimer: null, apprTextTimer: null, apprControlsTimer: null,
+    apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null, lastArm: 0, quoteFxTimer: null, apprTextTimer: null, apprControlsTimer: null, signalTimer: null,
+    apprTitleAccentTimer: null, apprTitleAccentLoopTimer: null,
     parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0, aimX: 0, aimY: 0, breath: 0, breathAppr: 0
   };
 
@@ -196,6 +197,33 @@
   }
   function safeColor(value) {
     return /^#[0-9a-f]{3,8}$/i.test(String(value || "")) ? String(value) : "var(--accent)";
+  }
+  function startSignalMeter() {
+    const meter = document.querySelector(".signal-meter");
+    if (!meter) return;
+    clearInterval(state.signalTimer);
+    const bars = [...meter.querySelectorAll("i")];
+    const label = meter.querySelector("span");
+    if (!bars.length) return;
+    const draw = () => {
+      if (document.hidden) return;
+      if (state.ui.performance) {
+        bars.forEach((b, i) => { b.style.height = `${[20, 38, 56, 74, 92][i]}%`; b.classList.toggle("is-on", i >= 3); });
+        if (label) label.textContent = "STABLE";
+        return;
+      }
+      const t = performance.now() / 1000;
+      const base = .56 + Math.sin(t / 3.3) * .13 + Math.sin(t / 1.7) * .06 + Math.random() * .09;
+      const lit = Math.max(1, Math.min(5, Math.round(base * 5)));
+      bars.forEach((b, i) => {
+        const level = Math.max(.12, Math.min(1, base + (i - 2) * .08 + (Math.random() - .5) * .18));
+        b.style.height = `${Math.round(level * 100)}%`;
+        b.classList.toggle("is-on", i < lit);
+      });
+      if (label) label.textContent = ["WEAK", "STABLE", "LOCKED", "TRACKING", "STABLE"][Math.min(4, lit - 1)];
+    };
+    draw();
+    state.signalTimer = setInterval(draw, 900);
   }
   function icon(name, size = 14) {
     return `<svg style="width:${size}px;height:${size}px"><use href="#i-${name}"></use></svg>`;
@@ -344,7 +372,9 @@
     const theme = state.ui.theme;
     const org = orgFor(theme);
     const badge = badgeFor(theme, true);
+    const token = ++state.wallToken;
     state.orgWallpaper = pickOrgWallpaper(theme);
+    preloadWallpaper(state.orgWallpaper).then(() => { if (token === state.wallToken) applyBackgrounds(); });
     const rail = $("#railBadge");
     if (rail) {
       rail.src = badge || "";
@@ -358,7 +388,6 @@
     const bootOrg = $("#bootOrg");
     if (bootOrg && org) bootOrg.textContent = `CHAPTER ${org.chapter} // ${org.name}`;
     renderThemeBadges();
-    applyBackgrounds();
   }
 
   /* ---------- theme / splash ---------- */
@@ -375,7 +404,7 @@
     if (!strip) return;
     strip.innerHTML = THEMES.map(t => {
       const org = orgFor(t);
-      const badge = badgeFor(t);
+      const badge = badgeFor(t, false);
       return `<button class="swatch ${t === state.ui.theme ? "is-active" : ""}" type="button" data-theme-set="${t}" title="${org ? esc(org.name) : t}" aria-label="${org ? esc(org.name) : t}" ${org ? `style="--sw:${safeColor(org.color)}"` : ""}>${badge ? `<img class="swatch-badge" src="${esc(badge)}" alt="">` : ""}</button>`;
     }).join("") + `<button class="swatch random" type="button" data-theme-set="random" title="随机配色" aria-label="随机配色"></button>`;
   }
@@ -428,6 +457,7 @@
     syncUiControls();
     startBrandModes();
     startWallRotation();
+    startSignalMeter();
     if (state.ui.quote_enabled) startQuoteTimer(); else stopQuoteTimer();
   }
   function queueUiSave() {
@@ -459,6 +489,14 @@
     const checked = $$("#setUiQuoteKbs input:checked").map(x => x.value);
     return checked.length === state.kbs.length ? [] : checked;
   }
+  function syncQuoteButton() {
+    const b = $("#quoteToggleBtn");
+    if (!b) return;
+    const on = !!state.ui.quote_enabled;
+    b.setAttribute("aria-pressed", String(on));
+    b.classList.toggle("is-off", !on);
+    const i = b.querySelector("i"); if (i) i.textContent = on ? "ON" : "OFF";
+  }
   function syncUiControls() {
     const set = (id, v) => { const el = $("#" + id); if (el) el.value = v; };
     const chk = (id, v) => { const el = $("#" + id); if (el) el.checked = !!v; };
@@ -472,7 +510,7 @@
     chk("setUiParallax", state.ui.wall_parallax);
     const ql = $("#setUiQuoteLines"); if (ql) ql.value = (state.ui.quote_custom_lines || []).join("\n");
     const qm = $("#setUiQuoteMottos"); if (qm) qm.value = (state.ui.quote_custom_mottos || []).join("\n");
-    renderQuoteKbs(); renderBgGrid(); renderWallVault();
+    renderQuoteKbs(); renderBgGrid(); renderWallVault(); syncQuoteButton();
   }
   function renderQuoteKbs() {
     const box = $("#setUiQuoteKbs");
@@ -525,6 +563,25 @@
   }
 
   /* ---------- wallpaper motion / transitions ---------- */
+  function preloadWallpaper(url) {
+    if (!url) return Promise.resolve();
+    const old = state.wallPreload.get(url);
+    if (old) return old;
+    const p = new Promise(resolve => {
+      let done = false;
+      const finish = () => { if (done) return; done = true; clearTimeout(timer); resolve(); };
+      const timer = setTimeout(finish, 1600);
+      const img = new Image();
+      img.onload = () => {
+        if (img.decode) img.decode().then(finish).catch(finish);
+        else finish();
+      };
+      img.onerror = finish;
+      img.src = url;
+    });
+    state.wallPreload.set(url, p);
+    return p;
+  }
   function wallFxClass(name) {
     const fx = $("#wallFx"); if (!fx) return;
     const host = document.querySelector(".view.is-active");
@@ -536,17 +593,21 @@
   }
   function setOrgWallpaper(url, animate = true) {
     if (!url) return;
+    const token = ++state.wallToken;
     state.orgWallpaper = url;
-    if (!animate || state.ui.performance || reduced) { applyBackgrounds(); return; }
-    const fx = ["fx-scan", "fx-tear", "fx-iris", "fx-shutter"][Math.floor(Math.random() * 4)];
-    wallFxClass(fx);
-    setTimeout(applyBackgrounds, 190);
-    if (state.apprOpen) setTimeout(() => syncApprArt(url), 190);
+    preloadWallpaper(url).then(() => {
+      if (token !== state.wallToken) return;
+      if (!animate || state.ui.performance || reduced) { applyBackgrounds(); return; }
+      const fx = ["fx-scan", "fx-tear", "fx-iris", "fx-shutter"][Math.floor(Math.random() * 4)];
+      wallFxClass(fx);
+      setTimeout(applyBackgrounds, 190);
+      if (state.apprOpen) setTimeout(() => syncApprArt(url), 190);
+    });
   }
   function startWallRotation() {
     clearInterval(state.wallTimer);
     const secs = Math.max(5, Number(state.ui.wall_interval) || 18);
-    if (!state.ui.wall_rotate) return;
+    if (!state.ui.wall_rotate || state.ui.performance) return;
     state.wallTimer = setInterval(() => {
       if (document.hidden || state.apprOpen) return;
       const pool = enabledWallsFor(state.ui.theme);
@@ -630,6 +691,45 @@
     clearTimeout(state.apprControlsTimer);
     state.apprControlsTimer = setTimeout(() => { if (state.apprOpen) el.classList.add("appr-collapsed"); }, 5000);
   }
+  const APPR_ACCENT_NAMES = {
+    violet: "紫垣", pink: "绯灯", blue: "青盾", amber: "燧火",
+    sg: "时计", green: "苍叶", red: "赤烬", gray: "灰庭", zero: "零章"
+  };
+  function clearApprTitleAccent() {
+    clearTimeout(state.apprTitleAccentTimer);
+    document.querySelectorAll("#apprTitle .appr-accent, #apprTitle .appr-accent-gradient").forEach(el => {
+      el.classList.remove("appr-accent", "appr-accent-gradient");
+    });
+  }
+  function applyApprTitleAccent() {
+    if (!state.apprOpen || state.ui.performance) return;
+    const title = $("#apprTitle"); if (!title) return;
+    const chars = [...title.querySelectorAll(".fx-ch")];
+    if (!chars.length) { state.apprTitleAccentTimer = setTimeout(applyApprTitleAccent, 450); return; }
+    const theme = state.apprTheme === "all" ? state.ui.theme : (state.apprTheme || state.ui.theme);
+    const target = APPR_ACCENT_NAMES[theme] || "零章";
+    const text = chars.map(c => c.dataset.final || c.textContent).join("");
+    const start = text.indexOf(target);
+    if (start < 0) return;
+    clearApprTitleAccent();
+    const count = Math.random() < .62 ? 1 : 2;
+    const positions = [start, start + 1].slice(0, Math.min(count, target.length));
+    const gradient = Math.random() < .45;
+    positions.forEach(i => {
+      const c = chars[i];
+      if (!c) return;
+      c.style.setProperty("--appr-accent", orgFor(theme)?.color || "var(--accent)");
+      c.classList.add(gradient ? "appr-accent-gradient" : "appr-accent");
+    });
+    state.apprTitleAccentTimer = setTimeout(clearApprTitleAccent, 4300 + Math.random() * 3600);
+  }
+  function startApprTitleAccentLoop() {
+    clearInterval(state.apprTitleAccentLoopTimer);
+    if (state.ui.performance) return;
+    state.apprTitleAccentLoopTimer = setInterval(() => {
+      if (state.apprOpen && !document.hidden && Math.random() < .58) applyApprTitleAccent();
+    }, 7600);
+  }
   function apprTextIntro() {
     if (!state.apprOpen || reduced || state.ui.performance || !window.KBTextFX) return;
     const title = $("#apprTitle"), meta = $("#apprMeta"), kicker = $("#apprCaptionKicker"), cap = $("#apprCaption");
@@ -640,6 +740,8 @@
       if (el) window.KBTextFX.playText(el, el.textContent, effect);
     });
     if (cap) { cap.classList.remove("appr-caption-in"); void cap.offsetWidth; cap.classList.add("appr-caption-in"); }
+    clearTimeout(state.apprTitleAccentTimer);
+    state.apprTitleAccentTimer = setTimeout(() => { if (Math.random() < .62) applyApprTitleAccent(); }, 650);
   }
   function startApprTextLoop() {
     clearInterval(state.apprTextTimer);
@@ -658,8 +760,11 @@
     if (state.apprIndex < 0) state.apprIndex = pool.length - 1;
     state.apprIndex %= pool.length;
     const item = pool[state.apprIndex];
+    const token = ++state.apprToken;
     const set = () => {
-      const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${item.url}")`;
+      if (token !== state.apprToken) return;
+      const art0 = $("#apprArt");
+      if (art0 && !art0.style.backgroundImage) art0.style.backgroundImage = `url("${item.url}")`;
       $("#apprTitle").textContent = item.org?.name || "第零章";
       $("#apprMeta").textContent = `CHAPTER ${item.org?.chapter || "00"} // ${item.org?.en || "LINJI"} · ${String(state.apprIndex + 1).padStart(2, "0")} / ${String(pool.length).padStart(2, "0")}`;
       $("#apprCaptionKicker").textContent = item.meta.title;
@@ -675,9 +780,26 @@
       setTimeout(() => { fx.className = "appr-fx"; }, 850);
     }
     setTimeout(set, 170);
-    setTimeout(() => { const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${item.url}")`; }, 170);
+    preloadWallpaper(item.url).then(() => {
+      if (token === state.apprToken && state.apprOpen) { const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${item.url}")`; }
+    });
+    setTimeout(() => {
+      if (token === state.apprToken && state.apprOpen) {
+        const art = $("#apprArt");
+        if (art && (!art.style.backgroundImage || art.style.backgroundImage === "none")) art.style.backgroundImage = `url("${item.url}")`;
+      }
+    }, 1100);
   }
   function apprMove(delta) { state.apprIndex += delta; apprShow(true); }
+  function apprRandomNext() {
+    const pool = apprPool();
+    if (!pool.length) return;
+    if (pool.length === 1) { state.apprIndex = 0; apprShow(true); return; }
+    let next = state.apprIndex;
+    while (next === state.apprIndex) next = Math.floor(Math.random() * pool.length);
+    state.apprIndex = next;
+    apprShow(true);
+  }
   function syncApprArt(url) {
     if (!state.apprOpen) return;
     const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${url}")`;
@@ -686,7 +808,7 @@
     clearInterval(state.apprTimer);
     if (!state.ui.wall_rotate) return;
     const secs = Math.max(5, Number(state.ui.wall_interval) || 18);
-    state.apprTimer = setInterval(() => { if (!document.hidden && state.apprOpen) apprMove(1); }, secs * 1000);
+    state.apprTimer = setInterval(() => { if (!document.hidden && state.apprOpen) apprRandomNext(); }, secs * 1000);
   }
   function openAppreciate(url, auto = false) {
     const all = apprAll();
@@ -705,6 +827,7 @@
     renderApprThemes(); apprShow(false);
     startApprRotation();
     startApprTextLoop();
+    startApprTitleAccentLoop();
     armApprControls();
     // carry the current subtitle into the appreciation ticker immediately
     const prefix = $("#tickerPrefix")?.textContent || "记录";
@@ -722,7 +845,9 @@
     document.body.classList.remove("appreciating");
     clearInterval(state.apprTimer);
     clearInterval(state.apprTextTimer);
-    clearTimeout(state.apprControlsTimer);
+    clearInterval(state.apprTitleAccentLoopTimer);
+    clearTimeout(state.apprTitleAccentTimer);
+    clearApprTitleAccent();
     const el = $("#appreciate");
     if (el) el.classList.remove("appr-collapsed");
     if (el) {
@@ -836,7 +961,7 @@
     const boot = $("#boot");
     if (!boot) return;
     const skip = $("#bootSkip");
-    if (!state.ui.splash || reduced || new URLSearchParams(location.search).has("skipboot")) {
+    if (!state.ui.splash || state.ui.performance || new URLSearchParams(location.search).has("skipboot")) {
       boot.classList.add("is-off"); document.body.classList.remove("boot-hold"); return;
     }
     document.body.classList.add("boot-hold");
@@ -1504,7 +1629,14 @@
       if (e.target.closest("#saveSettingsBtn")) return saveAllSettings();
       if (e.target.closest("#refreshTasksBtn")) { await loadTasks(); renderTasks(); return; }
       if (e.target.closest("#drawQuoteBtn") || e.target.closest("#tickerNext")) return broadcastQuote(true);
-      if (e.target.closest("#quoteToggleBtn")) { state.ui.quote_enabled = !state.ui.quote_enabled; if (state.ui.quote_enabled) startQuoteTimer(); else stopQuoteTimer(); syncUiControls(); queueUiSave(); return; }
+      if (e.target.closest("#quoteToggleBtn")) {
+        state.ui.quote_enabled = !state.ui.quote_enabled;
+        syncQuoteButton();
+        if (state.ui.quote_enabled) { startQuoteTimer(); broadcastQuote(true); }
+        else stopQuoteTimer();
+        syncUiControls(); queueUiSave();
+        return;
+      }
       if (e.target.closest("#quickCrt")) { applyCrt(state.ui.crt === "off" ? "high" : "off"); queueUiSave(); return; }
       if (e.target.closest("#searchBtn")) return runSearch();
     });
@@ -1702,6 +1834,20 @@
     initParallax();
     await loadSettings();
     if (state.settings?.ui) state.ui = { ...state.ui, ...state.settings.ui };
+    try {
+      if (!localStorage.getItem("linji-effects-forced-v151")) {
+        state.ui.performance = false;
+        state.ui.splash = true;
+        state.ui.crt = "high";
+        state.ui.text_fx = "mix";
+        state.ui.fx_loop = true;
+        state.ui.quote_enabled = true;
+        state.ui.quote_fx = true;
+        state.ui.wall_parallax = true;
+        state.ui.wall_rotate = true;
+        localStorage.setItem("linji-effects-forced-v151", "1");
+      }
+    } catch (_) {}
     try { if (!localStorage.getItem("linji-theme-choice")) state.ui.theme = "random"; } catch (_) {}
     state.ui.theme = (state.ui.theme === "random" || !THEMES.includes(state.ui.theme)) ? "random" : state.ui.theme;
     state.ui.text_fx = ["mix", "radio", "pulse", "type", "decode", "scan", "glitch"].includes(state.ui.text_fx) ? state.ui.text_fx : "mix";

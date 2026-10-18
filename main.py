@@ -106,6 +106,9 @@ class KiraKBPlugin(BasePlugin):
         self.ui_quote_kb_ids = [str(v).strip() for v in (sec_ui.get("quote_kb_ids") or []) if str(v).strip()]
         self.ui_quote_custom_lines = [str(v).strip() for v in (sec_ui.get("quote_custom_lines") or []) if str(v).strip()]
         self.ui_quote_custom_mottos = [str(v).strip() for v in (sec_ui.get("quote_custom_mottos") or []) if str(v).strip()]
+        self.ui_wall_rotate = bool(sec_ui.get("wall_rotate", True))
+        self.ui_wall_interval = max(5, min(120, int(sec_ui.get("wall_interval", 18) or 18)))
+        self.ui_wall_parallax = bool(sec_ui.get("wall_parallax", True))
 
         self.enable_webui = bool(sec_webui.get("enable_webui", False))
         self.webui_port = int(sec_webui.get("webui_port", 19122))
@@ -452,6 +455,9 @@ class KiraKBPlugin(BasePlugin):
                 "quote_kb_ids": list(self.ui_quote_kb_ids),
                 "quote_custom_lines": list(self.ui_quote_custom_lines),
                 "quote_custom_mottos": list(self.ui_quote_custom_mottos),
+                "wall_rotate": self.ui_wall_rotate,
+                "wall_interval": self.ui_wall_interval,
+                "wall_parallax": self.ui_wall_parallax,
             },
             "storage": {
                 "knowledge_base_dir": self.kb_base_dir,
@@ -664,6 +670,12 @@ class KiraKBPlugin(BasePlugin):
                 self.ui_quote_enabled = bool(ui.get("quote_enabled"))
             if "quote_fx" in ui:
                 self.ui_quote_fx = bool(ui.get("quote_fx"))
+            if "wall_rotate" in ui:
+                self.ui_wall_rotate = bool(ui.get("wall_rotate"))
+            if "wall_interval" in ui:
+                self.ui_wall_interval = clamp_int(ui.get("wall_interval"), self.ui_wall_interval, 5, 120)
+            if "wall_parallax" in ui:
+                self.ui_wall_parallax = bool(ui.get("wall_parallax"))
             if "quote_interval" in ui:
                 self.ui_quote_interval = clamp_int(ui.get("quote_interval"), self.ui_quote_interval, 4, 30)
             if "quote_kb_ids" in ui:
@@ -799,6 +811,9 @@ class KiraKBPlugin(BasePlugin):
                 "quote_kb_ids": list(self.ui_quote_kb_ids),
                 "quote_custom_lines": list(self.ui_quote_custom_lines),
                 "quote_custom_mottos": list(self.ui_quote_custom_mottos),
+                "wall_rotate": self.ui_wall_rotate,
+                "wall_interval": self.ui_wall_interval,
+                "wall_parallax": self.ui_wall_parallax,
             })
             rec = cfg.setdefault("section_recall", {})
             rec.update({
