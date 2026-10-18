@@ -678,6 +678,15 @@
     setTimeout(() => { const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${item.url}")`; }, 170);
   }
   function apprMove(delta) { state.apprIndex += delta; apprShow(true); }
+  function apprRandomNext() {
+    const pool = apprPool();
+    if (!pool.length) return;
+    if (pool.length === 1) { state.apprIndex = 0; apprShow(true); return; }
+    let next = state.apprIndex;
+    while (next === state.apprIndex) next = Math.floor(Math.random() * pool.length);
+    state.apprIndex = next;
+    apprShow(true);
+  }
   function syncApprArt(url) {
     if (!state.apprOpen) return;
     const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${url}")`;
@@ -686,7 +695,7 @@
     clearInterval(state.apprTimer);
     if (!state.ui.wall_rotate) return;
     const secs = Math.max(5, Number(state.ui.wall_interval) || 18);
-    state.apprTimer = setInterval(() => { if (!document.hidden && state.apprOpen) apprMove(1); }, secs * 1000);
+    state.apprTimer = setInterval(() => { if (!document.hidden && state.apprOpen) apprRandomNext(); }, secs * 1000);
   }
   function openAppreciate(url, auto = false) {
     const all = apprAll();
