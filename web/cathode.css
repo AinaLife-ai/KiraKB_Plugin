@@ -1732,3 +1732,6 @@ img[src=""] { visibility: hidden; }
 .wall-vault-foot { flex-wrap: wrap; gap: 10px; }
 .wall-vault-foot .switch { white-space: nowrap; }
 .wall-vault-tabs { flex-wrap: wrap; }
+/* KIRAKB: KIRA white, KB accent */
+.boot-logo .char { color: var(--ink); }
+.boot-logo .char.kb { color: var(--accent); }

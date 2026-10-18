@@ -106,9 +106,9 @@
             "theme": {
                 "name": "配色主题",
                 "type": "string",
-                "default": "violet",
-                "options": ["violet", "pink", "blue", "amber", "sg", "green", "red", "gray"],
-                "hint": "前端显像管配色。默认紫；粉色为新增主题。"
+                "default": "random",
+                "options": ["random", "violet", "pink", "blue", "amber", "sg", "green", "red", "gray"],
+                "hint": "前端显像管配色。默认随机；可选任意组织或随机。"
             },
             "crt": {
                 "name": "CRT 强度",

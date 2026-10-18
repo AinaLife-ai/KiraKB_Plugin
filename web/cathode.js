@@ -35,7 +35,7 @@
     wiki: ["08", "WIKI"]
   };
   const UI_DEFAULT = {
-    theme: "violet", crt: "high", performance: false, splash: true,
+    theme: "random", crt: "high", performance: false, splash: true,
     text_fx: "mix", fx_loop: true, fx_interval: 6,
     quote_enabled: true, quote_interval: 9, quote_kb_ids: [],
     quote_custom_lines: [], quote_custom_mottos: [],
@@ -55,7 +55,7 @@
     zero: (window.linjiZero ? window.linjiZero() : null),
     zeroRandomPick: false, wallVaultTheme: "violet",
     apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null,
-    apprTickerTimer: null, apprForcedQuote: false, parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0
+    apprTickerTimer: null, apprForcedQuote: false, parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0, aimX: 0, aimY: 0
   };
 
   /* ---------- API ---------- */
@@ -228,7 +228,7 @@
   }
   function wallMetaFor(theme, wall, index) {
     const org = orgFor(theme);
-    const meta = Array.isArray(org?.wallMeta) ? org.wallMeta[index] : null;
+    const meta = (window.LINJI_META?.[theme]?.[index]) || (Array.isArray(org?.wallMeta) ? org.wallMeta[index] : null);
     return { title: meta?.title || `WALL ${String(index + 1).padStart(2, "0")}`, caption: meta?.caption || org?.motto || "" };
   }
   function loadWallDisabled() {
@@ -300,6 +300,7 @@
     }).join("") + `<button class="swatch random" type="button" data-theme-set="random" title="随机配色" aria-label="随机配色"></button>`;
   }
   function setTheme(theme, save = true) {
+    if (save) { try { localStorage.setItem("linji-theme-choice", theme); } catch (_) {} }
     state.zeroRandomPick = false;
     if (theme === "random") {
       const pool = THEMES.filter(t => t !== state.ui.theme);
@@ -485,8 +486,10 @@
     const tick = (now) => {
       if (typeof now !== "number") now = performance.now();
       const sec = (now - t0) / 1000;
-      state.tx = Math.sin(sec / 11.3) * 16 + Math.sin(sec / 4.7) * 5;
-      state.ty = Math.cos(sec / 13.7) * 12 + Math.sin(sec / 6.1) * 4;
+      const dx = Math.sin(sec / 11.3) * 24 + Math.sin(sec / 4.7) * 8;
+      const dy = Math.cos(sec / 13.7) * 18 + Math.sin(sec / 6.1) * 6;
+      state.tx = dx + state.aimX;
+      state.ty = dy + state.aimY;
       state.px += (state.tx - state.px) * .12;
       state.py += (state.ty - state.py) * .12;
       applyParallax();
@@ -495,12 +498,12 @@
     requestAnimationFrame(tick);
     const follow = (x, y) => {
       if (!state.ui.wall_parallax) return;
-      state.tx = -((x / window.innerWidth) * 2 - 1) * 34;
-      state.ty = -((y / window.innerHeight) * 2 - 1) * 24;
+      state.aimX = -((x / window.innerWidth) * 2 - 1) * 40;
+      state.aimY = -((y / window.innerHeight) * 2 - 1) * 28;
     };
     window.addEventListener("mousemove", e => follow(e.clientX, e.clientY), { passive: true });
     window.addEventListener("touchmove", e => { const p = e.touches[0]; if (p) follow(p.clientX, p.clientY); }, { passive: true });
-    window.addEventListener("mouseleave", () => { state.tx = 0; state.ty = 0; });
+    window.addEventListener("mouseleave", () => { state.aimX = 0; state.aimY = 0; });
   }
 
   /* ---------- appreciation / 欣赏模式 ---------- */
@@ -1517,7 +1520,8 @@
     initParallax();
     await loadSettings();
     if (state.settings?.ui) state.ui = { ...state.ui, ...state.settings.ui };
-    state.ui.theme = THEMES.includes(state.ui.theme) ? state.ui.theme : "violet";
+    try { if (!localStorage.getItem("linji-theme-choice")) state.ui.theme = "random"; } catch (_) {}
+    state.ui.theme = (state.ui.theme === "random" || !THEMES.includes(state.ui.theme)) ? "random" : state.ui.theme;
     state.ui.text_fx = ["mix", "radio", "pulse", "type", "decode", "scan", "glitch"].includes(state.ui.text_fx) ? state.ui.text_fx : "mix";
     state.wallVaultTheme = state.ui.theme;
     applyUi();
