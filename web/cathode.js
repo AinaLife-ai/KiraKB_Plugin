@@ -55,7 +55,7 @@
     zero: (window.linjiZero ? window.linjiZero() : null),
     zeroRandomPick: false, wallVaultTheme: "violet",
     apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null,
-    apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null, quoteFxTimer: null,
+    apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null, quoteFxTimer: null, apprTextTimer: null,
     parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0, aimX: 0, aimY: 0, breath: 0, breathAppr: 0
   };
 
@@ -617,6 +617,28 @@
     box.innerHTML = `<button type="button" data-appr-theme="all" class="${state.apprTheme === "all" ? "is-on" : ""}" style="--sw:var(--accent)" title="全部"></button>` +
       themes.map(t => { const org = orgFor(t); return `<button type="button" data-appr-theme="${t}" class="${state.apprTheme === t ? "is-on" : ""}" style="--sw:${org?.color || "#fff"}" title="${esc(org?.name || t)}"></button>`; }).join("");
   }
+  function apprTextIntro() {
+    if (!state.apprOpen || reduced || state.ui.performance || !window.KBTextFX) return;
+    const title = $("#apprTitle"), meta = $("#apprMeta"), kicker = $("#apprCaptionKicker"), cap = $("#apprCaption");
+    const fx = ["radio", "pulse", "type", "scan", "glitch", "decode"];
+    [[title, fx[Math.floor(Math.random() * fx.length)]],
+     [meta, fx[Math.floor(Math.random() * fx.length)]],
+     [kicker, fx[Math.floor(Math.random() * fx.length)]]].forEach(([el, effect]) => {
+      if (el) window.KBTextFX.playText(el, el.textContent, effect);
+    });
+    if (cap) { cap.classList.remove("appr-caption-in"); void cap.offsetWidth; cap.classList.add("appr-caption-in"); }
+  }
+  function startApprTextLoop() {
+    clearInterval(state.apprTextTimer);
+    if (reduced || state.ui.performance) return;
+    state.apprTextTimer = setInterval(() => {
+      if (!state.apprOpen || document.hidden || !window.KBTextFX) return;
+      const els = [$("#apprTitle"), $("#apprMeta"), $("#apprCaption"), $("#apprCaptionKicker")].filter(Boolean);
+      if (!els.length) return;
+      const el = els[Math.floor(Math.random() * els.length)];
+      window.KBTextFX.burst(el, ["radio", "pulse", "scan", "glitch"][Math.floor(Math.random() * 4)]);
+    }, 4800);
+  }
   function apprShow(animate = true) {
     const pool = apprPool();
     if (!pool.length) return closeAppreciate();
@@ -628,9 +650,10 @@
       $("#apprTitle").textContent = item.org?.name || "第零章";
       $("#apprMeta").textContent = `CHAPTER ${item.org?.chapter || "00"} // ${item.org?.en || "LINJI"} · ${String(state.apprIndex + 1).padStart(2, "0")} / ${String(pool.length).padStart(2, "0")}`;
       $("#apprCaptionKicker").textContent = item.meta.title;
-      $("#apprCaption").textContent = item.meta.caption || item.org?.motto || "";
+      $("#apprCaption").innerHTML = fxText(item.meta.caption || item.org?.motto || "", false);
       $("#apprIndex").textContent = `${String(state.apprIndex + 1).padStart(2, "0")} / ${String(pool.length).padStart(2, "0")}`;
       document.documentElement.style.setProperty("--appr-accent", item.org?.color || "var(--accent)");
+      apprTextIntro();
     };
     if (!animate || state.ui.performance || reduced) { set(); return; }
     const fx = $("#apprFx");
@@ -668,6 +691,7 @@
     if (el) { el.hidden = false; el.classList.remove("is-closing"); el.classList.add("is-open"); el.setAttribute("aria-hidden", "false"); }
     renderApprThemes(); apprShow(false);
     startApprRotation();
+    startApprTextLoop();
     // carry the current subtitle into the appreciation ticker immediately
     const prefix = $("#tickerPrefix")?.textContent || "记录";
     const text = $("#tickerText")?.textContent || "正在接收信号……";
@@ -683,6 +707,7 @@
     if (state.apprForcedQuote) { state.apprForcedQuote = false; state.ui.quote_enabled = false; stopQuoteTimer(); }
     document.body.classList.remove("appreciating");
     clearInterval(state.apprTimer);
+    clearInterval(state.apprTextTimer);
     const el = $("#appreciate");
     if (el) {
       el.classList.remove("is-open");
