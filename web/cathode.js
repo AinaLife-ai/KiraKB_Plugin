@@ -844,9 +844,6 @@
     if (!state.apprOpen) return;
     state.apprOpen = false;
     state.apprAuto = false;
-    state.apprTheme = state.ui.theme;
-    state.apprIndex = 0;
-    state.apprPool = [];
     document.body.classList.remove("appr-auto");
     if (state.apprForcedQuote) { state.apprForcedQuote = false; state.ui.quote_enabled = false; stopQuoteTimer(); }
     document.body.classList.remove("appreciating");
