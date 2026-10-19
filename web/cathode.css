@@ -1750,8 +1750,7 @@ body.appr-auto .appr-tools { opacity: 0; transition: opacity .45s ease; }
 body.appr-auto .appr-head:hover .appr-tools,
 body.appr-auto .appr-tools:hover { opacity: 1; }
 body.appr-auto .appr-head h2 { opacity: .92; }
-body.appr-auto .appr-caption { opacity: 0; transition: opacity .45s ease; }
-body.appr-auto .appr-head:hover ~ .appr-caption { opacity: 1; }
+body.appr-auto .appr-caption { opacity: 1; transition: opacity .45s ease; }
 @media (max-width: 760px) {
   .view-art { inset: -12%; }
   .appr-art { inset: -14%; }
