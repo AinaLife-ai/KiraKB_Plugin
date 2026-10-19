@@ -2243,3 +2243,8 @@ body.wall-viewer-open { overflow: hidden; }
 /* 1.5.9 the persistent wallpaper must show through the view surface */
 .view { background: transparent; }
 .rail { background: linear-gradient(180deg, rgba(var(--accent-rgb), .035), transparent 30%), var(--bg); }
+/* 1.5.10 mobile: keep the original sticky rail/HUD; the desktop layer fix must not override them */
+@media (max-width: 900px) {
+  .rail { position: sticky; top: 0; z-index: 20; }
+  .hud { position: sticky; top: 108px; z-index: 18; }
+}
