@@ -556,12 +556,11 @@
     const hint = $("#wallVaultHint"); if (hint) hint.textContent = walls.length ? `当前：${orgFor(theme)?.name || theme} · 点击缩略图切换` : "默认全部启用；点缩略图切换。";
   }
   function applyBackgrounds() {
+    const pageWall = $("#screenWallpaper");
+    if (pageWall) pageWall.style.backgroundImage = state.orgWallpaper ? `url("${state.orgWallpaper}")` : "none";
     $$("[data-view]").forEach(view => {
-      const key = view.dataset.view;
       const art = view.querySelector(".view-art");
-      const img = state.backgrounds[key] || state.orgWallpaper;
-      // Only the active view keeps a full-screen bitmap alive.
-      if (art) art.style.backgroundImage = (key === state.view && img) ? `url("${img}")` : "none";
+      if (art) art.style.backgroundImage = "none";
     });
     const ticker = $("#ticker");
     if (ticker) ticker.style.setProperty("--ticker-art", state.backgrounds.ticker ? `url("${state.backgrounds.ticker}")` : "none");
@@ -685,17 +684,39 @@
       </button>`;
     }).join("");
   }
+  function scheduleApprCollapse(ms) {
+    clearTimeout(state.apprControlsTimer);
+    if (!state.apprOpen || state.apprHover) return;
+    state.apprControlsTimer = setTimeout(() => {
+      if (state.apprOpen && !state.apprHover) $("#appreciate")?.classList.add("appr-collapsed");
+    }, ms);
+  }
   function armApprControls() {
     const el = $("#appreciate"); if (!el) return;
-    clearTimeout(state.apprControlsTimer);
+    state.apprHover = !!$(".appr-tools")?.matches(":hover");
+    state.apprControlsDelay = 3000;
     el.classList.remove("appr-collapsed");
-    state.apprControlsTimer = setTimeout(() => { if (state.apprOpen) el.classList.add("appr-collapsed"); }, 1500);
+    scheduleApprCollapse(state.apprControlsDelay);
   }
   function expandApprControls() {
     const el = $("#appreciate"); if (!el) return;
+    state.apprControlsDelay = 5000;
     el.classList.remove("appr-collapsed");
-    clearTimeout(state.apprControlsTimer);
-    state.apprControlsTimer = setTimeout(() => { if (state.apprOpen) el.classList.add("appr-collapsed"); }, 1500);
+    scheduleApprCollapse(state.apprControlsDelay);
+  }
+  function initApprControlHover() {
+    const tools = $(".appr-tools"), head = $(".appr-head");
+    if (!tools || tools._hoverBound) return;
+    tools._hoverBound = true;
+    const enter = () => { state.apprHover = true; clearTimeout(state.apprControlsTimer); };
+    const leave = () => {
+      state.apprHover = false;
+      if (state.apprOpen) scheduleApprCollapse(state.apprControlsDelay || 3000);
+    };
+    [tools, head].filter(Boolean).forEach(node => {
+      node.addEventListener("pointerenter", enter);
+      node.addEventListener("pointerleave", leave);
+    });
   }
   const APPR_ACCENT_NAMES = {
     violet: "紫垣", pink: "绯灯", blue: "青盾", amber: "燧火",
@@ -853,6 +874,7 @@
     if (!state.apprOpen) return;
     state.apprOpen = false;
     state.apprAuto = false;
+    clearTimeout(state.apprControlsTimer);
     document.body.classList.remove("appr-auto");
     if (state.apprForcedQuote) { state.apprForcedQuote = false; state.ui.quote_enabled = false; stopQuoteTimer(); }
     document.body.classList.remove("appreciating");
@@ -1063,7 +1085,7 @@
       ${field("relations", "关系")}
       ${field("quote", "台词")}
       ${field("tags", "标签 <small>逗号分隔</small>")}
-      <div class="field span-2"><label>素材</label><div class="zero-upload-row"><label class="btn ghost zero-upload">上传徽章<input id="zeroBadgeFile" type="file" accept="image/*" hidden></label><label class="btn ghost zero-upload">上传插画（可多选）<input id="zeroWallsFile" type="file" accept="image/*" multiple hidden></label><button class="btn small ghost" id="zeroClearWalls" type="button">清空插画</button></div><div class="zero-thumbs">${z.badge ? `<img class="zero-badge-thumb" src="${esc(z.badge)}" alt="">` : ""}${(z.walls || []).map((w, i) => `<img src="${esc(w)}" alt="" title="插画 ${i + 1}">`).join("")}</div></div>
+      <div class="field span-2"><label>素材</label><div class="zero-upload-row"><label class="btn ghost zero-upload">上传徽章<input id="zeroBadgeFile" type="file" accept="image/*" hidden></label><label class="btn ghost zero-upload">上传插画（可多选）<input id="zeroWallsFile" type="file" accept="image/*" multiple hidden></label><button class="btn small ghost" id="zeroClearWalls" type="button">清空插画</button></div><div class="zero-thumbs">${z.badge ? `<img class="zero-badge-thumb" src="${esc(z.badge)}" alt="">` : ""}${(z.walls || []).map((w, i) => `<img src="${esc(w)}" alt="" title="插画 ${i + 1}" data-wiki-wall="${esc(w)}" data-wall-title="第零章 · 残页 ${String(i + 1).padStart(2, "0")}" style="cursor:zoom-in">`).join("")}</div></div>
       <div class="field span-2"><span class="hint">第零章只保存在本机（localStorage），不会上传服务器。启用后可在主题、壁纸库和欣赏模式中看到。</span></div>`;
     const st = $("#zeroState"); if (st) st.textContent = z.enabled ? "IN USE" : "UNWRITTEN";
     const tset2 = new Set(zeroTargets());
@@ -1100,7 +1122,7 @@
           <span>TAGS / 标签<b>${org.tags.map(esc).join(" · ")}</b></span>
         </div>
         <details class="org-details"><summary>展开档案全文 / LORE</summary><p class="org-lore">${fxText(org.lore, true)}</p>${org.extraLore ? `<p class="org-lore">${fxText(org.extraLore, true)}</p>` : ""}${org.finalStory?.length ? `<div class="org-final-story"><span class="mini-label">ARCHIVE STORY / 组织故事</span>${org.finalStory.map(x => `<p>${fxText(x, true)}</p>`).join("")}</div>` : ""}${org.chronicle?.length ? `<div class="org-chronicle">${org.chronicle.map((x, i) => `<p><b>${String(i + 1).padStart(2, "0")}</b>${fxText(x, true)}</p>`).join("")}</div>` : ""}${org.cases?.length ? `<div class="org-cases"><span class="mini-label">CASE FILES / 未结案</span>${org.cases.map(x => `<p>${fxText(x, true)}</p>`).join("")}</div>` : ""}</details>
-        <div class="org-gallery">${walls.map((wall, index) => { const meta = wallMetaFor(theme, wall, index); return `<button type="button" data-org-wall="${theme}" data-org-wall-index="${index}" title="${esc(meta.title)} — ${esc(meta.caption)}"><img src="${esc(wall)}" alt="" loading="lazy"><span>${esc(meta.title)}</span></button>`; }).join("")}</div>
+        <div class="org-gallery">${walls.map((wall, index) => { const meta = wallMetaFor(theme, wall, index); return `<button type="button" data-org-wall="${theme}" data-org-wall-index="${index}" data-wiki-wall="${esc(wall)}" data-wall-title="${esc(meta.title)}" title="${esc(meta.title)} — ${esc(meta.caption)}"><img src="${esc(wall)}" alt="" loading="lazy"><span>${esc(meta.title)}</span></button>`; }).join("")}</div>
         <div class="org-actions">
           <button type="button" class="btn" data-org-theme="${theme}">应用此主题</button>
           <label class="switch" title="关闭后不使用该组织的徽章与壁纸"><input type="checkbox" data-org-enabled="${theme}" ${enabled ? "checked" : ""}><span></span><b>启用组织外观</b></label>
@@ -1572,6 +1594,9 @@
   }
   function bind() {
     document.addEventListener("click", async (e) => {
+      if (e.target.closest("#wallViewerClose") || e.target.id === "wallViewer" || e.target.classList.contains("wall-viewer-frame") || e.target.classList.contains("wall-viewer-foot")) { closeWallViewer(); return; }
+      const wikiWall = e.target.closest("[data-wiki-wall]");
+      if (wikiWall) { openWallViewer(wikiWall.dataset.wikiWall, wikiWall.dataset.wallTitle || "WALLPAPER"); return; }
       const nav = e.target.closest(".channel[data-view]"); if (nav) return switchView(nav.dataset.view);
       const theme = e.target.closest("[data-theme-set]"); if (theme) return setTheme(theme.dataset.themeSet);
       if (e.target.closest("#appreciateBtn")) return openAppreciate();
@@ -1622,7 +1647,7 @@
       if (orgWall) {
         const theme = orgWall.dataset.orgWall, index = Number(orgWall.dataset.orgWallIndex);
         const walls = wallsFor(theme);
-        if (walls[index]) { setOrgWallpaper(walls[index], true); toast("已设为当前背景。"); }
+        if (walls[index]) { const meta = wallMetaFor(theme, walls[index], index); openWallViewer(walls[index], meta?.title || "WALLPAPER"); }
         return;
       }
       if (e.target.closest("#replayBootBtn")) {
@@ -1796,6 +1821,7 @@
     window.addEventListener("pointermove", () => { if (!state.apprOpen) armIdle(); }, { passive: true });
     document.addEventListener("keydown", e => {
       if (e.key === "Escape") {
+        if (!$("#wallViewer")?.hidden) { closeWallViewer(); return; }
         if (state.apprOpen) { closeAppreciate(); return; }
         const m = $(".modal-root"); if (m) m.remove(); hideBoot(); return;
       }
@@ -1806,6 +1832,22 @@
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable;
       if (!typing && !state.apprOpen && (e.key === "f" || e.key === "F") && !e.metaKey && !e.ctrlKey) { e.preventDefault(); openAppreciate(); }
     });
+  }
+  function openWallViewer(url, title = "WALLPAPER") {
+    if (!url) return;
+    const box = $("#wallViewer"), img = $("#wallViewerImg"), label = $("#wallViewerTitle");
+    if (!box || !img) return;
+    img.src = url; img.alt = title;
+    if (label) label.textContent = title;
+    box.hidden = false;
+    document.body.classList.add("wall-viewer-open");
+    $("#wallViewerClose")?.focus({ preventScroll: true });
+  }
+  function closeWallViewer() {
+    const box = $("#wallViewer"); if (!box) return;
+    box.hidden = true;
+    const img = $("#wallViewerImg"); if (img) img.removeAttribute("src");
+    document.body.classList.remove("wall-viewer-open");
   }
   function hideBoot() { const b = $("#boot"); if (!b) return; b.classList.add("is-off"); document.body.classList.remove("boot-hold", "booting"); setTimeout(() => b.style.display = "none", 300); }
   async function resizeImage(file, max = 1600) {
@@ -1845,6 +1887,7 @@
   /* ---------- init ---------- */
   async function init() {
     bind();
+    initApprControlHover();
     renderThemeStrip();
     document.documentElement.setAttribute("data-theme", "dark");
     document.body.dataset.theme = "violet";
