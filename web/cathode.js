@@ -626,7 +626,7 @@
     const x = enabled ? state.px : 0, y = enabled ? state.py : 0;
     document.documentElement.style.setProperty("--wall-px", x.toFixed(2) + "px");
     document.documentElement.style.setProperty("--wall-py", y.toFixed(2) + "px");
-    document.documentElement.style.setProperty("--wall-scale", (1.045 + (enabled ? state.breath : 0)).toFixed(4));
+    document.documentElement.style.setProperty("--wall-scale", (1.035 + (enabled ? state.breath : 0)).toFixed(4));
     document.documentElement.style.setProperty("--wall-scale-appr", (1.035 + (enabled ? state.breathAppr : 0)).toFixed(4));
   }
   function initParallax() {
