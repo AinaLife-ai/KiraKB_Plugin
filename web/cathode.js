@@ -387,6 +387,8 @@
     }
     const bootOrg = $("#bootOrg");
     if (bootOrg && org) bootOrg.textContent = `CHAPTER ${org.chapter} // ${org.name}`;
+    const side = $(".side-console");
+    if (side) side.dataset.org = theme;
     renderThemeBadges();
   }
 
