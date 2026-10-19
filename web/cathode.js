@@ -389,6 +389,8 @@
     if (bootOrg && org) bootOrg.textContent = `CHAPTER ${org.chapter} // ${org.name}`;
     const side = $(".side-console");
     if (side) side.dataset.org = theme;
+    const consoleNumber = $("#consoleNumber");
+    if (consoleNumber) consoleNumber.textContent = org?.chapter || "00";
     renderThemeBadges();
   }
 
@@ -686,13 +688,13 @@
     const el = $("#appreciate"); if (!el) return;
     clearTimeout(state.apprControlsTimer);
     el.classList.remove("appr-collapsed");
-    state.apprControlsTimer = setTimeout(() => { if (state.apprOpen) el.classList.add("appr-collapsed"); }, 5000);
+    state.apprControlsTimer = setTimeout(() => { if (state.apprOpen) el.classList.add("appr-collapsed"); }, 1500);
   }
   function expandApprControls() {
     const el = $("#appreciate"); if (!el) return;
     el.classList.remove("appr-collapsed");
     clearTimeout(state.apprControlsTimer);
-    state.apprControlsTimer = setTimeout(() => { if (state.apprOpen) el.classList.add("appr-collapsed"); }, 5000);
+    state.apprControlsTimer = setTimeout(() => { if (state.apprOpen) el.classList.add("appr-collapsed"); }, 1500);
   }
   const APPR_ACCENT_NAMES = {
     violet: "紫垣", pink: "绯灯", blue: "青盾", amber: "燧火",
@@ -1556,7 +1558,7 @@
       $$(".channel").forEach(b => b.classList.toggle("is-active", b.dataset.view === view));
       $$(".view").forEach(v => v.classList.toggle("is-active", v.dataset.view === view));
       $("#hudKicker").textContent = `CH ${VIEW_META[view][0]} // ${VIEW_META[view][1]}`;
-      $("#consoleNumber").textContent = VIEW_META[view][0];
+      $("#consoleNumber").textContent = orgFor(state.ui.theme)?.chapter || "00";
       $("#viewStack").scrollTop = 0;
       if (view === "settings") { loadSettings().then(renderSettings); syncUiControls(); }
       if (view === "wiki") renderWiki();

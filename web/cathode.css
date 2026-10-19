@@ -1750,8 +1750,7 @@ body.appr-auto .appr-tools { opacity: 0; transition: opacity .45s ease; }
 body.appr-auto .appr-head:hover .appr-tools,
 body.appr-auto .appr-tools:hover { opacity: 1; }
 body.appr-auto .appr-head h2 { opacity: .92; }
-body.appr-auto .appr-caption { opacity: 0; transition: opacity .45s ease; }
-body.appr-auto .appr-head:hover ~ .appr-caption { opacity: 1; }
+body.appr-auto .appr-caption { opacity: 1; transition: opacity .45s ease; }
 @media (max-width: 760px) {
   .view-art { inset: -12%; }
   .appr-art { inset: -14%; }
@@ -2100,3 +2099,72 @@ select option, select optgroup {
 @keyframes console-slit { 0%,100% { width:22px; opacity:.42; } 35% { width:13px; opacity:.95; } 65% { width:28px; opacity:.7; } }
 @keyframes console-label-flicker { 0%,93%,100% { opacity:.75; } 94% { opacity:1; } 96% { opacity:.5; } }
 body.perf .side-console *, body.perf .side-console { animation: none !important; }
+/* the lower dial has its own per-organisation motion identity */
+.console-knob.small { overflow: visible; box-shadow: 0 0 0 1px rgba(var(--accent-rgb), .18), 0 3px 10px #000; }
+.console-knob.small::before {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%; pointer-events: none;
+  background: repeating-conic-gradient(from -90deg, rgba(var(--accent-rgb), .7) 0deg 2deg, transparent 2deg 30deg);
+  mask: radial-gradient(circle, transparent 0 58%, #000 59% 100%);
+  -webkit-mask: radial-gradient(circle, transparent 0 58%, #000 59% 100%);
+  opacity: .48;
+}
+.console-knob.small::after {
+  content: ""; position: absolute; inset: 4px; border: 1px solid rgba(var(--accent-rgb), .22); border-radius: 50%;
+}
+.console-knob.small i { box-shadow: 0 0 6px rgba(var(--accent-rgb), .65); }
+.side-console[data-org="violet"] .console-knob.small { animation: dial-clock 16s linear infinite; }
+.side-console[data-org="pink"] .console-knob.small { animation: dial-heartbeat 1.9s ease-in-out infinite; }
+.side-console[data-org="blue"] .console-knob.small { animation: dial-step 4s steps(8) infinite; }
+.side-console[data-org="amber"] .console-knob.small { animation: dial-ember 3.2s ease-in-out infinite; }
+.side-console[data-org="sg"] .console-knob.small { animation: dial-clock 12s linear infinite reverse; }
+.side-console[data-org="green"] .console-knob.small { animation: dial-scan 2.6s ease-in-out infinite; }
+.side-console[data-org="red"] .console-knob.small { animation: dial-jitter .9s steps(2) infinite; }
+.side-console[data-org="gray"] .console-knob.small { animation: dial-drift 22s linear infinite; }
+@keyframes dial-clock { to { transform: rotate(360deg); } }
+@keyframes dial-step { to { transform: rotate(360deg); } }
+@keyframes dial-heartbeat {
+  0%, 100% { transform: scale(.9); filter: brightness(.85); }
+  16% { transform: scale(1.12); filter: brightness(1.2); }
+  28% { transform: scale(.96); }
+  40% { transform: scale(1.04); }
+}
+@keyframes dial-ember {
+  0%, 100% { transform: rotate(-8deg); filter: brightness(.8); }
+  45% { transform: rotate(9deg); filter: brightness(1.25); }
+  70% { transform: rotate(2deg); filter: brightness(1.05); }
+}
+@keyframes dial-scan {
+  0%, 100% { transform: rotate(-24deg); filter: brightness(.85); }
+  50% { transform: rotate(28deg); filter: brightness(1.2); }
+}
+@keyframes dial-jitter {
+  0% { transform: rotate(-5deg) translateX(-1px); }
+  50% { transform: rotate(6deg) translateX(1px); }
+  100% { transform: rotate(-3deg); }
+}
+@keyframes dial-drift {
+  0%, 100% { transform: rotate(0deg); opacity: .7; }
+  50% { transform: rotate(160deg); opacity: 1; }
+}
+/* collapsed appreciation badge: a soft ghost token, not a hard UI button */
+.appreciate.appr-collapsed .appr-badge.is-on {
+  opacity: .72;
+  transform: scale(.92);
+  border-color: rgba(255,255,255,.1) !important;
+  background: rgba(0,0,0,.08) !important;
+  box-shadow: 0 0 22px rgba(var(--accent-rgb), .14) !important;
+  backdrop-filter: blur(2px) saturate(.86);
+  -webkit-backdrop-filter: blur(2px) saturate(.86);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 58%, rgba(0,0,0,.8) 72%, transparent 100%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 58%, rgba(0,0,0,.8) 72%, transparent 100%);
+  transition: opacity .45s ease, transform .45s ease, border-color .45s ease, box-shadow .45s ease, background .45s ease;
+}
+.appreciate.appr-collapsed .appr-tools:hover .appr-badge.is-on {
+  opacity: 1;
+  transform: scale(1);
+  border-color: rgba(var(--accent-rgb), .55) !important;
+  background: rgba(0,0,0,.22) !important;
+  box-shadow: 0 0 24px rgba(var(--accent-rgb), .28) !important;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 70%, transparent 100%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 70%, transparent 100%);
+}
