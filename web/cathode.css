@@ -2146,3 +2146,25 @@ body.perf .side-console *, body.perf .side-console { animation: none !important;
   0%, 100% { transform: rotate(0deg); opacity: .7; }
   50% { transform: rotate(160deg); opacity: 1; }
 }
+/* collapsed appreciation badge: a soft ghost token, not a hard UI button */
+.appreciate.appr-collapsed .appr-badge.is-on {
+  opacity: .72;
+  transform: scale(.92);
+  border-color: rgba(255,255,255,.1) !important;
+  background: rgba(0,0,0,.08) !important;
+  box-shadow: 0 0 22px rgba(var(--accent-rgb), .14) !important;
+  backdrop-filter: blur(2px) saturate(.86);
+  -webkit-backdrop-filter: blur(2px) saturate(.86);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 58%, rgba(0,0,0,.8) 72%, transparent 100%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 58%, rgba(0,0,0,.8) 72%, transparent 100%);
+  transition: opacity .45s ease, transform .45s ease, border-color .45s ease, box-shadow .45s ease, background .45s ease;
+}
+.appreciate.appr-collapsed .appr-tools:hover .appr-badge.is-on {
+  opacity: 1;
+  transform: scale(1);
+  border-color: rgba(var(--accent-rgb), .55) !important;
+  background: rgba(0,0,0,.22) !important;
+  box-shadow: 0 0 24px rgba(var(--accent-rgb), .28) !important;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 70%, transparent 100%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 70%, transparent 100%);
+}

@@ -688,13 +688,13 @@
     const el = $("#appreciate"); if (!el) return;
     clearTimeout(state.apprControlsTimer);
     el.classList.remove("appr-collapsed");
-    state.apprControlsTimer = setTimeout(() => { if (state.apprOpen) el.classList.add("appr-collapsed"); }, 5000);
+    state.apprControlsTimer = setTimeout(() => { if (state.apprOpen) el.classList.add("appr-collapsed"); }, 1500);
   }
   function expandApprControls() {
     const el = $("#appreciate"); if (!el) return;
     el.classList.remove("appr-collapsed");
     clearTimeout(state.apprControlsTimer);
-    state.apprControlsTimer = setTimeout(() => { if (state.apprOpen) el.classList.add("appr-collapsed"); }, 5000);
+    state.apprControlsTimer = setTimeout(() => { if (state.apprOpen) el.classList.add("appr-collapsed"); }, 1500);
   }
   const APPR_ACCENT_NAMES = {
     violet: "紫垣", pink: "绯灯", blue: "青盾", amber: "燧火",
