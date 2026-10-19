@@ -45,7 +45,7 @@
   const state = {
     kbs: [], current: null, docs: [], versions: [], tasks: [], deleted: [],
     models: [], globalRecall: {}, settings: null,
-    view: "catalog", selectedDoc: null, selected: new Set(),
+    view: "catalog", themeChoice: "random", selectedDoc: null, selected: new Set(),
     docFilter: "", docFilterKind: "all",
     ui: { ...UI_DEFAULT },
     quoteTimer: null, quoteBusy: false, tickerTimer: null,
@@ -409,11 +409,15 @@
     strip.innerHTML = THEMES.map(t => {
       const org = orgFor(t);
       const badge = badgeFor(t, false);
-      return `<button class="swatch ${badge ? "has-badge" : ""} ${t === state.ui.theme ? "is-active" : ""}" type="button" data-theme-set="${t}" title="${org ? esc(org.name) : t}" aria-label="${org ? esc(org.name) : t}" ${org ? `style="--sw:${safeColor(org.color)}"` : ""}>${badge ? `<img class="swatch-badge" src="${esc(badge)}" alt="">` : ""}</button>`;
+      return `<button class="swatch ${badge ? "has-badge" : ""} ${((state.themeChoice === "random" && t === "random") || (state.themeChoice !== "random" && t === state.ui.theme)) ? "is-active" : ""}" type="button" data-theme-set="${t}" title="${org ? esc(org.name) : t}" aria-label="${org ? esc(org.name) : t}" ${org ? `style="--sw:${safeColor(org.color)}"` : ""}>${badge ? `<img class="swatch-badge" src="${esc(badge)}" alt="">` : ""}</button>`;
     }).join("") + `<button class="swatch random" type="button" data-theme-set="random" title="随机配色" aria-label="随机配色"></button>`;
   }
   function setTheme(theme, save = true) {
-    if (save) { try { localStorage.setItem("linji-theme-choice", theme); } catch (_) {} }
+    // applyUi() may re-apply the resolved theme after a random draw. Do not
+    // overwrite the "random" preference with that resolved concrete theme.
+    const keepRandom = theme === "random" || (!save && theme === state.ui.theme && state.themeChoice === "random");
+    state.themeChoice = keepRandom ? "random" : theme;
+    if (save) { try { localStorage.setItem("linji-theme-choice", state.themeChoice); } catch (_) {} }
     state.zeroRandomPick = false;
     if (theme === "random") {
       const pool = THEMES.filter(t => t !== state.ui.theme);
@@ -422,13 +426,15 @@
       if (z.enabled && zeroTargets().includes("random")) state.zeroRandomPick = Math.random() < 0.5;
     }
     if (!THEMES.includes(theme)) theme = "violet";
+    state.themeChoice = state.themeChoice === "random" ? "random" : theme;
     state.ui.theme = theme;
     state.wallVaultTheme = theme;
     document.documentElement.setAttribute("data-theme", "dark");
     document.body.dataset.theme = theme;
-    $$("#themeStrip [data-theme-set]").forEach(b => b.classList.toggle("is-active", b.dataset.themeSet === theme));
+    const activeSwatch = state.themeChoice === "random" ? "random" : theme;
+    $$("#themeStrip [data-theme-set]").forEach(b => b.classList.toggle("is-active", b.dataset.themeSet === activeSwatch));
     const themeSelect = $("#setUiTheme");
-    if (themeSelect) themeSelect.value = theme;
+    if (themeSelect) themeSelect.value = state.themeChoice === "random" ? "random" : theme;
     applyOrgIdentity();
     const screen = $("#screen");
     if (screen && save) { screen.classList.add("theme-flash"); setTimeout(() => screen.classList.remove("theme-flash"), 500); }
@@ -504,7 +510,7 @@
   function syncUiControls() {
     const set = (id, v) => { const el = $("#" + id); if (el) el.value = v; };
     const chk = (id, v) => { const el = $("#" + id); if (el) el.checked = !!v; };
-    set("setUiTheme", state.ui.theme); set("setUiCrt", state.ui.crt);
+    set("setUiTheme", state.themeChoice === "random" ? "random" : state.ui.theme); set("setUiCrt", state.ui.crt);
     chk("setUiPerf", state.ui.performance); chk("setUiSplash", state.ui.splash);
     set("setUiTextFx", state.ui.text_fx); chk("setUiFxLoop", state.ui.fx_loop);
     set("setUiFxInterval", state.ui.fx_interval); chk("setUiQuoteEnabled", state.ui.quote_enabled);
@@ -693,7 +699,7 @@
   }
   function armApprControls() {
     const el = $("#appreciate"); if (!el) return;
-    state.apprHover = !!$(".appr-tools")?.matches(":hover");
+    state.apprHover = false;
     state.apprControlsDelay = 3000;
     el.classList.remove("appr-collapsed");
     scheduleApprCollapse(state.apprControlsDelay);
@@ -714,7 +720,9 @@
       if (state.apprOpen) scheduleApprCollapse(state.apprControlsDelay || 3000);
     };
     [tools, head].filter(Boolean).forEach(node => {
-      node.addEventListener("pointerenter", enter);
+      // pointerenter also fires when the overlay appears under a stationary
+      // cursor, which used to cancel the very first 3s collapse forever.
+      node.addEventListener("pointermove", enter);
       node.addEventListener("pointerleave", leave);
     });
   }
@@ -1778,7 +1786,10 @@
         state.ui.quote_fx = e.target.checked; queueUiSave(); renderWiki(); if (state.selectedDoc) selectDoc(state.selectedDoc); return;
       }
       if (e.target.matches("#setUiTheme, #setUiCrt, #setUiTextFx, #setUiPerf, #setUiSplash, #setUiFxLoop, #setUiFxInterval, #setUiQuoteEnabled, #setUiQuoteInterval")) {
-        state.ui.theme = $("#setUiTheme").value; state.ui.crt = $("#setUiCrt").value;
+        const chosenTheme = $("#setUiTheme").value;
+        state.themeChoice = chosenTheme;
+        try { localStorage.setItem("linji-theme-choice", chosenTheme); } catch (_) {}
+        state.ui.theme = chosenTheme; state.ui.crt = $("#setUiCrt").value;
         state.ui.performance = $("#setUiPerf").checked; state.ui.splash = $("#setUiSplash").checked;
         state.ui.text_fx = $("#setUiTextFx").value; state.ui.fx_loop = $("#setUiFxLoop").checked;
         state.ui.fx_interval = Number($("#setUiFxInterval").value) || 6;
@@ -1910,8 +1921,15 @@
         localStorage.setItem("linji-effects-forced-v151", "1");
       }
     } catch (_) {}
-    try { if (!localStorage.getItem("linji-theme-choice")) state.ui.theme = "random"; } catch (_) {}
-    state.ui.theme = (state.ui.theme === "random" || !THEMES.includes(state.ui.theme)) ? "random" : state.ui.theme;
+    let themeChoice = "random";
+    try { themeChoice = localStorage.getItem("linji-theme-choice") || "random"; } catch (_) {}
+    if (themeChoice === "random" || !THEMES.includes(themeChoice)) {
+      state.themeChoice = "random";
+      state.ui.theme = "random";
+    } else {
+      state.themeChoice = themeChoice;
+      state.ui.theme = themeChoice;
+    }
     state.ui.text_fx = ["mix", "radio", "pulse", "type", "decode", "scan", "glitch"].includes(state.ui.text_fx) ? state.ui.text_fx : "mix";
     state.wallVaultTheme = state.ui.theme;
     applyUi();
