@@ -2195,3 +2195,13 @@ body.perf .side-console *, body.perf .side-console { animation: none !important;
   color: rgba(244,239,230,.78); font: 700 7px/1 var(--mono); text-shadow: 0 1px 2px #000;
 }
 .swatch.random:hover { opacity: 1; }
+/* 1.5.6: keep the rail solid now that the wallpaper is a full-viewport layer */
+.rail {
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), .035), transparent 30%), rgba(5,4,8,.9);
+}
+.view[data-view="catalog"] .view-art { opacity: .9; }
+.zero-grid input, .zero-grid textarea, .zero-grid select {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+.zero-grid textarea { margin: 0; }
