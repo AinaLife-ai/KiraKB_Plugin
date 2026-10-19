@@ -2036,4 +2036,4 @@ body.boot-ready #boot.is-off { visibility: hidden; }
 .swatch.has-badge .swatch-badge { mix-blend-mode: normal; }
 .appr-tools .appr-badge { background: #050407; }
 .appr-tools .appr-badge img { mix-blend-mode: normal; background: #050407; }
-.wall-fx { z-index: 2; }
+.wall-fx { z-index: 0; }

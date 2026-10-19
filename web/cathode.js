@@ -584,7 +584,7 @@
   }
   function wallFxClass(name) {
     const fx = $("#wallFx"); if (!fx) return;
-    const host = document.querySelector(".view.is-active");
+    const host = document.querySelector(".view.is-active .view-art") || document.querySelector(".view.is-active");
     if (host && fx.parentElement !== host) host.appendChild(fx);
     clearTimeout(state.wallFxTimer);
     fx.style.display = "block";
