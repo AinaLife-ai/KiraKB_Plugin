@@ -2279,3 +2279,6 @@ body.appreciating .page * { animation-play-state: paused !important; }
 }
 .appr-noise { mix-blend-mode: normal; opacity: .06; }
 .view::after { display: none; }
+/* 1.5.8: no perpetual text-shadow breathing on headings */
+.fx-title.fx-idle-scan, .fx-title.fx-idle-pulse { animation: none !important; }
+.fx-heading { animation: fx-heading-in .55s var(--ease-out) both !important; }
