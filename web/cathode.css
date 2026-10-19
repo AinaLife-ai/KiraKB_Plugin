@@ -2037,3 +2037,15 @@ body.boot-ready #boot.is-off { visibility: hidden; }
 .appr-tools .appr-badge { background: #050407; }
 .appr-tools .appr-badge img { mix-blend-mode: normal; background: #050407; }
 .wall-fx { z-index: 0; }
+/* 1.5.3 boot must own the viewport until finish */
+body.booting .page { visibility: hidden; opacity: 0; }
+.page { transition: opacity .35s ease; }
+.boot { transition: opacity .38s var(--ease-out), visibility .38s; }
+/* 1.5.3 wallpaper switch uses the same broadcast flash language as theme switch */
+.appr-art.appr-art-flash { animation: appr-art-flash .5s steps(3) both; }
+@keyframes appr-art-flash {
+  0% { filter: brightness(1.55) contrast(1.12); }
+  38% { filter: brightness(.78) contrast(1.04); }
+  70% { filter: brightness(1.12); }
+  100% { filter: none; }
+}

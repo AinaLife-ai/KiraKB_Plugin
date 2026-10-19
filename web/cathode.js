@@ -598,10 +598,11 @@
     preloadWallpaper(url).then(() => {
       if (token !== state.wallToken) return;
       if (!animate || state.ui.performance || reduced) { applyBackgrounds(); return; }
-      const fx = ["fx-scan", "fx-tear", "fx-iris", "fx-shutter"][Math.floor(Math.random() * 4)];
-      wallFxClass(fx);
-      setTimeout(applyBackgrounds, 190);
-      if (state.apprOpen) setTimeout(() => syncApprArt(url), 190);
+      const screen = $("#screen");
+      if (screen) { screen.classList.remove("theme-flash"); void screen.offsetWidth; screen.classList.add("theme-flash"); }
+      setTimeout(applyBackgrounds, 160);
+      setTimeout(() => { if (screen) screen.classList.remove("theme-flash"); }, 520);
+      if (state.apprOpen) setTimeout(() => syncApprArt(url), 160);
     });
   }
   function startWallRotation() {
@@ -763,6 +764,9 @@
     state.orgWallpaper = item.url;
     applyBackgrounds();
     const token = ++state.apprToken;
+    const artFlash = $("#apprArt");
+    if (artFlash) { artFlash.classList.remove("appr-art-flash"); void artFlash.offsetWidth; artFlash.classList.add("appr-art-flash"); }
+    setTimeout(() => { if (artFlash) artFlash.classList.remove("appr-art-flash"); }, 520);
     const set = () => {
       if (token !== state.apprToken) return;
       const art0 = $("#apprArt");
@@ -967,7 +971,7 @@
     if (!boot) return;
     const skip = $("#bootSkip");
     if (!state.ui.splash || state.ui.performance || new URLSearchParams(location.search).has("skipboot")) {
-      boot.classList.add("is-off"); document.body.classList.remove("boot-hold"); return;
+      boot.classList.add("is-off"); document.body.classList.remove("boot-hold", "booting"); return;
     }
     document.body.classList.add("boot-hold");
     const pct = $("#bootPct"), status = $("#bootStatus");
@@ -977,13 +981,13 @@
       v = Math.min(100, v + Math.max(1, Math.round((100 - v) / 10)));
       pct.textContent = String(v).padStart(2, "0");
       status.textContent = stages[Math.min(3, Math.floor(v / 28))];
-      if (v >= 100) { clearInterval(boot.timer); setTimeout(finish, 160); }
-    }, 80);
+      if (v >= 100) { clearInterval(boot.timer); setTimeout(finish, 80); }
+    }, 60);
     skip.onclick = finish;
     function finish() {
       clearInterval(boot.timer);
-      boot.classList.add("is-off"); document.body.classList.remove("boot-hold");
-      setTimeout(() => { boot.style.display = "none"; }, 600);
+      boot.classList.add("is-off"); document.body.classList.remove("boot-hold", "booting");
+      setTimeout(() => { boot.style.display = "none"; }, 300);
       replayText(); replayBrand(); startQuoteTimer(); armIdle(true);
     }
   }
@@ -1797,7 +1801,7 @@
       if (!typing && !state.apprOpen && (e.key === "f" || e.key === "F") && !e.metaKey && !e.ctrlKey) { e.preventDefault(); openAppreciate(); }
     });
   }
-  function hideBoot() { const b = $("#boot"); if (!b) return; b.classList.add("is-off"); document.body.classList.remove("boot-hold"); setTimeout(() => b.style.display = "none", 600); }
+  function hideBoot() { const b = $("#boot"); if (!b) return; b.classList.add("is-off"); document.body.classList.remove("boot-hold", "booting"); setTimeout(() => b.style.display = "none", 300); }
   async function resizeImage(file, max = 1600) {
     if (!file.type.startsWith("image/")) throw new Error("不是图片");
     if (file.size > 8 * 1024 * 1024) throw new Error("图片超过 8MB");
