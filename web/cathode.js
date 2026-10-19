@@ -405,7 +405,7 @@
     strip.innerHTML = THEMES.map(t => {
       const org = orgFor(t);
       const badge = badgeFor(t, false);
-      return `<button class="swatch ${t === state.ui.theme ? "is-active" : ""}" type="button" data-theme-set="${t}" title="${org ? esc(org.name) : t}" aria-label="${org ? esc(org.name) : t}" ${org ? `style="--sw:${safeColor(org.color)}"` : ""}>${badge ? `<img class="swatch-badge" src="${esc(badge)}" alt="">` : ""}</button>`;
+      return `<button class="swatch ${badge ? "has-badge" : ""} ${t === state.ui.theme ? "is-active" : ""}" type="button" data-theme-set="${t}" title="${org ? esc(org.name) : t}" aria-label="${org ? esc(org.name) : t}" ${org ? `style="--sw:${safeColor(org.color)}"` : ""}>${badge ? `<img class="swatch-badge" src="${esc(badge)}" alt="">` : ""}</button>`;
     }).join("") + `<button class="swatch random" type="button" data-theme-set="random" title="随机配色" aria-label="随机配色"></button>`;
   }
   function setTheme(theme, save = true) {
@@ -584,7 +584,7 @@
   }
   function wallFxClass(name) {
     const fx = $("#wallFx"); if (!fx) return;
-    const host = document.querySelector(".view.is-active");
+    const host = document.querySelector(".view.is-active .view-art") || document.querySelector(".view.is-active");
     if (host && fx.parentElement !== host) host.appendChild(fx);
     clearTimeout(state.wallFxTimer);
     fx.style.display = "block";
@@ -760,6 +760,8 @@
     if (state.apprIndex < 0) state.apprIndex = pool.length - 1;
     state.apprIndex %= pool.length;
     const item = pool[state.apprIndex];
+    state.orgWallpaper = item.url;
+    applyBackgrounds();
     const token = ++state.apprToken;
     const set = () => {
       if (token !== state.apprToken) return;
@@ -820,6 +822,8 @@
     const found = url ? all.findIndex(x => x.url === url) : all.findIndex(x => x.url === state.orgWallpaper);
     state.apprIndex = found >= 0 ? found : 0;
     state.apprOpen = true;
+    const seed = url || state.orgWallpaper;
+    if (seed) { const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${seed}")`; }
     if (!state.ui.quote_enabled) { state.apprForcedQuote = true; state.ui.quote_enabled = true; startQuoteTimer(); broadcastQuote(true); }
     document.body.classList.add("appreciating");
     const el = $("#appreciate");
@@ -955,6 +959,7 @@
     setFx($("#bootSub"), pick(["radio", "type", "pulse"]), 260);
     const status = $("#bootStatus"); if (status) status.textContent = "ACQUIRING SIGNAL";
     const pct = $("#bootPct"); if (pct) pct.textContent = "00";
+    document.body.classList.add("boot-ready");
   }
 
   function runBoot() {
@@ -972,8 +977,8 @@
       v = Math.min(100, v + Math.max(1, Math.round((100 - v) / 10)));
       pct.textContent = String(v).padStart(2, "0");
       status.textContent = stages[Math.min(3, Math.floor(v / 28))];
-      if (v >= 100) { clearInterval(boot.timer); setTimeout(finish, 350); }
-    }, 95);
+      if (v >= 100) { clearInterval(boot.timer); setTimeout(finish, 160); }
+    }, 80);
     skip.onclick = finish;
     function finish() {
       clearInterval(boot.timer);
@@ -1568,7 +1573,11 @@
         const el = $("#appreciate");
         const target = apprTheme.dataset.apprTheme;
         if (el && el.classList.contains("appr-collapsed") && target === state.apprTheme) { expandApprControls(); return; }
-        if (target !== state.apprTheme) { state.apprTheme = target; state.apprIndex = 0; renderApprThemes(); apprShow(true); }
+        if (target !== state.apprTheme) {
+          state.apprTheme = target; state.apprIndex = 0;
+          if (target !== state.ui.theme) setTheme(target, true);
+          renderApprThemes(); apprShow(true);
+        }
         expandApprControls();
         return;
       }
