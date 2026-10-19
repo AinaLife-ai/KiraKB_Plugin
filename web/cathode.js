@@ -560,7 +560,8 @@
       const key = view.dataset.view;
       const art = view.querySelector(".view-art");
       const img = state.backgrounds[key] || state.orgWallpaper;
-      if (art) art.style.backgroundImage = img ? `url("${img}")` : "none";
+      // Only the active view keeps a full-screen bitmap alive.
+      if (art) art.style.backgroundImage = (key === state.view && img) ? `url("${img}")` : "none";
     });
     const ticker = $("#ticker");
     if (ticker) ticker.style.setProperty("--ticker-art", state.backgrounds.ticker ? `url("${state.backgrounds.ticker}")` : "none");
@@ -1557,6 +1558,7 @@
       state.view = view;
       $$(".channel").forEach(b => b.classList.toggle("is-active", b.dataset.view === view));
       $$(".view").forEach(v => v.classList.toggle("is-active", v.dataset.view === view));
+      applyBackgrounds();
       $("#hudKicker").textContent = `CH ${VIEW_META[view][0]} // ${VIEW_META[view][1]}`;
       $("#consoleNumber").textContent = orgFor(state.ui.theme)?.chapter || "00";
       $("#viewStack").scrollTop = 0;

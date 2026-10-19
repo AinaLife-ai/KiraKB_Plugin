@@ -2205,3 +2205,8 @@ body.perf .side-console *, body.perf .side-console { animation: none !important;
   max-width: 100%;
 }
 .zero-grid textarea { margin: 0; }
+/* 1.5.8: keep the fixed wallpaper below the rail and HUD */
+.rail { position: relative; z-index: 8; }
+.cabinet-head { position: relative; z-index: 9; }
+.hud { position: relative; z-index: 3; }
+.side-console { position: relative; z-index: 3; }
