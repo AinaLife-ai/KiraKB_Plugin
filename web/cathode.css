@@ -2037,3 +2037,66 @@ body.boot-ready #boot.is-off { visibility: hidden; }
 .appr-tools .appr-badge { background: #050407; }
 .appr-tools .appr-badge img { mix-blend-mode: normal; background: #050407; }
 .wall-fx { z-index: 0; }
+/* 1.5.3 boot must own the viewport until finish */
+body.booting .page { visibility: hidden; opacity: 0; }
+.page { transition: opacity .35s ease; }
+.boot { transition: opacity .38s var(--ease-out), visibility .38s; }
+/* 1.5.3 wallpaper switch uses the same broadcast flash language as theme switch */
+.appr-art.appr-art-flash { animation: appr-art-flash .5s steps(3) both; }
+@keyframes appr-art-flash {
+  0% { filter: brightness(1.55) contrast(1.12); }
+  38% { filter: brightness(.78) contrast(1.04); }
+  70% { filter: brightness(1.12); }
+  100% { filter: none; }
+}
+/* 1.5.3 detailed panels must not let URLs or long tokens escape their frame */
+#heroQuote, .quote-text, #inspectContent, .ticker-text, .appr-caption p,
+.org-summary, .org-lore, .org-final-story p, .org-chronicle p, .org-cases p,
+.wall-label, .anom-link, .anom-word {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.anom-link { word-break: break-all; }
+#heroQuote, #inspectContent, .appr-caption p { max-width: 100%; }
+
+/* native selects: dark option surfaces so theme labels stay legible */
+select {
+  color-scheme: dark;
+  background-color: #0a0810 !important;
+  color: var(--ink) !important;
+  border-color: var(--line-2);
+}
+select option, select optgroup {
+  background-color: #0a0810 !important;
+  color: var(--ink) !important;
+}
+
+/* right console: live per-organisation instrumentation */
+.side-console { --console-turn: 14s; --console-slit: 3.8s; --console-glow: .45; }
+.side-console .console-number {
+  animation: console-number-pulse 3.2s steps(1) infinite;
+  text-shadow: 0 0 12px rgba(var(--accent-rgb), var(--console-glow));
+}
+.side-console .console-knob { animation: console-turn var(--console-turn) linear infinite; }
+.side-console .console-knob.small { animation: console-volume var(--console-slit) ease-in-out infinite; }
+.side-console .console-slits i { animation: console-slit var(--console-slit) steps(2) infinite; }
+.side-console .console-slits i:nth-child(2) { animation-delay: -.7s; }
+.side-console .console-slits i:nth-child(3) { animation-delay: -1.3s; }
+.side-console .console-slits i:nth-child(4) { animation-delay: -1.9s; }
+.side-console .console-slits i:nth-child(5) { animation-delay: -2.5s; }
+.side-console .console-slits i:nth-child(6) { animation-delay: -3.1s; }
+.side-console .console-label { animation: console-label-flicker 4.6s steps(1) infinite; }
+.side-console[data-org="violet"] { --console-turn: 16s; --console-slit: 4.4s; }
+.side-console[data-org="pink"] { --console-turn: 9s; --console-slit: 3.2s; }
+.side-console[data-org="blue"] { --console-turn: 6.5s; --console-slit: 2.4s; }
+.side-console[data-org="amber"] { --console-turn: 12s; --console-slit: 3.8s; }
+.side-console[data-org="sg"] { --console-turn: 21s; --console-slit: 5.1s; }
+.side-console[data-org="green"] { --console-turn: 7.4s; --console-slit: 2.8s; }
+.side-console[data-org="red"] { --console-turn: 3.6s; --console-slit: 2.1s; }
+.side-console[data-org="gray"] { --console-turn: 17s; --console-slit: 6s; }
+@keyframes console-turn { to { transform: rotate(360deg); } }
+@keyframes console-volume { 0%,100% { transform: scale(.92); opacity:.7; } 50% { transform: scale(1.08); opacity:1; } }
+@keyframes console-number-pulse { 0%,90%,100% { opacity:1; } 91% { opacity:.55; } 92% { opacity:1; } 95% { opacity:.7; } }
+@keyframes console-slit { 0%,100% { width:22px; opacity:.42; } 35% { width:13px; opacity:.95; } 65% { width:28px; opacity:.7; } }
+@keyframes console-label-flicker { 0%,93%,100% { opacity:.75; } 94% { opacity:1; } 96% { opacity:.5; } }
+body.perf .side-console *, body.perf .side-console { animation: none !important; }
