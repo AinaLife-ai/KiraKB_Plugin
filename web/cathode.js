@@ -760,6 +760,8 @@
     if (state.apprIndex < 0) state.apprIndex = pool.length - 1;
     state.apprIndex %= pool.length;
     const item = pool[state.apprIndex];
+    state.orgWallpaper = item.url;
+    applyBackgrounds();
     const token = ++state.apprToken;
     const set = () => {
       if (token !== state.apprToken) return;
@@ -820,6 +822,8 @@
     const found = url ? all.findIndex(x => x.url === url) : all.findIndex(x => x.url === state.orgWallpaper);
     state.apprIndex = found >= 0 ? found : 0;
     state.apprOpen = true;
+    const seed = url || state.orgWallpaper;
+    if (seed) { const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${seed}")`; }
     if (!state.ui.quote_enabled) { state.apprForcedQuote = true; state.ui.quote_enabled = true; startQuoteTimer(); broadcastQuote(true); }
     document.body.classList.add("appreciating");
     const el = $("#appreciate");
@@ -1572,7 +1576,11 @@
         const el = $("#appreciate");
         const target = apprTheme.dataset.apprTheme;
         if (el && el.classList.contains("appr-collapsed") && target === state.apprTheme) { expandApprControls(); return; }
-        if (target !== state.apprTheme) { state.apprTheme = target; state.apprIndex = 0; renderApprThemes(); apprShow(true); }
+        if (target !== state.apprTheme) {
+          state.apprTheme = target; state.apprIndex = 0;
+          if (target !== state.ui.theme) setTheme(target, true);
+          renderApprThemes(); apprShow(true);
+        }
         expandApprControls();
         return;
       }
