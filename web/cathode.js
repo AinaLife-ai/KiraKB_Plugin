@@ -389,6 +389,8 @@
     if (bootOrg && org) bootOrg.textContent = `CHAPTER ${org.chapter} // ${org.name}`;
     const side = $(".side-console");
     if (side) side.dataset.org = theme;
+    const consoleNumber = $("#consoleNumber");
+    if (consoleNumber) consoleNumber.textContent = org?.chapter || "00";
     renderThemeBadges();
   }
 
@@ -1556,7 +1558,7 @@
       $$(".channel").forEach(b => b.classList.toggle("is-active", b.dataset.view === view));
       $$(".view").forEach(v => v.classList.toggle("is-active", v.dataset.view === view));
       $("#hudKicker").textContent = `CH ${VIEW_META[view][0]} // ${VIEW_META[view][1]}`;
-      $("#consoleNumber").textContent = VIEW_META[view][0];
+      $("#consoleNumber").textContent = orgFor(state.ui.theme)?.chapter || "00";
       $("#viewStack").scrollTop = 0;
       if (view === "settings") { loadSettings().then(renderSettings); syncUiControls(); }
       if (view === "wiki") renderWiki();
