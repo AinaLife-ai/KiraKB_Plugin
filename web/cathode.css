@@ -1585,7 +1585,7 @@ body.perf .view-art { transform: none !important; }
 .appr-bottom .ticker-line { flex: 1; min-width: 0; }
 .appr-bottom .ticker-text { font-size: clamp(13px, 1.5vw, 18px); }
 .appr-index { align-self: center; font-family: var(--mono); font-size: 8px; letter-spacing: .1em; color: rgba(244,239,230,.55); white-space: nowrap; }
-.appr-fx { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0; mix-blend-mode: screen; }
+.appr-fx { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0; mix-blend-mode: normal; }
 .appr-fx.is-on { opacity: 1; }
 .appr-fx.fx-scan { animation: wall-scan-flash .72s steps(2) both; }
 .appr-fx.fx-tear { animation: wall-tear-flash .62s steps(3) both; }
@@ -2028,3 +2028,12 @@ body.perf .signal-meter i { transition: none; }
 /* subtitle toggle must visibly reflect ON/OFF */
 .hud-btn#quoteToggleBtn[aria-pressed="false"], .hud-btn#quoteToggleBtn.is-off { color: var(--dim); border-color: var(--line); }
 .hud-btn#quoteToggleBtn[aria-pressed="false"] i, .hud-btn#quoteToggleBtn.is-off i { color: var(--dim); }
+/* 1.5.1 boot / badge / transition visibility */
+#boot { visibility: hidden; }
+body.boot-ready #boot { visibility: visible; }
+body.boot-ready #boot.is-off { visibility: hidden; }
+.swatch.has-badge { background: transparent; box-shadow: none; border-color: rgba(255,255,255,.18); }
+.swatch.has-badge .swatch-badge { mix-blend-mode: normal; }
+.appr-tools .appr-badge { background: #050407; }
+.appr-tools .appr-badge img { mix-blend-mode: normal; background: #050407; }
+.wall-fx { z-index: 2; }

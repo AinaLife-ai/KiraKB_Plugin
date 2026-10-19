@@ -405,7 +405,7 @@
     strip.innerHTML = THEMES.map(t => {
       const org = orgFor(t);
       const badge = badgeFor(t, false);
-      return `<button class="swatch ${t === state.ui.theme ? "is-active" : ""}" type="button" data-theme-set="${t}" title="${org ? esc(org.name) : t}" aria-label="${org ? esc(org.name) : t}" ${org ? `style="--sw:${safeColor(org.color)}"` : ""}>${badge ? `<img class="swatch-badge" src="${esc(badge)}" alt="">` : ""}</button>`;
+      return `<button class="swatch ${badge ? "has-badge" : ""} ${t === state.ui.theme ? "is-active" : ""}" type="button" data-theme-set="${t}" title="${org ? esc(org.name) : t}" aria-label="${org ? esc(org.name) : t}" ${org ? `style="--sw:${safeColor(org.color)}"` : ""}>${badge ? `<img class="swatch-badge" src="${esc(badge)}" alt="">` : ""}</button>`;
     }).join("") + `<button class="swatch random" type="button" data-theme-set="random" title="随机配色" aria-label="随机配色"></button>`;
   }
   function setTheme(theme, save = true) {
@@ -840,6 +840,9 @@
     if (!state.apprOpen) return;
     state.apprOpen = false;
     state.apprAuto = false;
+    state.apprTheme = state.ui.theme;
+    state.apprIndex = 0;
+    state.apprPool = [];
     document.body.classList.remove("appr-auto");
     if (state.apprForcedQuote) { state.apprForcedQuote = false; state.ui.quote_enabled = false; stopQuoteTimer(); }
     document.body.classList.remove("appreciating");
@@ -955,6 +958,7 @@
     setFx($("#bootSub"), pick(["radio", "type", "pulse"]), 260);
     const status = $("#bootStatus"); if (status) status.textContent = "ACQUIRING SIGNAL";
     const pct = $("#bootPct"); if (pct) pct.textContent = "00";
+    document.body.classList.add("boot-ready");
   }
 
   function runBoot() {
@@ -972,8 +976,8 @@
       v = Math.min(100, v + Math.max(1, Math.round((100 - v) / 10)));
       pct.textContent = String(v).padStart(2, "0");
       status.textContent = stages[Math.min(3, Math.floor(v / 28))];
-      if (v >= 100) { clearInterval(boot.timer); setTimeout(finish, 350); }
-    }, 95);
+      if (v >= 100) { clearInterval(boot.timer); setTimeout(finish, 160); }
+    }, 80);
     skip.onclick = finish;
     function finish() {
       clearInterval(boot.timer);
