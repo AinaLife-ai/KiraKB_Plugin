@@ -30,29 +30,42 @@
   /** Wrap every text node into .fx-ch spans while preserving <em>, <br>, etc. */
   function prepare(el) {
     if (el._fxOriginal == null) el._fxOriginal = el.innerHTML;
-    else el.innerHTML = el._fxOriginal;
-    const chars = [];
-    const walk = (node) => {
-      if (node.nodeType === 3) {
-        const text = node.nodeValue;
-        if (!text) return;
-        const frag = document.createDocumentFragment();
-        for (const ch of text) {
-          if (ch === "\n") { frag.appendChild(document.createElement("br")); continue; }
-          const span = document.createElement("span");
-          span.className = "fx-ch";
-          span.textContent = ch === " " ? "\u00a0" : ch;
-          span.dataset.final = span.textContent;
-          chars.push(span);
-          frag.appendChild(span);
+    // Reuse the wrapped glyph spans across replays. Rebuilding innerHTML every
+    // six seconds forced a full text layout for every animated title.
+    if (!el._fxPrepared) {
+      el.innerHTML = el._fxOriginal;
+      const walk = (node) => {
+        if (node.nodeType === 3) {
+          const text = node.nodeValue;
+          if (!text) return;
+          const frag = document.createDocumentFragment();
+          for (const ch of text) {
+            if (ch === "\n") { frag.appendChild(document.createElement("br")); continue; }
+            const span = document.createElement("span");
+            span.className = "fx-ch";
+            span.textContent = ch === " " ? "\u00a0" : ch;
+            span.dataset.final = span.textContent;
+            frag.appendChild(span);
+          }
+          node.parentNode.replaceChild(frag, node);
+        } else if (node.nodeType === 1) {
+          if (node.tagName === "BR" || node.classList.contains("fx-ch")) return;
+          [...node.childNodes].forEach(walk);
         }
-        node.parentNode.replaceChild(frag, node);
-      } else if (node.nodeType === 1) {
-        if (node.tagName === "BR" || node.classList.contains("fx-ch")) return;
-        [...node.childNodes].forEach(walk);
-      }
-    };
-    [...el.childNodes].forEach(walk);
+      };
+      [...el.childNodes].forEach(walk);
+      el._fxPrepared = true;
+    } else {
+      // A previous typewriter effect may have left a caret behind.
+      el.querySelectorAll(".fx-caret").forEach(node => node.remove());
+    }
+    const chars = [...el.querySelectorAll(".fx-ch")];
+    chars.forEach(c => {
+      c.className = "fx-ch";
+      c.style.animationDelay = "";
+      c.style.textShadow = "";
+      c.textContent = c.dataset.final;
+    });
     return chars;
   }
 
@@ -81,6 +94,7 @@
     resetClasses(el);
     if (!conf.enabled) {
       if (el._fxOriginal != null) el.innerHTML = el._fxOriginal;
+      el._fxPrepared = false;
       return null;
     }
     const effect = choose(el, requested);
@@ -136,6 +150,7 @@
     el.innerHTML = "";
     el.textContent = text;
     el._fxOriginal = text;
+    el._fxPrepared = false;
     return play(el, requested, opts);
   }
 
@@ -145,11 +160,12 @@
       if (!el.dataset.fx) el.dataset.fx = "mix";
       later(el, () => play(el, el.dataset.fx), i * 60);
     });
+    // Panel headings keep their cheap CSS scan line; do not wrap every glyph
+    // and run a per-character animation for all of them on every view switch.
     root.querySelectorAll(".panel-head h2, .version-model, .version-card h3").forEach((el, i) => {
       el.classList.remove("fx-heading");
       void el.offsetWidth;
       el.classList.add("fx-heading");
-      later(el, () => play(el, ["scan", "pulse", "radio"][i % 3]), 40 + i * 35);
     });
   }
 
@@ -174,15 +190,11 @@
   }
 
   function loopTick() {
-    if (!conf.enabled || !conf.loop || document.hidden) return;
+    if (!conf.enabled || !conf.loop || document.hidden || document.body.classList.contains("appreciating")) return;
     const root = document.querySelector(".view.is-active");
     if (!root) return;
-    const titles = [...root.querySelectorAll(
-      ".hero-copy h1, .page-title h1, .panel-head h2, .version-model"
-    )];
-    const extras = [...root.querySelectorAll(
-      ".entry-main b, .inspect-body h3, .stat-card b, .chapter-label, .eyebrow, #heroQuote"
-    )];
+    const titles = [...root.querySelectorAll(".hero-copy h1, .page-title h1")];
+    const extras = [...root.querySelectorAll(".chapter-label, .eyebrow, #heroQuote")];
     const brand = [document.querySelector("#railKb"), document.querySelector("#railTitle"), document.querySelector("#railAlias")];
     const pool = (Math.random() < .72 && titles.length ? titles : titles.concat(extras))
       .concat(brand)

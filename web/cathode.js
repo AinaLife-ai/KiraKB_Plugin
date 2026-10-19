@@ -560,7 +560,9 @@
       const key = view.dataset.view;
       const art = view.querySelector(".view-art");
       const img = state.backgrounds[key] || state.orgWallpaper;
-      if (art) art.style.backgroundImage = img ? `url("${img}")` : "none";
+      // Keep exactly one full-screen bitmap alive. Hidden views used to retain
+      // five composited covers at once, which is pure GPU memory pressure.
+      if (art) art.style.backgroundImage = (key === state.view && img) ? `url("${img}")` : "none";
     });
     const ticker = $("#ticker");
     if (ticker) ticker.style.setProperty("--ticker-art", state.backgrounds.ticker ? `url("${state.backgrounds.ticker}")` : "none");
@@ -624,17 +626,30 @@
   function applyParallax() {
     const enabled = !!state.ui.wall_parallax && !state.ui.performance && !reduced;
     const x = enabled ? state.px : 0, y = enabled ? state.py : 0;
-    document.documentElement.style.setProperty("--wall-px", x.toFixed(2) + "px");
-    document.documentElement.style.setProperty("--wall-py", y.toFixed(2) + "px");
-    document.documentElement.style.setProperty("--wall-scale", (1.035 + (enabled ? state.breath : 0)).toFixed(4));
-    document.documentElement.style.setProperty("--wall-scale-appr", (1.035 + (enabled ? state.breathAppr : 0)).toFixed(4));
+    const scale = 1.035 + (enabled ? state.breath : 0);
+    const tf = `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) scale(${scale.toFixed(4)})`;
+    // Write transforms only to the two visible wallpaper layers. Touching
+    // documentElement CSS vars every frame invalidates the whole tree.
+    if (state.apprOpen) {
+      const appr = $("#apprArt");
+      if (appr) appr.style.transform = tf;
+    } else {
+      const art = document.querySelector(".view.is-active .view-art");
+      if (art) art.style.transform = tf;
+    }
   }
   function initParallax() {
     if (state.parallaxBound) return;
     state.parallaxBound = true;
     let t0 = performance.now();
+    let lastPaint = 0;
     const tick = (now) => {
       if (typeof now !== "number") now = performance.now();
+      if (document.hidden) { requestAnimationFrame(tick); return; }
+      // The wallpaper is a slow ambient layer. 30 Hz is visually identical
+      // here and leaves the main thread free for 60/120 Hz UI compositing.
+      if (now - lastPaint < 32) { requestAnimationFrame(tick); return; }
+      lastPaint = now;
       const sec = (now - t0) / 1000;
       const dx = Math.sin(sec / 11.3) * 24 + Math.sin(sec / 4.7) * 8;
       const dy = Math.cos(sec / 13.7) * 18 + Math.sin(sec / 6.1) * 6;
@@ -1557,6 +1572,8 @@
       state.view = view;
       $$(".channel").forEach(b => b.classList.toggle("is-active", b.dataset.view === view));
       $$(".view").forEach(v => v.classList.toggle("is-active", v.dataset.view === view));
+      applyBackgrounds();
+      applyParallax();
       $("#hudKicker").textContent = `CH ${VIEW_META[view][0]} // ${VIEW_META[view][1]}`;
       $("#consoleNumber").textContent = orgFor(state.ui.theme)?.chapter || "00";
       $("#viewStack").scrollTop = 0;

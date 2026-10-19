@@ -2214,3 +2214,38 @@ body.perf .side-console *, body.perf .side-console { animation: none !important;
 .cabinet-head { position: relative; z-index: 9; }
 .hud { position: relative; z-index: 3; }
 .side-console { position: relative; z-index: 3; }
+/* 1.5.8 performance: kill full-screen blend/filter compositing and idle filter churn */
+.screen::before, .ambient::after { mix-blend-mode: normal; }
+.view-art::before, .appr-art::before {
+  animation: none !important;
+  mix-blend-mode: normal;
+  opacity: .38;
+}
+body.appreciating .page { visibility: hidden; }
+body.appreciating .page * { animation-play-state: paused !important; }
+
+.appr-tools button { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: rgba(0,0,0,.46); }
+.appr-caption { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: rgba(0,0,0,.4); }
+.appr-bottom { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: linear-gradient(180deg, rgba(0,0,0,.32), rgba(0,0,0,.86)); }
+.appreciate.appr-collapsed .appr-badge.is-on { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.modal-backdrop { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+
+.fx-title, .fx-heading, .fx-ch, .fx-pulse-in, .fx-scan-in, .fx-char-in,
+.brand-breathe .rail-kb, .fx-title.fx-idle-pulse { filter: none !important; }
+
+@keyframes rail-badge-idle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(2deg) scale(1.06); }
+}
+
+.console-slits i { width: 28px; transform-origin: center; }
+@keyframes console-slit {
+  0%, 100% { transform: scaleX(.78); opacity: .42; }
+  35% { transform: scaleX(.46); opacity: .95; }
+  65% { transform: scaleX(1); opacity: .7; }
+}
+/* 1.5.8 pause animation clocks for views/overlays that cannot be seen */
+.view:not(.is-active) *, .appreciate:not(.is-open) *, #boot.is-off * { animation-play-state: paused !important; }
+/* 1.5.8: anomaly words are decorated statically; only the timed burst wins */
+.anom-word, .anom-link { animation: none; }
+.screen-glass { display: none; }
