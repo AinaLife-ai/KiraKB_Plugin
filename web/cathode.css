@@ -2168,3 +2168,30 @@ body.perf .side-console *, body.perf .side-console { animation: none !important;
   -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 70%, transparent 100%);
   mask-image: radial-gradient(circle at 50% 50%, #000 70%, transparent 100%);
 }
+/* 1.5.5: normal UI uses the same full-viewport wallpaper box as appreciation */
+.view-art { position: fixed; inset: -10%; }
+@keyframes view-in { from { opacity: 0; } to { opacity: 1; } }
+@media (max-width: 760px) {
+  .view-art, .appr-art { inset: -10%; }
+}
+
+/* 1.5.5: the zero-chapter enable switch must size to its label, not the 34px track */
+.zero-preview { flex-wrap: wrap; }
+.zero-preview > div { min-width: 0; flex: 1 1 auto; }
+.zero-preview .switch { width: auto; height: auto; flex: 0 0 auto; margin-left: auto; }
+
+/* 1.5.5: random theme picker reads as a colour ring, not a bright filled chip */
+.swatch.random {
+  opacity: .78;
+  background: conic-gradient(from 20deg, #b58cff, #ff8fcf, #66c7ff, #ffb547, #e0a340, #8bd46f, #ff6b78, #b58cff);
+  box-shadow: inset 0 0 0 2px rgba(8,6,13,.78), 0 0 0 1px rgba(255,255,255,.1);
+}
+.swatch.random::before {
+  content: ""; position: absolute; inset: 2px; border-radius: 50%;
+  background: rgba(8,6,13,.82);
+}
+.swatch.random::after {
+  content: "?"; position: absolute; inset: 0; display: grid; place-items: center;
+  color: rgba(244,239,230,.78); font: 700 7px/1 var(--mono); text-shadow: 0 1px 2px #000;
+}
+.swatch.random:hover { opacity: 1; }
