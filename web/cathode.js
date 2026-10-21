@@ -974,21 +974,37 @@
         if (state.statRelayHover === card) state.statRelayHover = null;
       });
     });
+    const variants = ["", "is-relay-alt", "is-relay-burst"];
     const tick = () => {
       clearTimeout(state.statRelayTimer);
-      state.statRelayTimer = setTimeout(tick, 1500 + Math.random() * 1200);
+      state.statRelayTimer = setTimeout(tick, 1100 + Math.random() * 1500);
       if (document.hidden || state.apprOpen || state.sixEggOpen || state.statRelayHover) return;
       const live = cards.filter(c => !c.classList.contains("is-hover"));
       if (!live.length) return;
+      // Randomly vary the beat: mostly one handoff, sometimes a quick
+      // two-step handoff; never all four at once.
       let pick = live[Math.floor(Math.random() * live.length)];
       if (live.length > 1 && cards[state.statRelayIndex] === pick) {
         pick = live[(live.indexOf(pick) + 1) % live.length];
       }
-      cards.forEach(c => c.classList.remove("is-relay"));
+      const variant = variants[Math.floor(Math.random() * variants.length)];
+      const duration = 820 + Math.random() * 520;
+      cards.forEach(c => c.classList.remove("is-relay", "is-relay-alt", "is-relay-burst"));
       state.statRelayIndex = cards.indexOf(pick);
-      pick.classList.add("is-relay");
+      pick.classList.add("is-relay", variant);
       clearTimeout(pick._relayOff);
-      pick._relayOff = setTimeout(() => pick.classList.remove("is-relay"), 1150);
+      pick._relayOff = setTimeout(() => pick.classList.remove("is-relay", "is-relay-alt", "is-relay-burst"), duration);
+      if (Math.random() < .34 && live.length > 1) {
+        const next = live[(live.indexOf(pick) + 1 + Math.floor(Math.random() * (live.length - 1))) % live.length];
+        setTimeout(() => {
+          if (state.apprOpen || state.sixEggOpen || state.statRelayHover) return;
+          pick.classList.remove("is-relay", "is-relay-alt", "is-relay-burst");
+          state.statRelayIndex = cards.indexOf(next);
+          next.classList.add("is-relay", variants[Math.floor(Math.random() * variants.length)]);
+          clearTimeout(next._relayOff);
+          next._relayOff = setTimeout(() => next.classList.remove("is-relay", "is-relay-alt", "is-relay-burst"), duration);
+        }, 360);
+      }
     };
     setTimeout(tick, 900);
   }
