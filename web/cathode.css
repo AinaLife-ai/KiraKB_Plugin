@@ -2676,3 +2676,30 @@ body[data-theme="gray"] { --scan-anim: nav-gray-drift; }
 }
 body.perf .stat-card[data-num-fx] #statEntries, body.perf .stat-card[data-num-fx] #statVersions,
 body.perf .stat-card[data-num-fx] #statDimension, body.perf .stat-card[data-num-fx] #statRecall { animation: none !important; }
+/* 1.5.14 — entry index only reacts on hover/selection */
+.entry-row { animation: none !important; }
+.entry-row::after { animation: none !important; }
+.entry-row:not(:hover):not(.is-selected) .entry-no,
+.entry-row:not(:hover):not(.is-selected) .entry-main small,
+.entry-row:not(:hover):not(.is-selected) .entry-kb,
+.entry-row:not(:hover):not(.is-selected) .entry-status,
+.entry-row:not(:hover):not(.is-selected) .entry-time,
+.entry-row:not(:hover):not(.is-selected) .entry-main b { animation: none !important; }
+.entry-row:hover .entry-no, .entry-row.is-selected .entry-no,
+.entry-row:hover .entry-main small, .entry-row.is-selected .entry-main small,
+.entry-row:hover .entry-status, .entry-row.is-selected .entry-status,
+.entry-row:hover .entry-time, .entry-row.is-selected .entry-time,
+.entry-row:hover .entry-kb, .entry-row.is-selected .entry-kb { animation: entry-row-number 1.2s steps(1) infinite !important; }
+.entry-row:hover::after, .entry-row.is-selected::after { animation: entry-row-scan 1.8s linear infinite !important; }
+.entry-row.is-selected { animation: selected-scan 2.6s ease-in-out infinite !important; }
+@keyframes entry-row-number {
+  0%, 100% { opacity: 1; transform: none; }
+  48% { opacity: .62; }
+  50% { opacity: 1; transform: translateX(-1px); }
+  52% { opacity: .78; transform: none; }
+}
+@keyframes entry-row-scan { from { background-position: -120% 0; } to { background-position: 120% 0; } }
+body.perf .entry-row, body.perf .entry-row::after, body.perf .entry-row * { animation: none !important; }
+/* 1.5.14 — appreciation wallpapers crossfade instead of flashing */
+.appr-art-next { opacity: 0; transition: opacity .68s ease; }
+.appr-art-next.is-on { opacity: 1; }
