@@ -55,6 +55,7 @@
     zero: (window.linjiZero ? window.linjiZero() : null),
     zeroRandomPick: false, wallVaultTheme: "violet",
     sixSevenSwapped: false, sixEggOpen: false,
+    statRelayTimer: null, statRelayHover: null, statRelayIndex: -1,
     sixEggToken: 0, sixEggPage: 0, sixEggTyping: false, sixEggReady: false,
     sixEggChoiceShown: false, sixEggResolution: false, sixEggBusy: false, sixEggSkip: false,
     apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null,
@@ -957,6 +958,41 @@
     el.classList.remove("appr-collapsed");
     scheduleApprCollapse(state.apprControlsDelay);
   }
+  function initStatRelay() {
+    const row = document.querySelector(".stat-row");
+    if (!row || row._relayBound) return;
+    row._relayBound = true;
+    const cards = [...row.querySelectorAll(".stat-card")];
+    cards.forEach(card => {
+      card.addEventListener("pointerenter", () => {
+        state.statRelayHover = card;
+        cards.forEach(c => c.classList.remove("is-relay"));
+        card.classList.add("is-hover");
+      });
+      card.addEventListener("pointerleave", () => {
+        card.classList.remove("is-hover");
+        if (state.statRelayHover === card) state.statRelayHover = null;
+      });
+    });
+    const tick = () => {
+      clearTimeout(state.statRelayTimer);
+      state.statRelayTimer = setTimeout(tick, 1500 + Math.random() * 1200);
+      if (document.hidden || state.apprOpen || state.sixEggOpen || state.statRelayHover) return;
+      const live = cards.filter(c => !c.classList.contains("is-hover"));
+      if (!live.length) return;
+      let pick = live[Math.floor(Math.random() * live.length)];
+      if (live.length > 1 && cards[state.statRelayIndex] === pick) {
+        pick = live[(live.indexOf(pick) + 1) % live.length];
+      }
+      cards.forEach(c => c.classList.remove("is-relay"));
+      state.statRelayIndex = cards.indexOf(pick);
+      pick.classList.add("is-relay");
+      clearTimeout(pick._relayOff);
+      pick._relayOff = setTimeout(() => pick.classList.remove("is-relay"), 1150);
+    };
+    setTimeout(tick, 900);
+  }
+
   function initApprControlHover() {
     const tools = $(".appr-tools"), head = $(".appr-head");
     if (!tools || tools._hoverBound) return;
@@ -2172,6 +2208,7 @@
     reorderThemeOptions();
     bind();
     initApprControlHover();
+    initStatRelay();
     renderThemeStrip();
     document.documentElement.setAttribute("data-theme", "dark");
     document.body.dataset.theme = "violet";

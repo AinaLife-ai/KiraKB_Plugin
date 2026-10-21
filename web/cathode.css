@@ -2573,3 +2573,55 @@ body[data-theme="gray"] #statEntries, body[data-theme="gray"] #statVersions, bod
 @keyframes num-gray { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
 body.perf .stat-card, body.perf .version-card, body.perf .entry-row,
 body.perf #statEntries, body.perf #statVersions, body.perf #statRecall, body.perf .entry-no, body.perf .entry-main small, body.perf .version-card .version-counts b { animation: none !important; }
+/* 1.5.13 pass 6 — relay the four catalogue gauges, react on hover */
+body[data-theme="violet"] { --frame-anim: frame-violet; --num-anim: num-violet; }
+body[data-theme="pink"] { --frame-anim: frame-pink; --num-anim: num-pink; }
+body[data-theme="blue"] { --frame-anim: frame-blue; --num-anim: num-blue; }
+body[data-theme="amber"] { --frame-anim: frame-amber; --num-anim: num-amber; }
+body[data-theme="sg"] { --frame-anim: frame-sg; --num-anim: num-sg; }
+body[data-theme="green"] { --frame-anim: frame-green; --num-anim: num-green; }
+body[data-theme="red"] { --frame-anim: frame-red; --num-anim: num-red; }
+body[data-theme="gray"] { --frame-anim: frame-gray; --num-anim: num-gray; }
+.stat-row .stat-card,
+.stat-row .stat-card::after,
+.stat-row .stat-card #statEntries,
+.stat-row .stat-card #statVersions,
+.stat-row .stat-card #statDimension,
+.stat-row .stat-card #statRecall { animation: none !important; }
+.stat-row .stat-card::after { opacity: .16; }
+.stat-row .stat-card.is-relay,
+.stat-row .stat-card.is-hover { animation: var(--frame-anim) 1.1s steps(1) both !important; }
+.stat-row .stat-card.is-relay::after,
+.stat-row .stat-card.is-hover::after { animation: nav-sweep 1.1s linear both !important; opacity: .52; }
+.stat-row .stat-card.is-relay #statEntries,
+.stat-row .stat-card.is-relay #statVersions,
+.stat-row .stat-card.is-relay #statDimension,
+.stat-row .stat-card.is-relay #statRecall,
+.stat-row .stat-card.is-hover #statEntries,
+.stat-row .stat-card.is-hover #statVersions,
+.stat-row .stat-card.is-hover #statDimension,
+.stat-row .stat-card.is-hover #statRecall { animation: var(--num-anim) 1.1s steps(1) both !important; }
+.stat-row .stat-card { transition: transform .18s ease, border-color .18s ease, filter .18s ease; }
+.stat-row .stat-card.is-hover { transform: translateY(-2px); border-color: var(--accent); filter: brightness(1.07); }
+.stat-row .stat-card.is-hover b { color: var(--accent); text-shadow: 0 0 14px rgba(var(--accent-rgb), .45); }
+body.perf .stat-row .stat-card, body.perf .stat-row .stat-card * { animation: none !important; }
+.stat-row .stat-card.is-hover b { animation-duration: .62s !important; }
+.stat-row .stat-card.is-hover::after { animation-duration: .62s !important; }
+/* 1.5.13 pass 7 — the four gauges/version/toggle must not share the same sweep */
+body[data-theme="violet"] .stat-card::after, body[data-theme="violet"] .version-card::after, body[data-theme="violet"] .toggle-big::after { background: linear-gradient(180deg, transparent, rgba(var(--accent-rgb), .2), transparent); animation-name: nav-violet-fall; }
+body[data-theme="pink"] .stat-card::after, body[data-theme="pink"] .version-card::after, body[data-theme="pink"] .toggle-big::after { background: radial-gradient(circle at 20% 50%, rgba(var(--accent-rgb), .22), transparent 58%); animation-name: nav-pink-heart; }
+body[data-theme="blue"] .stat-card::after, body[data-theme="blue"] .version-card::after, body[data-theme="blue"] .toggle-big::after { background: linear-gradient(115deg, transparent 32%, rgba(var(--accent-rgb), .18), transparent 58%); animation-name: nav-blue-scan; }
+body[data-theme="amber"] .stat-card::after, body[data-theme="amber"] .version-card::after, body[data-theme="amber"] .toggle-big::after { background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), .2), transparent); animation-name: nav-amber-ember; }
+body[data-theme="sg"] .stat-card::after, body[data-theme="sg"] .version-card::after, body[data-theme="sg"] .toggle-big::after { background: conic-gradient(from 0deg, transparent 0 82%, rgba(var(--accent-rgb), .2) 94%, transparent 100%); animation-name: nav-sg-clock; }
+body[data-theme="green"] .stat-card::after, body[data-theme="green"] .version-card::after, body[data-theme="green"] .toggle-big::after { background: linear-gradient(90deg, transparent 18%, rgba(var(--accent-rgb), .2), transparent 42%); animation-name: nav-green-sweep; }
+body[data-theme="red"] .stat-card::after, body[data-theme="red"] .version-card::after, body[data-theme="red"] .toggle-big::after { background: repeating-linear-gradient(135deg, transparent 0 9px, rgba(var(--accent-rgb), .16) 9px 10px); animation-name: nav-red-alert; }
+body[data-theme="gray"] .stat-card::after, body[data-theme="gray"] .version-card::after, body[data-theme="gray"] .toggle-big::after { background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), .12), transparent); animation-name: nav-gray-drift; }
+body[data-theme="violet"] { --scan-anim: nav-violet-fall; }
+body[data-theme="pink"] { --scan-anim: nav-pink-heart; }
+body[data-theme="blue"] { --scan-anim: nav-blue-scan; }
+body[data-theme="amber"] { --scan-anim: nav-amber-ember; }
+body[data-theme="sg"] { --scan-anim: nav-sg-clock; }
+body[data-theme="green"] { --scan-anim: nav-green-sweep; }
+body[data-theme="red"] { --scan-anim: nav-red-alert; }
+body[data-theme="gray"] { --scan-anim: nav-gray-drift; }
+.stat-row .stat-card.is-relay::after, .stat-row .stat-card.is-hover::after { animation: var(--scan-anim, nav-sweep) 1.1s linear both !important; }
