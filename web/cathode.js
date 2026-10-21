@@ -1346,7 +1346,7 @@
       const enabled = orgEnabled(theme);
       return `<article class="org-card" id="org-${theme}" style="--org:${safeColor(org.color)}">
         <div class="org-top">
-          <img class="org-badge" src="${esc(badge)}" alt="${esc(org.name)}">
+          <img class="org-badge${theme === "green" || theme === "red" ? " is-six-egg" : ""}" src="${esc(badge)}" alt="${esc(org.name)}"${theme === "green" || theme === "red" ? ' data-six-egg-badge="1" title="06 / 07 · 异常编号"' : ""}>
           <div class="org-title">
             <div class="org-chapter">CHAPTER ${org.chapter} // ${esc(org.en)}</div>
             <h3>${esc(org.name)}</h3>
@@ -1844,6 +1844,8 @@
     document.addEventListener("click", async (e) => {
       const anomalyNumber = e.target.closest("#consoleNumber");
       if (anomalyNumber && !state.sixEggOpen && /^(06|07)$/.test(anomalyNumber.textContent.trim())) { openSixEgg(); return; }
+      const anomalyBadge = e.target.closest("[data-six-egg-badge]");
+      if (anomalyBadge && !state.sixEggOpen) { openSixEgg(); return; }
       if (state.sixEggOpen) {
         if (e.target.closest("#sixEggClose")) { closeSixEgg(); return; }
         const choice = e.target.closest("[data-six-choice]");

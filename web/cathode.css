@@ -2462,3 +2462,8 @@ body.perf .cabinet-serial { animation: none !important; }
 /* keep random flicker glyphs visible after their entrance */
 @keyframes six-glyph-flicker { 0%, 35%, 70% { opacity: 0; } 20%, 55%, 100% { opacity: 1; } }
 @keyframes six-choice-flicker { 0%, 30%, 62% { opacity: 0; } 15%, 45%, 100% { opacity: 1; } }
+/* 1.5.13 — portable 06/07 trigger on wiki badges */
+.org-badge.is-six-egg { cursor: pointer; box-shadow: 0 0 0 1px rgba(var(--accent-rgb), .22), 0 0 18px rgba(var(--accent-rgb), .16); animation: six-badge-breathe 3.6s ease-in-out infinite; }
+.org-badge.is-six-egg:hover { box-shadow: 0 0 0 1px var(--accent), 0 0 24px rgba(var(--accent-rgb), .4); }
+@keyframes six-badge-breathe { 0%,100% { opacity: .82; } 50% { opacity: 1; } }
+body.perf .org-badge.is-six-egg { animation: none !important; }
