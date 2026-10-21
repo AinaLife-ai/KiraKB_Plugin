@@ -455,6 +455,7 @@
   function applyUi() {
     setTheme(state.ui.theme, false);
     applyCrt(state.ui.crt);
+    applyQuoteEnabled();
     applyPerformance();
     if (window.KBTextFX) {
       window.KBTextFX.setConfig({
@@ -468,7 +469,7 @@
     startBrandModes();
     startWallRotation();
     startSignalMeter();
-    if (state.ui.quote_enabled) startQuoteTimer(); else stopQuoteTimer();
+    startQuoteTimer();
   }
   function queueUiSave() {
     clearTimeout(state.uiSaveTimer);
@@ -506,6 +507,12 @@
     b.setAttribute("aria-pressed", String(on));
     b.classList.toggle("is-off", !on);
     const i = b.querySelector("i"); if (i) i.textContent = on ? "ON" : "OFF";
+  }
+  function applyQuoteEnabled() {
+    const on = !!state.ui.quote_enabled;
+    document.body.classList.toggle("quote-off", !on);
+    const ticker = $("#ticker");
+    if (ticker) ticker.classList.toggle("is-hidden", !on);
   }
   function syncUiControls() {
     const set = (id, v) => { const el = $("#" + id); if (el) el.value = v; };
@@ -862,7 +869,6 @@
     state.apprOpen = true;
     const seed = url || state.orgWallpaper;
     if (seed) { const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${seed}")`; }
-    if (!state.ui.quote_enabled) { state.apprForcedQuote = true; state.ui.quote_enabled = true; startQuoteTimer(); broadcastQuote(true); }
     document.body.classList.add("appreciating");
     const el = $("#appreciate");
     if (el) { el.hidden = false; el.classList.remove("is-closing"); el.classList.add("is-open"); el.setAttribute("aria-hidden", "false"); }
@@ -1575,7 +1581,9 @@
     } finally { state.quoteBusy = false; }
   }
   function startQuoteTimer() {
-    stopQuoteTimer(); if (!state.ui.quote_enabled) return;
+    stopQuoteTimer();
+    // Auto-extraction is independent of the subtitle bar's visibility.
+    // The ticker may be display:none, but the quote card should still update.
     state.quoteTimer = setInterval(() => { if (!document.hidden) broadcastQuote(); }, Math.max(4, state.ui.quote_interval) * 1000);
   }
   function stopQuoteTimer() { if (state.quoteTimer) clearInterval(state.quoteTimer); state.quoteTimer = null; }
@@ -1683,9 +1691,10 @@
       if (e.target.closest("#drawQuoteBtn") || e.target.closest("#tickerNext")) return broadcastQuote(true);
       if (e.target.closest("#quoteToggleBtn")) {
         state.ui.quote_enabled = !state.ui.quote_enabled;
+        applyQuoteEnabled();
         syncQuoteButton();
-        if (state.ui.quote_enabled) { startQuoteTimer(); broadcastQuote(true); }
-        else stopQuoteTimer();
+        startQuoteTimer();
+        if (state.ui.quote_enabled) broadcastQuote(true);
         syncUiControls(); queueUiSave();
         return;
       }
@@ -1819,7 +1828,7 @@
         startQuoteTimer(); queueUiSave();
       }
     });
-    document.addEventListener("visibilitychange", () => { if (document.hidden) { stopQuoteTimer(); clearTimeout(state.idleTimer); state.idleTimer = null; } else { if (state.ui.quote_enabled) startQuoteTimer(); armIdle(true); } });
+    document.addEventListener("visibilitychange", () => { if (document.hidden) { stopQuoteTimer(); clearTimeout(state.idleTimer); state.idleTimer = null; } else { startQuoteTimer(); armIdle(true); } });
     ["pointerdown","keydown","wheel","touchstart"].forEach(evt => window.addEventListener(evt, (e) => {
       if (state.apprOpen) {
         const inside = e.target && e.target.closest && e.target.closest("#appreciate .appr-tools, #appreciate .appr-bottom");
@@ -1945,7 +1954,8 @@
     } catch (e) { toast("加载失败：" + e.message, "err"); }
     initTextFx();
     startBrandModes();
-    if (state.ui.quote_enabled) { broadcastQuote(true); startQuoteTimer(); }
+    broadcastQuote(true);
+    startQuoteTimer();
     armIdle(true);
     startQuoteFxLoop();
     setInterval(() => { if (!document.hidden) { loadTasks().then(renderTasks).catch(() => {}); } }, 5000);
