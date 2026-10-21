@@ -58,7 +58,7 @@
     statRelayTimer: null, statRelayHover: null, statRelayIndex: -1,
     sixEggToken: 0, sixEggPage: 0, sixEggTyping: false, sixEggReady: false,
     sixEggChoiceShown: false, sixEggResolution: false, sixEggBusy: false, sixEggSkip: false,
-    apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null, apprArtTimer: null,
+    apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null, apprArtTimer: null, apprFxTimer: null,
     apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null, lastArm: 0, quoteFxTimer: null, apprTextTimer: null, apprControlsTimer: null, signalTimer: null,
     apprTitleAccentTimer: null, apprTitleAccentLoopTimer: null,
     parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0, aimX: 0, aimY: 0, breath: 0, breathAppr: 0
@@ -1146,6 +1146,16 @@
       apprTextIntro();
     };
     if (!animate || state.ui.performance || reduced) { set(); setApprArt(item.url, true); return; }
+    const fx = $("#apprFx");
+    if (fx) {
+      clearTimeout(state.apprFxTimer);
+      fx.className = "appr-fx";
+      void fx.offsetWidth;
+      fx.classList.add("is-on", ["fx-scan", "fx-tear", "fx-iris", "fx-shutter"][Math.floor(Math.random() * 4)]);
+      state.apprFxTimer = setTimeout(() => {
+        if (token === state.apprToken) fx.className = "appr-fx";
+      }, 850);
+    }
     setTimeout(set, 170);
     const applyArt = () => {
       if (token === state.apprToken && state.apprOpen) setApprArt(item.url);
@@ -1213,6 +1223,8 @@
     document.body.classList.remove("appreciating");
     clearInterval(state.apprTimer);
     clearTimeout(state.apprArtTimer);
+    clearTimeout(state.apprFxTimer);
+    const apprFx = $("#apprFx"); if (apprFx) apprFx.className = "appr-fx";
     $("#apprArtNext")?.classList.remove("is-on");
     clearInterval(state.apprTextTimer);
     clearInterval(state.apprTitleAccentLoopTimer);
