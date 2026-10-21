@@ -2522,3 +2522,54 @@ body.perf .org-badge.is-six-egg { animation: none !important; }
 body.perf #statEntries, body.perf #statVersions, body.perf #statRecall, body.perf .version-counts b,
 body.perf .entry-no, body.perf .entry-main small, body.perf .entry-status, body.perf .entry-time, body.perf .entry-kb { animation: none !important; }
 .version-card .version-counts b { animation: data-digit-glitch var(--stat-speed, 8s) steps(1) infinite; }
+/* 1.5.13 pass 5 — unmistakably different organisation frames and numerals */
+/* static frame motifs */
+.stat-card, .entry-row { background-image: var(--org-frame, none); }
+body[data-theme="violet"] { --org-frame: linear-gradient(90deg, rgba(181,140,255,.10) 0 1px, transparent 1px calc(100% - 1px), rgba(181,140,255,.10) calc(100% - 1px)); }
+body[data-theme="pink"] { --org-frame: radial-gradient(circle at 10% 50%, rgba(255,143,207,.10) 0 2px, transparent 2px), radial-gradient(circle at 90% 50%, rgba(255,143,207,.08) 0 2px, transparent 2px); }
+body[data-theme="blue"] { --org-frame: repeating-linear-gradient(115deg, transparent 0 13px, rgba(102,199,255,.07) 13px 14px); }
+body[data-theme="amber"] { --org-frame: linear-gradient(0deg, rgba(255,181,71,.12), transparent 18%, transparent 82%, rgba(255,181,71,.06)); }
+body[data-theme="sg"] { --org-frame: repeating-linear-gradient(90deg, transparent 0 10px, rgba(224,163,64,.08) 10px 11px); }
+body[data-theme="green"] { --org-frame: radial-gradient(ellipse at 100% 0%, rgba(139,212,111,.10), transparent 52%); }
+body[data-theme="red"] { --org-frame: repeating-linear-gradient(135deg, transparent 0 8px, rgba(255,107,120,.07) 8px 9px); }
+body[data-theme="gray"] { --org-frame: repeating-linear-gradient(90deg, transparent 0 14px, rgba(199,198,189,.06) 14px 15px); }
+
+/* frame motion languages */
+body[data-theme="violet"] .stat-card, body[data-theme="violet"] .version-card, body[data-theme="violet"] .entry-row { animation: frame-violet 7.2s steps(1) infinite; }
+body[data-theme="pink"] .stat-card, body[data-theme="pink"] .version-card, body[data-theme="pink"] .entry-row { animation: frame-pink 3.6s ease-in-out infinite; }
+body[data-theme="blue"] .stat-card, body[data-theme="blue"] .version-card, body[data-theme="blue"] .entry-row { animation: frame-blue 4.5s steps(3) infinite; }
+body[data-theme="amber"] .stat-card, body[data-theme="amber"] .version-card, body[data-theme="amber"] .entry-row { animation: frame-amber 4.8s ease-in-out infinite; }
+body[data-theme="sg"] .stat-card, body[data-theme="sg"] .version-card, body[data-theme="sg"] .entry-row { animation: frame-sg 9s steps(1) infinite; }
+body[data-theme="green"] .stat-card, body[data-theme="green"] .version-card, body[data-theme="green"] .entry-row { animation: frame-green 5.4s ease-in-out infinite; }
+body[data-theme="red"] .stat-card, body[data-theme="red"] .version-card, body[data-theme="red"] .entry-row { animation: frame-red 2.2s steps(2) infinite; }
+body[data-theme="gray"] .stat-card, body[data-theme="gray"] .version-card, body[data-theme="gray"] .entry-row { animation: frame-gray 12s ease-in-out infinite; }
+
+/* numeral motion languages */
+body[data-theme="violet"] #statEntries, body[data-theme="violet"] #statVersions, body[data-theme="violet"] #statRecall, body[data-theme="violet"] .entry-no, body[data-theme="violet"] .entry-main small, body[data-theme="violet"] .version-card .version-counts b { animation-name: num-violet; }
+body[data-theme="pink"] #statEntries, body[data-theme="pink"] #statVersions, body[data-theme="pink"] #statRecall, body[data-theme="pink"] .entry-no, body[data-theme="pink"] .entry-main small, body[data-theme="pink"] .version-card .version-counts b { animation-name: num-pink; }
+body[data-theme="blue"] #statEntries, body[data-theme="blue"] #statVersions, body[data-theme="blue"] #statRecall, body[data-theme="blue"] .entry-no, body[data-theme="blue"] .entry-main small, body[data-theme="blue"] .version-card .version-counts b { animation-name: num-blue; }
+body[data-theme="amber"] #statEntries, body[data-theme="amber"] #statVersions, body[data-theme="amber"] #statRecall, body[data-theme="amber"] .entry-no, body[data-theme="amber"] .entry-main small, body[data-theme="amber"] .version-card .version-counts b { animation-name: num-amber; }
+body[data-theme="sg"] #statEntries, body[data-theme="sg"] #statVersions, body[data-theme="sg"] #statRecall, body[data-theme="sg"] .entry-no, body[data-theme="sg"] .entry-main small, body[data-theme="sg"] .version-card .version-counts b { animation-name: num-sg; }
+body[data-theme="green"] #statEntries, body[data-theme="green"] #statVersions, body[data-theme="green"] #statRecall, body[data-theme="green"] .entry-no, body[data-theme="green"] .entry-main small, body[data-theme="green"] .version-card .version-counts b { animation-name: num-green; }
+body[data-theme="red"] #statEntries, body[data-theme="red"] #statVersions, body[data-theme="red"] #statRecall, body[data-theme="red"] .entry-no, body[data-theme="red"] .entry-main small, body[data-theme="red"] .version-card .version-counts b { animation-name: num-red; }
+body[data-theme="gray"] #statEntries, body[data-theme="gray"] #statVersions, body[data-theme="gray"] #statRecall, body[data-theme="gray"] .entry-no, body[data-theme="gray"] .entry-main small, body[data-theme="gray"] .version-card .version-counts b { animation-name: num-gray; }
+
+@keyframes frame-violet { 0%, 91%, 100% { box-shadow: inset 0 0 0 1px rgba(181,140,255,.04); } 92% { box-shadow: inset 0 0 0 1px rgba(181,140,255,.42), inset 0 0 18px rgba(181,140,255,.08); } 94% { box-shadow: inset 0 0 0 1px rgba(181,140,255,.08); } }
+@keyframes frame-pink { 0%, 100% { box-shadow: inset 0 0 0 1px rgba(255,143,207,.05); } 50% { box-shadow: inset 0 0 0 1px rgba(255,143,207,.36), 0 0 16px rgba(255,143,207,.10); } }
+@keyframes frame-blue { 0%, 100% { box-shadow: inset 0 0 0 1px rgba(102,199,255,.04); } 34% { box-shadow: inset 0 0 0 1px rgba(102,199,255,.36), inset 8px 0 16px -14px #66c7ff; } 68% { box-shadow: inset 0 0 0 1px rgba(102,199,255,.12); } }
+@keyframes frame-amber { 0%, 100% { box-shadow: inset 0 -2px 0 rgba(255,181,71,.05); } 45% { box-shadow: inset 0 -2px 0 rgba(255,181,71,.42), inset 0 -12px 18px -16px #ffb547; } }
+@keyframes frame-sg { 0%, 88%, 100% { box-shadow: inset 0 0 0 1px rgba(224,163,64,.04); } 89% { box-shadow: inset 0 0 0 1px rgba(224,163,64,.42); } 91% { box-shadow: inset 0 0 0 1px rgba(224,163,64,.12); } }
+@keyframes frame-green { 0%, 100% { box-shadow: inset 0 0 0 1px rgba(139,212,111,.04); } 50% { box-shadow: inset 0 0 0 1px rgba(139,212,111,.33), inset 12px 0 18px -18px #8bd46f; } }
+@keyframes frame-red { 0%, 46%, 100% { box-shadow: inset 0 0 0 1px rgba(255,107,120,.04); } 48%, 60% { box-shadow: inset 0 0 0 1px rgba(255,107,120,.42); } }
+@keyframes frame-gray { 0%, 100% { box-shadow: inset 0 0 0 1px rgba(199,198,189,.025); } 50% { box-shadow: inset 0 0 0 1px rgba(199,198,189,.16); } }
+
+@keyframes num-violet { 0%, 88%, 100% { opacity: 1; transform: none; } 89% { opacity: .35; transform: translateY(-1px); } 91% { opacity: .9; } }
+@keyframes num-pink { 0%, 100% { transform: scale(1); opacity: 1; } 12% { transform: scale(1.12); opacity: .85; } 24% { transform: scale(.98); } }
+@keyframes num-blue { 0%, 100% { letter-spacing: .04em; opacity: 1; } 50% { letter-spacing: .14em; opacity: .65; } }
+@keyframes num-amber { 0%, 100% { opacity: .9; text-shadow: none; } 35% { opacity: 1; text-shadow: 0 0 14px rgba(255,181,71,.5); } 68% { opacity: .72; } }
+@keyframes num-sg { 0%, 86%, 100% { opacity: 1; } 87% { opacity: .35; } 89% { opacity: .92; } 91% { opacity: .55; } }
+@keyframes num-green { 0%, 100% { text-shadow: 0 0 4px rgba(139,212,111,.1); opacity: .9; } 50% { text-shadow: 0 0 16px rgba(139,212,111,.55); opacity: 1; } }
+@keyframes num-red { 0%, 44%, 100% { opacity: 1; color: var(--accent); } 46%, 58% { opacity: .35; color: var(--warn); } }
+@keyframes num-gray { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
+body.perf .stat-card, body.perf .version-card, body.perf .entry-row,
+body.perf #statEntries, body.perf #statVersions, body.perf #statRecall, body.perf .entry-no, body.perf .entry-main small, body.perf .version-card .version-counts b { animation: none !important; }
