@@ -2467,3 +2467,18 @@ body.perf .cabinet-serial { animation: none !important; }
 .org-badge.is-six-egg:hover { box-shadow: 0 0 0 1px var(--accent), 0 0 24px rgba(var(--accent-rgb), .4); }
 @keyframes six-badge-breathe { 0%,100% { opacity: .82; } 50% { opacity: 1; } }
 body.perf .org-badge.is-six-egg { animation: none !important; }
+/* 1.5.13 pass 3 — punctuation rests + ambient glyph noise */
+.six-g.is-idle-glow { animation: six-idle-glow 3.8s ease-in-out infinite; }
+.six-g.is-idle-flicker { animation: six-idle-flicker 5.6s steps(1) infinite; }
+.six-g.is-idle-drift { animation: six-idle-drift 4.6s ease-in-out infinite; }
+.six-egg-line.is-idle-echo { animation: six-idle-line 7s ease-in-out infinite; }
+.six-egg-choices button.is-choice-idle-glow { animation: six-choice-idle-glow 3.6s ease-in-out infinite; }
+.six-egg-choices button.is-choice-idle-flicker { animation: six-choice-idle-flicker 4.8s steps(1) infinite; }
+.six-egg-choices button.is-choice-idle-drift { animation: six-choice-idle-drift 5.2s ease-in-out infinite; }
+@keyframes six-idle-glow { 0%,100% { opacity:.92; text-shadow:none; } 50% { opacity:1; text-shadow:0 0 8px rgba(var(--accent-rgb),.32); } }
+@keyframes six-idle-flicker { 0%,91%,100% { opacity:1; } 92% { opacity:.42; } 94% { opacity:1; } 96% { opacity:.6; } }
+@keyframes six-idle-drift { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-1px); } }
+@keyframes six-idle-line { 0%,100% { text-shadow:0 0 28px rgba(0,0,0,.8); } 50% { text-shadow:2px 0 rgba(255,70,110,.10), -2px 0 rgba(70,190,255,.10), 0 0 28px rgba(0,0,0,.8); } }
+@keyframes six-choice-idle-glow { 0%,100% { border-color:rgba(var(--accent-rgb),.4); box-shadow:none; } 50% { border-color:var(--accent); box-shadow:0 0 14px rgba(var(--accent-rgb),.18); } }
+@keyframes six-choice-idle-flicker { 0%,90%,100% { opacity:1; } 91% { opacity:.6; } 93% { opacity:1; } 95% { opacity:.72; } }
+@keyframes six-choice-idle-drift { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-1px); } }

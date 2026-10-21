@@ -97,18 +97,18 @@
   const SIX_FIRST = [
     { lines: [
       { text: "你也发现了吗？" },
-      { text: "临极无论是档案，还是组织，所有人都已经污染了", delay: 1400 }
+      { text: "临极无论是档案，还是组织，所有人都已经污染了", delay: 2200 }
     ] },
     { lines: [
       { text: "除了这里，还有很多不对的地方，一切还能修正吗？" },
-      { text: "他们不知道。我们也不知道。", delay: 1200 }
+      { text: "他们不知道。我们也不知道。", delay: 1600 }
     ] },
     { lines: [{ text: "你愿意只修正这里吗？即使只是故事" }], choices: true }
   ];
   const SIX_SECOND = [
     { lines: [
       { text: "现在和以前，哪个是错误？" },
-      { text: "你决定回去吗？还是说那才是未来", delay: 1300 }
+      { text: "你决定回去吗？还是说那才是未来", delay: 1600 }
     ], choices: true }
   ];
   function sixEggSleep(ms, token) {
@@ -140,15 +140,25 @@
     if (!el) return false;
     el.textContent = "";
     const chars = [...text];
+    const pauseAfter = { "，": 520, "、": 420, "；": 560, "。": 460, "？": 480, "！": 480 };
     for (let i = 0; i < chars.length; i++) {
       if (state.sixEggToken !== token) return false;
       if (state.sixEggSkip) {
         for (let j = i; j < chars.length; j++) sixAppendGlyph(el, chars[j]);
-        return true;
+        break;
       }
       sixAppendGlyph(el, chars[i], sixGlyphClass());
       await sixEggSleep(56, token);
+      if (pauseAfter[chars[i]] && !await sixEggSleep(pauseAfter[chars[i]] + Math.round(Math.random() * 180), token)) return false;
     }
+    // Normal-state instrument noise: a small random subset keeps a slow
+    // ambient flicker after the character has finished typing.
+    el.querySelectorAll(".six-g").forEach(g => {
+      const r = Math.random();
+      if (r < .10) g.classList.add("is-idle-flicker");
+      else if (r < .18) g.classList.add("is-idle-glow");
+      else if (r < .23) g.classList.add("is-idle-drift");
+    });
     return true;
   }
   async function sixEggPage(index) {
@@ -169,7 +179,7 @@
     for (const line of page.lines) {
       if (!lines) return;
       const p = document.createElement("p");
-      p.className = "six-egg-line" + (line.cls ? " " + line.cls : "") + (Math.random() < .22 ? " is-echo" : "");
+      p.className = "six-egg-line" + (line.cls ? " " + line.cls : "") + (Math.random() < .22 ? " is-echo" : "") + (Math.random() < .16 ? " is-idle-echo" : "");
       lines.appendChild(p);
       if (!await sixEggType(p, line.text, token)) return;
       if (line.delay && !await sixEggSleep(line.delay, token)) return;
@@ -180,7 +190,10 @@
       state.sixEggChoiceShown = true;
       if (choices) {
         choices.hidden = false;
-        [...choices.querySelectorAll("button")].forEach((b, i) => b.classList.add(i === 0 ? "is-glitch" : i === 1 ? "is-flicker" : "is-drift"));
+        [...choices.querySelectorAll("button")].forEach((b, i) => {
+          b.classList.add(i === 0 ? "is-glitch" : i === 1 ? "is-flicker" : "is-drift");
+          b.classList.add(["is-choice-idle-glow", "is-choice-idle-flicker", "is-choice-idle-drift"][Math.floor(Math.random() * 3)]);
+        });
       }
       return;
     }
