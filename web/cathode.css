@@ -2253,3 +2253,7 @@ body.wall-viewer-open { overflow: hidden; }
 .screen { isolation: isolate; z-index: 0; }
 /* 1.5.12: the subtitle toggle actually removes the subtitle bar */
 .ticker.is-hidden { display: none !important; }
+/* 1.5.12: appreciation respects the subtitle toggle too */
+body.quote-off .appr-bottom { display: none !important; }
+body.quote-off .appr-caption { bottom: 34px; }
+body.quote-off .appr-index { bottom: 34px; }

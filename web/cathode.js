@@ -869,7 +869,6 @@
     state.apprOpen = true;
     const seed = url || state.orgWallpaper;
     if (seed) { const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${seed}")`; }
-    if (!state.ui.quote_enabled) { state.apprForcedQuote = true; state.ui.quote_enabled = true; startQuoteTimer(); broadcastQuote(true); }
     document.body.classList.add("appreciating");
     const el = $("#appreciate");
     if (el) { el.hidden = false; el.classList.remove("is-closing"); el.classList.add("is-open"); el.setAttribute("aria-hidden", "false"); }
