@@ -2375,3 +2375,90 @@ body.perf .channel.is-active { animation: none !important; }
 body.perf .entry-row::before, body.perf .entry-row::after, body.perf .version-card::after, body.perf .version-card .version-counts b { animation: none !important; }
 #consoleNumber.is-anomaly { cursor: pointer; text-shadow: 0 0 14px rgba(var(--accent-rgb), .55); }
 #consoleNumber.is-anomaly::after { content: " ·"; opacity: .6; animation: blink 1.8s steps(1) infinite; }
+/* 1.5.13 pass 2 — data numerals + organisation-specific lower frames */
+.entry-no, .entry-main small, .entry-kb, .entry-status, .entry-time, .entry-main b { animation: entry-data-breathe var(--data-speed, 8s) ease-in-out infinite; }
+.entry-no { color: var(--accent); }
+.entry-status i { box-shadow: 0 0 7px rgba(var(--accent-rgb), .35); }
+.entry-status.is-recall { animation: entry-recall-pulse 2.8s ease-in-out infinite; }
+.stat-card, .version-card, .channel { border-bottom-color: rgba(var(--accent-rgb), .16); }
+.stat-card b, .version-counts b, .entry-no { text-shadow: 0 0 10px rgba(var(--accent-rgb), .12); }
+
+body[data-theme="violet"] .entry-row::after { background: repeating-linear-gradient(90deg, transparent 0 6px, rgba(var(--accent-rgb), .34) 6px 7px); height: 1px; opacity: .36; }
+body[data-theme="violet"] .stat-card, body[data-theme="violet"] .version-card { border-bottom-style: double; border-bottom-width: 3px; }
+body[data-theme="violet"] .entry-no { animation-name: numeral-archive; }
+
+body[data-theme="pink"] .entry-row::after { background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), .42), transparent); height: 2px; opacity: .5; }
+body[data-theme="pink"] .stat-card, body[data-theme="pink"] .version-card { border-bottom-style: double; border-bottom-color: rgba(var(--accent-rgb), .28); }
+body[data-theme="pink"] .entry-status.is-recall { animation-name: entry-heartbeat; }
+
+body[data-theme="blue"] .entry-row::after { background: repeating-linear-gradient(115deg, transparent 0 7px, rgba(var(--accent-rgb), .34) 7px 8px); height: 1px; opacity: .4; }
+body[data-theme="blue"] .stat-card, body[data-theme="blue"] .version-card { border-bottom-style: dashed; border-bottom-color: rgba(var(--accent-rgb), .32); }
+body[data-theme="blue"] .entry-no { animation-name: numeral-signal; }
+
+body[data-theme="amber"] .entry-row::after { background: linear-gradient(90deg, transparent, rgba(255,181,71,.38), rgba(255,181,71,.08), transparent); height: 2px; opacity: .55; animation: entry-ember 4.8s ease-in-out infinite; }
+body[data-theme="amber"] .stat-card, body[data-theme="amber"] .version-card { border-bottom-style: solid; border-bottom-color: rgba(255,181,71,.28); }
+body[data-theme="amber"] .entry-main small { animation-name: ember-data; }
+
+body[data-theme="sg"] .entry-row::after { background: repeating-linear-gradient(90deg, transparent 0 9px, rgba(var(--accent-rgb), .34) 9px 10px, transparent 10px 18px); height: 1px; opacity: .35; }
+body[data-theme="sg"] .stat-card, body[data-theme="sg"] .version-card { border-bottom-style: dotted; border-bottom-color: rgba(var(--accent-rgb), .36); }
+body[data-theme="sg"] .entry-no { animation-name: numeral-clock; }
+
+body[data-theme="green"] .entry-row::after { background: repeating-linear-gradient(90deg, transparent 0 4px, rgba(var(--accent-rgb), .28) 4px 5px); height: 1px; opacity: .4; }
+body[data-theme="green"] .stat-card, body[data-theme="green"] .version-card { border-bottom-style: solid; border-bottom-color: rgba(var(--accent-rgb), .3); }
+body[data-theme="green"] .entry-status { animation-name: entry-scan; }
+
+body[data-theme="red"] .entry-row::after { background: repeating-linear-gradient(135deg, transparent 0 6px, rgba(var(--accent-rgb), .38) 6px 7px, transparent 7px 12px); height: 2px; opacity: .55; animation: entry-hazard 2.4s steps(2) infinite; }
+body[data-theme="red"] .stat-card, body[data-theme="red"] .version-card { border-bottom-style: solid; border-bottom-width: 2px; border-bottom-color: rgba(var(--accent-rgb), .45); }
+body[data-theme="red"] .entry-no, body[data-theme="red"] .entry-status { animation-name: numeral-alert; }
+
+body[data-theme="gray"] .entry-row::after { background: repeating-linear-gradient(90deg, transparent 0 12px, rgba(var(--accent-rgb), .2) 12px 13px); height: 1px; opacity: .28; }
+body[data-theme="gray"] .stat-card, body[data-theme="gray"] .version-card { border-bottom-style: dashed; border-bottom-color: rgba(var(--accent-rgb), .18); }
+body[data-theme="gray"] .entry-main small { animation-name: numeral-drift; }
+
+@keyframes entry-data-breathe { 0%, 100% { opacity: 1; } 50% { opacity: .78; } }
+@keyframes entry-recall-pulse { 0%, 100% { text-shadow: 0 0 0 transparent; } 50% { text-shadow: 0 0 9px rgba(var(--accent-rgb), .55); } }
+@keyframes entry-heartbeat { 0%, 100% { opacity: .65; } 16% { opacity: 1; } 30% { opacity: .72; } }
+@keyframes entry-scan { 0%, 100% { opacity: .72; } 50% { opacity: 1; } }
+@keyframes entry-ember { 0%, 100% { opacity: .25; } 42% { opacity: .7; } 70% { opacity: .4; } }
+@keyframes entry-hazard { 0%, 100% { opacity: .3; } 50% { opacity: .7; } }
+@keyframes numeral-archive { 0%, 88%, 100% { opacity: 1; transform: none; } 90% { opacity: .45; transform: translateY(-1px); } 92% { opacity: 1; } }
+@keyframes numeral-signal { 0%, 100% { letter-spacing: .04em; } 50% { letter-spacing: .12em; opacity: .8; } }
+@keyframes numeral-clock { 0%, 84%, 100% { opacity: 1; } 86% { opacity: .4; } 88% { opacity: .9; } }
+@keyframes numeral-alert { 0%, 46%, 100% { opacity: 1; } 48%, 60% { opacity: .42; color: var(--warn); } }
+@keyframes numeral-drift { 0%, 100% { opacity: .8; } 50% { opacity: .55; } }
+body.perf .entry-no, body.perf .entry-main small, body.perf .entry-kb, body.perf .entry-status,
+body.perf .entry-time, body.perf .entry-main b, body.perf .entry-row::after { animation: none !important; }
+.channel { border-bottom: 1px solid rgba(var(--accent-rgb), .14); }
+body[data-theme="violet"] .channel { border-bottom-style: double; border-bottom-width: 3px; }
+body[data-theme="pink"] .channel { border-bottom-style: double; }
+body[data-theme="blue"] .channel { border-bottom-style: dashed; }
+body[data-theme="amber"] .channel { border-bottom-color: rgba(255,181,71,.24); }
+body[data-theme="sg"] .channel { border-bottom-style: dotted; }
+body[data-theme="green"] .channel { border-bottom-style: solid; }
+body[data-theme="red"] .channel { border-bottom-style: double; border-bottom-color: rgba(var(--accent-rgb), .32); }
+body[data-theme="gray"] .channel { border-bottom-style: dashed; border-bottom-color: rgba(var(--accent-rgb), .18); }
+.cabinet-serial { animation: serial-data 9s steps(1) infinite; }
+body[data-theme="red"] .cabinet-serial { animation-duration: 4s; }
+body[data-theme="sg"] .cabinet-serial { animation-duration: 12s; }
+@keyframes serial-data { 0%, 92%, 100% { opacity: .65; } 93% { opacity: 1; } 95% { opacity: .35; } }
+body.perf .cabinet-serial { animation: none !important; }
+/* 1.5.13 pass 2 — random glyph effects in the anomaly dialogue */
+.six-g { display: inline-block; white-space: pre; will-change: transform, opacity; }
+.six-g.is-glitch { animation: six-glyph-glitch .5s steps(2) both; }
+.six-g.is-flicker { animation: six-glyph-flicker .62s steps(3) both; }
+.six-g.is-drift { animation: six-glyph-drift .8s ease-out both; }
+.six-g.is-warm { animation: six-glyph-warm .7s ease-out both; }
+.six-egg-line.is-echo { text-shadow: 2px 0 rgba(255,70,110,.14), -2px 0 rgba(70,190,255,.12), 0 0 28px rgba(0,0,0,.8); }
+.six-egg-choices button.is-glitch { animation: six-choice-glitch .75s steps(2) both; }
+.six-egg-choices button.is-flicker { animation: six-choice-flicker 1.1s steps(3) both; }
+.six-egg-choices button.is-drift { animation: six-choice-drift .9s ease-out both; }
+@keyframes six-glyph-glitch { 0% { opacity: 0; transform: translateX(-3px); filter: contrast(1.5); } 35% { opacity: 1; transform: translateX(2px); } 60% { transform: translateX(-1px); } 100% { opacity: 1; transform: none; filter: none; } }
+@keyframes six-glyph-flicker { 0%, 38%, 72%, 100% { opacity: 0; } 20%, 55%, 86% { opacity: 1; } }
+@keyframes six-glyph-drift { 0% { opacity: 0; transform: translateY(5px) scale(.92); } 100% { opacity: 1; transform: none; } }
+@keyframes six-glyph-warm { 0% { opacity: 0; color: var(--accent); text-shadow: 0 0 12px var(--accent); } 100% { opacity: 1; text-shadow: none; } }
+@keyframes six-choice-glitch { 0% { opacity: 0; transform: translateX(-8px); } 30% { opacity: 1; transform: translateX(3px); } 60% { transform: translateX(-1px); } 100% { opacity: 1; transform: none; } }
+@keyframes six-choice-flicker { 0%, 30%, 62%, 100% { opacity: 0; } 15%, 45%, 80% { opacity: 1; } }
+@keyframes six-choice-drift { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: none; } }
+/* keep random flicker glyphs visible after their entrance */
+@keyframes six-glyph-flicker { 0%, 35%, 70% { opacity: 0; } 20%, 55%, 100% { opacity: 1; } }
+@keyframes six-choice-flicker { 0%, 30%, 62% { opacity: 0; } 15%, 45%, 100% { opacity: 1; } }

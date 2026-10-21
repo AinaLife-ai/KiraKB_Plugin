@@ -97,18 +97,18 @@
   const SIX_FIRST = [
     { lines: [
       { text: "你也发现了吗？" },
-      { text: "临极无论是档案，还是组织，所有人都已经污染了", delay: 900 }
+      { text: "临极无论是档案，还是组织，所有人都已经污染了", delay: 1400 }
     ] },
     { lines: [
       { text: "除了这里，还有很多不对的地方，一切还能修正吗？" },
-      { text: "他们不知道。我们也不知道。", delay: 700 }
+      { text: "他们不知道。我们也不知道。", delay: 1200 }
     ] },
     { lines: [{ text: "你愿意只修正这里吗？即使只是故事" }], choices: true }
   ];
   const SIX_SECOND = [
     { lines: [
       { text: "现在和以前，哪个是错误？" },
-      { text: "你决定回去吗？还是说那才是未来", delay: 750 }
+      { text: "你决定回去吗？还是说那才是未来", delay: 1300 }
     ], choices: true }
   ];
   function sixEggSleep(ms, token) {
@@ -122,14 +122,32 @@
       tick();
     });
   }
+  function sixGlyphClass() {
+    const r = Math.random();
+    if (r < .09) return "is-glitch";
+    if (r < .17) return "is-flicker";
+    if (r < .23) return "is-drift";
+    if (r < .29) return "is-warm";
+    return "";
+  }
+  function sixAppendGlyph(el, ch, effect = "") {
+    const span = document.createElement("span");
+    span.className = "six-g" + (effect ? " " + effect : "");
+    span.textContent = ch === " " ? "\u00a0" : ch;
+    el.appendChild(span);
+  }
   async function sixEggType(el, text, token) {
     if (!el) return false;
     el.textContent = "";
-    for (let i = 0; i < text.length; i++) {
+    const chars = [...text];
+    for (let i = 0; i < chars.length; i++) {
       if (state.sixEggToken !== token) return false;
-      if (state.sixEggSkip) { el.textContent = text; return true; }
-      el.textContent = text.slice(0, i + 1);
-      await sixEggSleep(28, token);
+      if (state.sixEggSkip) {
+        for (let j = i; j < chars.length; j++) sixAppendGlyph(el, chars[j]);
+        return true;
+      }
+      sixAppendGlyph(el, chars[i], sixGlyphClass());
+      await sixEggSleep(56, token);
     }
     return true;
   }
@@ -151,7 +169,7 @@
     for (const line of page.lines) {
       if (!lines) return;
       const p = document.createElement("p");
-      p.className = "six-egg-line" + (line.cls ? " " + line.cls : "");
+      p.className = "six-egg-line" + (line.cls ? " " + line.cls : "") + (Math.random() < .22 ? " is-echo" : "");
       lines.appendChild(p);
       if (!await sixEggType(p, line.text, token)) return;
       if (line.delay && !await sixEggSleep(line.delay, token)) return;
@@ -160,7 +178,10 @@
     state.sixEggTyping = false;
     if (page.choices) {
       state.sixEggChoiceShown = true;
-      if (choices) choices.hidden = false;
+      if (choices) {
+        choices.hidden = false;
+        [...choices.querySelectorAll("button")].forEach((b, i) => b.classList.add(i === 0 ? "is-glitch" : i === 1 ? "is-flicker" : "is-drift"));
+      }
       return;
     }
     state.sixEggReady = true;
@@ -194,7 +215,7 @@
     for (const line of lines) {
       if (!box) return;
       const p = document.createElement("p");
-      p.className = "six-egg-line" + (line.cls ? " " + line.cls : "");
+      p.className = "six-egg-line" + (line.cls ? " " + line.cls : "") + (Math.random() < .20 ? " is-echo" : "");
       box.appendChild(p);
       if (!await sixEggType(p, line.text, token)) return;
       if (line.delay && !await sixEggSleep(line.delay, token)) return;
@@ -222,7 +243,7 @@
       copy = "这样的故事，好像也不错，吗。那就这样吧，因为要修的也不止这里，或许这样才没错。";
     } else {
       swap = Math.random() < 0.5;
-      title = swap ? "省略号替你决定。" : "省略号选择了沉默。";
+      title = swap ? "……替你决定。" : "……选择了沉默。";
       copy = swap ? "06 与 07 已经对调。没有人看见这次修改，除了你。" : "时间线维持现状。故事似乎也很满意这个答案。";
     }
     if (swap) {
