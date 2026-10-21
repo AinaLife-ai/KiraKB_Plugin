@@ -1212,6 +1212,8 @@
     if (state.apprForcedQuote) { state.apprForcedQuote = false; state.ui.quote_enabled = false; stopQuoteTimer(); }
     document.body.classList.remove("appreciating");
     clearInterval(state.apprTimer);
+    clearTimeout(state.apprArtTimer);
+    $("#apprArtNext")?.classList.remove("is-on");
     clearInterval(state.apprTextTimer);
     clearInterval(state.apprTitleAccentLoopTimer);
     clearTimeout(state.apprTitleAccentTimer);
