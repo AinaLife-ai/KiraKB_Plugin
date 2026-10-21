@@ -58,7 +58,7 @@
     statRelayTimer: null, statRelayHover: null, statRelayIndex: -1,
     sixEggToken: 0, sixEggPage: 0, sixEggTyping: false, sixEggReady: false,
     sixEggChoiceShown: false, sixEggResolution: false, sixEggBusy: false, sixEggSkip: false,
-    apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null,
+    apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null, apprArtTimer: null, apprFxTimer: null,
     apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null, lastArm: 0, quoteFxTimer: null, apprTextTimer: null, apprControlsTimer: null, signalTimer: null,
     apprTitleAccentTimer: null, apprTitleAccentLoopTimer: null,
     parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0, aimX: 0, aimY: 0, breath: 0, breathAppr: 0
@@ -1095,6 +1095,35 @@
       window.KBTextFX.burst(el, ["radio", "pulse", "scan", "glitch"][Math.floor(Math.random() * 4)]);
     }, 4800);
   }
+  function setApprArt(url, instant = false) {
+    const base = $("#apprArt"), next = $("#apprArtNext");
+    if (!base || !url) return;
+    if (base.dataset.apprUrl === url) return;
+    if (instant || !next) {
+      base.style.backgroundImage = `url("${url}")`;
+      base.dataset.apprUrl = url;
+      if (next) { next.classList.remove("is-on"); next.style.backgroundImage = "none"; }
+      return;
+    }
+    // If a previous crossfade is still running, snapshot its incoming image
+    // into the base first so a rapid next/prev cannot leave a stale layer.
+    if (next.classList.contains("is-on") && next.style.backgroundImage) {
+      base.style.backgroundImage = next.style.backgroundImage;
+      base.dataset.apprUrl = next.dataset.apprUrl || base.dataset.apprUrl || "";
+      next.classList.remove("is-on");
+    }
+    clearTimeout(state.apprArtTimer);
+    next.style.backgroundImage = `url("${url}")`;
+    next.dataset.apprUrl = url;
+    next.classList.add("is-on");
+    state.apprArtTimer = setTimeout(() => {
+      base.style.backgroundImage = `url("${url}")`;
+      base.dataset.apprUrl = url;
+      next.classList.remove("is-on");
+      state.apprArtTimer = setTimeout(() => { if (!next.classList.contains("is-on")) next.style.backgroundImage = "none"; }, 720);
+    }, 700);
+  }
+
   function apprShow(animate = true) {
     const pool = apprPool();
     if (!pool.length) return closeAppreciate();
@@ -1104,13 +1133,10 @@
     state.orgWallpaper = item.url;
     applyBackgrounds();
     const token = ++state.apprToken;
-    const artFlash = $("#apprArt");
-    if (artFlash) { artFlash.classList.remove("appr-art-flash"); void artFlash.offsetWidth; artFlash.classList.add("appr-art-flash"); }
-    setTimeout(() => { if (artFlash) artFlash.classList.remove("appr-art-flash"); }, 520);
     const set = () => {
       if (token !== state.apprToken) return;
       const art0 = $("#apprArt");
-      if (art0 && !art0.style.backgroundImage) art0.style.backgroundImage = `url("${item.url}")`;
+      if (art0 && !art0.style.backgroundImage) setApprArt(item.url, true);
       $("#apprTitle").textContent = item.org?.name || "第零章";
       $("#apprMeta").textContent = `CHAPTER ${item.org?.chapter || "00"} // ${item.org?.en || "LINJI"} · ${String(state.apprIndex + 1).padStart(2, "0")} / ${String(pool.length).padStart(2, "0")}`;
       $("#apprCaptionKicker").textContent = item.meta.title;
@@ -1119,22 +1145,23 @@
       document.documentElement.style.setProperty("--appr-accent", item.org?.color || "var(--accent)");
       apprTextIntro();
     };
-    if (!animate || state.ui.performance || reduced) { set(); return; }
+    if (!animate || state.ui.performance || reduced) { set(); setApprArt(item.url, true); return; }
     const fx = $("#apprFx");
     if (fx) {
-      fx.className = "appr-fx is-on " + ["fx-scan", "fx-tear", "fx-iris", "fx-shutter"][Math.floor(Math.random() * 4)];
-      setTimeout(() => { fx.className = "appr-fx"; }, 850);
+      clearTimeout(state.apprFxTimer);
+      fx.className = "appr-fx";
+      void fx.offsetWidth;
+      fx.classList.add("is-on", ["fx-scan", "fx-tear", "fx-iris", "fx-shutter"][Math.floor(Math.random() * 4)]);
+      state.apprFxTimer = setTimeout(() => {
+        if (token === state.apprToken) fx.className = "appr-fx";
+      }, 850);
     }
     setTimeout(set, 170);
-    preloadWallpaper(item.url).then(() => {
-      if (token === state.apprToken && state.apprOpen) { const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${item.url}")`; }
-    });
-    setTimeout(() => {
-      if (token === state.apprToken && state.apprOpen) {
-        const art = $("#apprArt");
-        if (art && (!art.style.backgroundImage || art.style.backgroundImage === "none")) art.style.backgroundImage = `url("${item.url}")`;
-      }
-    }, 1100);
+    const applyArt = () => {
+      if (token === state.apprToken && state.apprOpen) setApprArt(item.url);
+    };
+    preloadWallpaper(item.url).then(applyArt);
+    setTimeout(applyArt, 1100);
   }
   function apprMove(delta) { state.apprIndex += delta; apprShow(true); }
   function apprRandomNext() {
@@ -1147,8 +1174,7 @@
     apprShow(true);
   }
   function syncApprArt(url) {
-    if (!state.apprOpen) return;
-    const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${url}")`;
+    if (state.apprOpen) setApprArt(url);
   }
   function startApprRotation() {
     clearInterval(state.apprTimer);
@@ -1167,7 +1193,11 @@
     state.apprIndex = found >= 0 ? found : 0;
     state.apprOpen = true;
     const seed = url || state.orgWallpaper;
-    if (seed) { const art = $("#apprArt"); if (art) art.style.backgroundImage = `url("${seed}")`; }
+    if (seed) {
+      const art = $("#apprArt"), next = $("#apprArtNext");
+      if (art) { art.style.backgroundImage = `url("${seed}")`; art.dataset.apprUrl = seed; }
+      if (next) { next.classList.remove("is-on"); next.style.backgroundImage = "none"; }
+    }
     document.body.classList.add("appreciating");
     const el = $("#appreciate");
     if (el) { el.hidden = false; el.classList.remove("is-closing"); el.classList.add("is-open"); el.setAttribute("aria-hidden", "false"); }
@@ -1192,6 +1222,10 @@
     if (state.apprForcedQuote) { state.apprForcedQuote = false; state.ui.quote_enabled = false; stopQuoteTimer(); }
     document.body.classList.remove("appreciating");
     clearInterval(state.apprTimer);
+    clearTimeout(state.apprArtTimer);
+    clearTimeout(state.apprFxTimer);
+    const apprFx = $("#apprFx"); if (apprFx) apprFx.className = "appr-fx";
+    $("#apprArtNext")?.classList.remove("is-on");
     clearInterval(state.apprTextTimer);
     clearInterval(state.apprTitleAccentLoopTimer);
     clearTimeout(state.apprTitleAccentTimer);
