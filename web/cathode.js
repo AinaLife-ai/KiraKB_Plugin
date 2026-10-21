@@ -54,11 +54,212 @@
     wallDisabled: loadWallDisabled(), wallTimer: null, wallFxTimer: null, wallToken: 0, wallPreload: new Map(), apprToken: 0,
     zero: (window.linjiZero ? window.linjiZero() : null),
     zeroRandomPick: false, wallVaultTheme: "violet",
+    sixSevenSwapped: false, sixEggOpen: false,
+    sixEggToken: 0, sixEggPage: 0, sixEggTyping: false, sixEggReady: false,
+    sixEggChoiceShown: false, sixEggResolution: false, sixEggBusy: false, sixEggSkip: false,
     apprOpen: false, apprPool: [], apprIndex: 0, apprTimer: null,
     apprTickerTimer: null, apprForcedQuote: false, apprAuto: false, idleTimer: null, lastArm: 0, quoteFxTimer: null, apprTextTimer: null, apprControlsTimer: null, signalTimer: null,
     apprTitleAccentTimer: null, apprTitleAccentLoopTimer: null,
     parallaxBound: false, px: 0, py: 0, tx: 0, ty: 0, aimX: 0, aimY: 0, breath: 0, breathAppr: 0
   };
+
+  const SIX_SWAP_KEY = "kirakb-six-seven-swapped";
+  function applySixSevenSwap(swapped, persist = false) {
+    if (!!state.sixSevenSwapped === !!swapped) return;
+    const gi = THEMES.indexOf("green"), ri = THEMES.indexOf("red");
+    if (gi >= 0 && ri >= 0) [THEMES[gi], THEMES[ri]] = [THEMES[ri], THEMES[gi]];
+    const g = ORGS.green, r = ORGS.red;
+    if (g && r) {
+      const chapter = g.chapter;
+      g.chapter = r.chapter;
+      r.chapter = chapter;
+    }
+    state.sixSevenSwapped = !!swapped;
+    if (persist) { try { localStorage.setItem(SIX_SWAP_KEY, swapped ? "1" : "0"); } catch (_) {} }
+  }
+  function reorderThemeOptions() {
+    const sel = $("#setUiTheme"); if (!sel) return;
+    const wanted = ["random", ...THEMES];
+    const byValue = new Map([...sel.options].map(o => [o.value, o]));
+    wanted.forEach(v => { const o = byValue.get(v); if (o) sel.appendChild(o); });
+  }
+  function refreshSixSevenUI() {
+    reorderThemeOptions();
+    renderThemeStrip();
+    renderThemeBadges();
+    renderWiki();
+    renderWallVault();
+    renderApprThemes();
+    syncUiControls();
+    applyOrgIdentity();
+  }
+
+  const SIX_FIRST = [
+    { lines: [
+      { text: "你也发现了吗？" },
+      { text: "临极无论是档案，还是组织，所有人都已经污染了", delay: 900 }
+    ] },
+    { lines: [
+      { text: "除了这里，还有很多不对的地方，一切还能修正吗？" },
+      { text: "他们不知道。我们也不知道。", delay: 700 }
+    ] },
+    { lines: [{ text: "你愿意只修正这里吗？即使只是故事" }], choices: true }
+  ];
+  const SIX_SECOND = [
+    { lines: [
+      { text: "现在和以前，哪个是错误？" },
+      { text: "你决定回去吗？还是说那才是未来", delay: 750 }
+    ], choices: true }
+  ];
+  function sixEggSleep(ms, token) {
+    return new Promise(resolve => {
+      const end = Date.now() + ms;
+      const tick = () => {
+        if (state.sixEggToken !== token) return resolve(false);
+        if (state.sixEggSkip || Date.now() >= end) return resolve(true);
+        setTimeout(tick, 32);
+      };
+      tick();
+    });
+  }
+  async function sixEggType(el, text, token) {
+    if (!el) return false;
+    el.textContent = "";
+    for (let i = 0; i < text.length; i++) {
+      if (state.sixEggToken !== token) return false;
+      if (state.sixEggSkip) { el.textContent = text; return true; }
+      el.textContent = text.slice(0, i + 1);
+      await sixEggSleep(28, token);
+    }
+    return true;
+  }
+  async function sixEggPage(index) {
+    const script = state.sixEggScript || SIX_FIRST;
+    const page = script[index];
+    if (!page) return closeSixEgg();
+    const token = ++state.sixEggToken;
+    state.sixEggPage = index;
+    state.sixEggTyping = true;
+    state.sixEggReady = false;
+    state.sixEggChoiceShown = false;
+    state.sixEggResolution = false;
+    state.sixEggSkip = false;
+    const lines = $("#sixEggLines"), next = $("#sixEggNext"), choices = $("#sixEggChoices");
+    if (lines) lines.innerHTML = "";
+    if (next) next.hidden = true;
+    if (choices) choices.hidden = true;
+    for (const line of page.lines) {
+      if (!lines) return;
+      const p = document.createElement("p");
+      p.className = "six-egg-line" + (line.cls ? " " + line.cls : "");
+      lines.appendChild(p);
+      if (!await sixEggType(p, line.text, token)) return;
+      if (line.delay && !await sixEggSleep(line.delay, token)) return;
+    }
+    if (state.sixEggToken !== token) return;
+    state.sixEggTyping = false;
+    if (page.choices) {
+      state.sixEggChoiceShown = true;
+      if (choices) choices.hidden = false;
+      return;
+    }
+    state.sixEggReady = true;
+    if (next) { next.hidden = false; const lab = next.querySelector("span"); if (lab) lab.textContent = "CLICK / ENTER"; }
+  }
+  function advanceSixEgg() {
+    if (!state.sixEggOpen || state.sixEggBusy) return;
+    if (state.sixEggChoiceShown) return;
+    if (!state.sixEggReady) { state.sixEggSkip = true; return; }
+    if (state.sixEggResolution) return closeSixEgg();
+    const script = state.sixEggScript || SIX_FIRST;
+    if (state.sixEggPage + 1 < script.length) sixEggPage(state.sixEggPage + 1);
+    else closeSixEgg();
+  }
+  async function sixEggResolution(lines, effect = false) {
+    const token = ++state.sixEggToken;
+    state.sixEggTyping = true;
+    state.sixEggReady = false;
+    state.sixEggChoiceShown = false;
+    state.sixEggResolution = true;
+    state.sixEggSkip = false;
+    const box = $("#sixEggLines"), next = $("#sixEggNext"), choices = $("#sixEggChoices");
+    if (choices) choices.hidden = true;
+    if (next) next.hidden = true;
+    if (box) box.innerHTML = "";
+    if (effect) {
+      const egg = $("#sixEgg"); egg?.classList.add("is-swapping");
+      $("#screen")?.classList.add("theme-flash");
+      setTimeout(() => { egg?.classList.remove("is-swapping"); $("#screen")?.classList.remove("theme-flash"); }, 850);
+    }
+    for (const line of lines) {
+      if (!box) return;
+      const p = document.createElement("p");
+      p.className = "six-egg-line" + (line.cls ? " " + line.cls : "");
+      box.appendChild(p);
+      if (!await sixEggType(p, line.text, token)) return;
+      if (line.delay && !await sixEggSleep(line.delay, token)) return;
+    }
+    if (state.sixEggToken !== token) return;
+    state.sixEggTyping = false;
+    state.sixEggReady = true;
+    state.sixEggResolution = true;
+    if (next) { next.hidden = false; const lab = next.querySelector("span"); if (lab) lab.textContent = "CLOSE"; }
+  }
+  async function chooseSixEgg(choice) {
+    if (!state.sixEggOpen || state.sixEggBusy) return;
+    state.sixEggBusy = true;
+    const choices = $("#sixEggChoices"); if (choices) choices.hidden = true;
+    const was = state.sixSevenSwapped;
+    let swap = false;
+    let title = "";
+    let copy = "";
+    if (choice === "yes") {
+      swap = true;
+      title = was ? "时间线再次翻面。" : "06 与 07 已重新归档。";
+      copy = was ? "六协会与七协会又换了一次位置。你已经无法确定哪一边才是原来。" : "六协会与七协会的编号与顺序已经互换。档案没有解释为什么。";
+    } else if (choice === "no") {
+      title = was ? "时间线没有移动。" : "保持原样。";
+      copy = "这样的故事，好像也不错，吗。那就这样吧，因为要修的也不止这里，或许这样才没错。";
+    } else {
+      swap = Math.random() < 0.5;
+      title = swap ? "省略号替你决定。" : "省略号选择了沉默。";
+      copy = swap ? "06 与 07 已经对调。没有人看见这次修改，除了你。" : "时间线维持现状。故事似乎也很满意这个答案。";
+    }
+    if (swap) {
+      applySixSevenSwap(!state.sixSevenSwapped, true);
+      refreshSixSevenUI();
+    }
+    try { localStorage.setItem("kirakb-six-seven-last-choice", choice); } catch (_) {}
+    await sixEggResolution([
+      { text: title, cls: "is-warn" },
+      { text: copy },
+      { text: swap ? "06 ↔ 07 / INDEX REWRITTEN" : "NO CHANGE / STORY KEPT", cls: "is-warn", delay: 250 }
+    ], swap);
+    state.sixEggBusy = false;
+  }
+  function openSixEgg() {
+    if (state.sixEggOpen) return;
+    state.sixEggOpen = true;
+    state.sixEggScript = state.sixSevenSwapped ? SIX_SECOND : SIX_FIRST;
+    state.sixEggPage = 0;
+    state.sixEggBusy = false;
+    const el = $("#sixEgg"); if (!el) return;
+    el.hidden = false;
+    el.setAttribute("aria-hidden", "false");
+    document.body.classList.add("six-egg-open");
+    sixEggPage(0);
+  }
+  function closeSixEgg() {
+    if (!state.sixEggOpen) return;
+    state.sixEggOpen = false;
+    state.sixEggToken++;
+    const el = $("#sixEgg");
+    if (el) { el.hidden = true; el.setAttribute("aria-hidden", "true"); el.classList.remove("is-swapping"); }
+    document.body.classList.remove("six-egg-open");
+    const lines = $("#sixEggLines"); if (lines) lines.innerHTML = "";
+    const choices = $("#sixEggChoices"); if (choices) choices.hidden = true;
+    const next = $("#sixEggNext"); if (next) next.hidden = true;
+  }
 
   /* ---------- API ---------- */
   const isSidebarMode = typeof window.PluginPageContext !== "undefined"
@@ -390,7 +591,12 @@
     const side = $(".side-console");
     if (side) side.dataset.org = theme;
     const consoleNumber = $("#consoleNumber");
-    if (consoleNumber) consoleNumber.textContent = org?.chapter || "00";
+    if (consoleNumber) {
+      consoleNumber.textContent = org?.chapter || "00";
+      const anomaly = /^(06|07)$/.test(consoleNumber.textContent.trim());
+      consoleNumber.classList.toggle("is-anomaly", anomaly);
+      consoleNumber.title = anomaly ? "06 / 07 · 异常编号" : "";
+    }
     renderThemeBadges();
   }
 
@@ -550,7 +756,7 @@
   function renderWallVault() {
     const tabs = $("#wallVaultTabs"), grid = $("#wallVault");
     if (!tabs || !grid) return;
-    const themes = Object.keys(ORGS);
+    const themes = THEMES.slice();
     if (zeroIsEnabled() && (zeroData().walls || []).length) themes.push("zero");
     if (!themes.includes(state.wallVaultTheme)) state.wallVaultTheme = themes[0] || "violet";
     tabs.innerHTML = themes.map(t => {
@@ -689,7 +895,7 @@
   }
   function renderApprThemes() {
     const box = $("#apprThemes"); if (!box) return;
-    box.innerHTML = Object.keys(ORGS).filter(t => orgEnabled(t)).map(t => {
+    box.innerHTML = THEMES.filter(t => orgEnabled(t)).map(t => {
       const org = orgFor(t);
       const badge = badgeFor(t, false);
       return `<button type="button" class="appr-badge ${state.apprTheme === t ? "is-on" : ""}" data-appr-theme="${t}" title="${esc(org?.name || t)}">
@@ -909,7 +1115,7 @@
   }
   function armIdle(force = false) {
     const ae = document.activeElement;
-    const blocked = document.querySelector(".modal-root") || document.body.classList.contains("boot-hold") ||
+    const blocked = state.sixEggOpen || document.querySelector(".modal-root") || document.body.classList.contains("boot-hold") ||
       (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName));
     if (!force && blocked) { clearTimeout(state.idleTimer); state.idleTimer = null; return; }
     if (!force && state.idleTimer && Date.now() - state.lastArm < 1200) return;
@@ -1111,7 +1317,7 @@
     renderZeroPanel();
     const tl = $("#wikiTimeline");
     if (tl && window.LINJI_STORY) tl.innerHTML = window.LINJI_STORY.map(s => `<div><b>${esc(s.year)}</b><p>${fxText(s.text, true)}</p></div>`).join("");
-    const themes = Object.keys(ORGS);
+    const themes = THEMES;
     grid.innerHTML = themes.map(theme => {
       const org = orgFor(theme);
       const badge = badgeFor(theme, false);
@@ -1179,7 +1385,12 @@
     $("#statVersions").textContent = String(state.versions.length).padStart(2, "0");
     $("#statDimension").textContent = ver ? ver.dimension : "—";
     const recall = state.globalRecall?.enabled && kb?.recall?.enabled;
-    $("#statRecall").textContent = recall ? "ON" : "OFF";
+    const recallStat = $("#statRecall");
+    if (recallStat) {
+      recallStat.textContent = recall ? "ON" : "OFF";
+      recallStat.classList.toggle("is-on", !!recall);
+      recallStat.classList.toggle("is-off", !recall);
+    }
     $("#activeBadgeText").textContent = ver ? `${ver.model_name} · ${ver.dimension}D` : "NO ACTIVE VERSION";
     $("#docCount").textContent = `${state.docs.length} RECORDS`;
     $("#docFoot").textContent = `${filteredDocs().length} RECORDS`;
@@ -1610,6 +1821,16 @@
   }
   function bind() {
     document.addEventListener("click", async (e) => {
+      const anomalyNumber = e.target.closest("#consoleNumber");
+      if (anomalyNumber && !state.sixEggOpen && /^(06|07)$/.test(anomalyNumber.textContent.trim())) { openSixEgg(); return; }
+      if (state.sixEggOpen) {
+        if (e.target.closest("#sixEggClose")) { closeSixEgg(); return; }
+        const choice = e.target.closest("[data-six-choice]");
+        if (choice) { chooseSixEgg(choice.dataset.sixChoice); return; }
+        if (e.target.closest("#sixEggNext")) { advanceSixEgg(); return; }
+        if (e.target.closest(".six-egg-shell")) { advanceSixEgg(); return; }
+        closeSixEgg(); return;
+      }
       if (e.target.closest("#wallViewerClose") || e.target.id === "wallViewer" || e.target.classList.contains("wall-viewer-frame") || e.target.classList.contains("wall-viewer-foot")) { closeWallViewer(); return; }
       const wikiWall = e.target.closest("[data-wiki-wall]");
       if (wikiWall) { openWallViewer(wikiWall.dataset.wikiWall, wikiWall.dataset.wallTitle || "WALLPAPER"); return; }
@@ -1840,6 +2061,11 @@
     }, { passive: true, capture: true }));
     window.addEventListener("pointermove", () => { if (!state.apprOpen) armIdle(); }, { passive: true });
     document.addEventListener("keydown", e => {
+      if (state.sixEggOpen) {
+        if (e.key === "Escape") { closeSixEgg(); return; }
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); advanceSixEgg(); return; }
+        return;
+      }
       if (e.key === "Escape") {
         if (!$("#wallViewer")?.hidden) { closeWallViewer(); return; }
         if (state.apprOpen) { closeAppreciate(); return; }
@@ -1906,6 +2132,8 @@
 
   /* ---------- init ---------- */
   async function init() {
+    try { if (localStorage.getItem(SIX_SWAP_KEY) === "1") applySixSevenSwap(true, false); } catch (_) {}
+    reorderThemeOptions();
     bind();
     initApprControlHover();
     renderThemeStrip();
