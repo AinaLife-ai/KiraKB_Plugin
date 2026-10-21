@@ -455,6 +455,7 @@
   function applyUi() {
     setTheme(state.ui.theme, false);
     applyCrt(state.ui.crt);
+    applyQuoteEnabled();
     applyPerformance();
     if (window.KBTextFX) {
       window.KBTextFX.setConfig({
@@ -506,6 +507,12 @@
     b.setAttribute("aria-pressed", String(on));
     b.classList.toggle("is-off", !on);
     const i = b.querySelector("i"); if (i) i.textContent = on ? "ON" : "OFF";
+  }
+  function applyQuoteEnabled() {
+    const on = !!state.ui.quote_enabled;
+    document.body.classList.toggle("quote-off", !on);
+    const ticker = $("#ticker");
+    if (ticker) ticker.classList.toggle("is-hidden", !on);
   }
   function syncUiControls() {
     const set = (id, v) => { const el = $("#" + id); if (el) el.value = v; };
@@ -1683,6 +1690,7 @@
       if (e.target.closest("#drawQuoteBtn") || e.target.closest("#tickerNext")) return broadcastQuote(true);
       if (e.target.closest("#quoteToggleBtn")) {
         state.ui.quote_enabled = !state.ui.quote_enabled;
+        applyQuoteEnabled();
         syncQuoteButton();
         if (state.ui.quote_enabled) { startQuoteTimer(); broadcastQuote(true); }
         else stopQuoteTimer();
