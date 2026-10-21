@@ -2482,3 +2482,43 @@ body.perf .org-badge.is-six-egg { animation: none !important; }
 @keyframes six-choice-idle-glow { 0%,100% { border-color:rgba(var(--accent-rgb),.4); box-shadow:none; } 50% { border-color:var(--accent); box-shadow:0 0 14px rgba(var(--accent-rgb),.18); } }
 @keyframes six-choice-idle-flicker { 0%,90%,100% { opacity:1; } 91% { opacity:.6; } 93% { opacity:1; } 95% { opacity:.72; } }
 @keyframes six-choice-idle-drift { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-1px); } }
+/* 1.5.13 pass 4 — readable number glitches on the catalogue surfaces */
+.stat-card b, .version-counts b, .entry-no { color: var(--accent); }
+#statEntries, #statVersions, .version-counts b, .entry-no {
+  animation: data-digit-glitch var(--stat-speed, 8s) steps(1) infinite;
+}
+#statRecall {
+  animation: data-digit-glitch var(--stat-speed, 8s) steps(1) infinite;
+}
+#statRecall.is-off {
+  animation: recall-off-flicker 3.8s steps(1) infinite;
+  color: var(--warn);
+}
+.entry-main small {
+  animation: data-size-flicker 5.8s steps(1) infinite;
+  text-shadow: 0 0 7px rgba(var(--accent-rgb), .10);
+}
+.entry-status, .entry-time, .entry-kb { animation: entry-data-breathe 6.4s ease-in-out infinite; }
+.cabinet-serial { color: var(--muted); text-shadow: 0 0 8px rgba(var(--accent-rgb), .12); }
+@keyframes data-digit-glitch {
+  0%, 82%, 100% { opacity: 1; transform: none; filter: none; }
+  83% { opacity: .55; transform: translateX(-1px); color: var(--accent); }
+  84% { opacity: 1; transform: translateX(1px); }
+  86% { opacity: .72; filter: blur(.3px); }
+  88% { opacity: 1; filter: none; }
+}
+@keyframes recall-off-flicker {
+  0%, 86%, 100% { opacity: .68; }
+  87% { opacity: .28; color: var(--warn); }
+  89% { opacity: .9; }
+  91% { opacity: .5; }
+}
+@keyframes data-size-flicker {
+  0%, 90%, 100% { opacity: 1; text-shadow: 0 0 7px rgba(var(--accent-rgb), .10); }
+  91% { opacity: .55; }
+  93% { opacity: 1; text-shadow: 0 0 12px rgba(var(--accent-rgb), .3); }
+  95% { opacity: .78; }
+}
+body.perf #statEntries, body.perf #statVersions, body.perf #statRecall, body.perf .version-counts b,
+body.perf .entry-no, body.perf .entry-main small, body.perf .entry-status, body.perf .entry-time, body.perf .entry-kb { animation: none !important; }
+.version-card .version-counts b { animation: data-digit-glitch var(--stat-speed, 8s) steps(1) infinite; }
