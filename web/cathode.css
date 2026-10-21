@@ -2634,3 +2634,45 @@ body[data-theme="gray"] { --scan-anim: nav-gray-drift; }
 .stat-row .stat-card.is-relay-burst::after { animation-duration: .55s !important; }
 .stat-row .stat-card.is-relay-burst b { animation-duration: .55s !important; }
 .stat-row .stat-card small { font-size: 10.5px; font-weight: 600; letter-spacing: .025em; color: var(--ink-2); text-shadow: 0 1px 4px rgba(0,0,0,.75); }
+/* 1.5.13 pass 8 — random numeral motifs on the active gauge */
+.stat-card b { display: inline-block; }
+.stat-row .stat-card.is-relay:not(.is-hover) { animation-duration: 1.2s !important; }
+.stat-row .stat-card.is-relay:not(.is-hover)::after { animation-duration: 1.2s !important; }
+.stat-row .stat-card.is-hover { --num-fx-duration: .72s; }
+.stat-row .stat-card[data-num-fx="pulse"] #statEntries,
+.stat-row .stat-card[data-num-fx="pulse"] #statVersions,
+.stat-row .stat-card[data-num-fx="pulse"] #statDimension,
+.stat-row .stat-card[data-num-fx="pulse"] #statRecall { animation: num-fx-pulse var(--num-fx-duration, 1.2s) steps(1) both !important; }
+.stat-row .stat-card[data-num-fx="signal"] #statEntries,
+.stat-row .stat-card[data-num-fx="signal"] #statVersions,
+.stat-row .stat-card[data-num-fx="signal"] #statDimension,
+.stat-row .stat-card[data-num-fx="signal"] #statRecall { animation: num-fx-signal var(--num-fx-duration, 1.2s) steps(1) both !important; }
+.stat-row .stat-card[data-num-fx="delete"] #statEntries,
+.stat-row .stat-card[data-num-fx="delete"] #statVersions,
+.stat-row .stat-card[data-num-fx="delete"] #statDimension,
+.stat-row .stat-card[data-num-fx="delete"] #statRecall { animation: num-fx-delete var(--num-fx-duration, 1.2s) steps(1) both !important; }
+@keyframes num-fx-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; text-shadow: 0 0 8px rgba(var(--accent-rgb), .15); }
+  38% { transform: scale(1.1); opacity: 1; text-shadow: 0 0 20px rgba(var(--accent-rgb), .7); }
+  64% { transform: scale(.98); opacity: .82; }
+}
+@keyframes num-fx-signal {
+  0%, 100% { transform: none; opacity: 1; text-shadow: none; }
+  12% { transform: translateX(-2px); opacity: .38; text-shadow: 2px 0 rgba(255,70,110,.45), -2px 0 rgba(70,190,255,.35); }
+  14% { transform: translateX(2px); opacity: 1; }
+  34% { transform: translateX(-1px); opacity: .68; }
+  36% { transform: none; opacity: 1; }
+  62% { opacity: .45; filter: blur(.4px); }
+  64% { opacity: 1; filter: none; }
+}
+@keyframes num-fx-delete {
+  0%, 100% { clip-path: inset(0 0 0 0); opacity: 1; transform: none; }
+  18% { clip-path: inset(0 0 100% 0); opacity: .35; transform: translateX(-1px); }
+  20% { clip-path: inset(0 0 0 0); opacity: .9; transform: none; }
+  52% { clip-path: inset(0 0 0 48%); opacity: 1; }
+  56% { clip-path: inset(0 0 0 0); opacity: 1; }
+  74% { clip-path: inset(48% 0 0 0); opacity: .6; }
+  78% { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+body.perf .stat-card[data-num-fx] #statEntries, body.perf .stat-card[data-num-fx] #statVersions,
+body.perf .stat-card[data-num-fx] #statDimension, body.perf .stat-card[data-num-fx] #statRecall { animation: none !important; }

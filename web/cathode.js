@@ -963,14 +963,18 @@
     if (!row || row._relayBound) return;
     row._relayBound = true;
     const cards = [...row.querySelectorAll(".stat-card")];
+    const numFx = ["pulse", "signal", "delete"];
+    const fx = () => numFx[Math.floor(Math.random() * numFx.length)];
     cards.forEach(card => {
       card.addEventListener("pointerenter", () => {
         state.statRelayHover = card;
-        cards.forEach(c => c.classList.remove("is-relay"));
+        cards.forEach(c => { c.classList.remove("is-relay", "is-relay-alt", "is-relay-burst"); delete c.dataset.numFx; });
+        card.dataset.numFx = fx();
         card.classList.add("is-hover");
       });
       card.addEventListener("pointerleave", () => {
         card.classList.remove("is-hover");
+        delete card.dataset.numFx;
         if (state.statRelayHover === card) state.statRelayHover = null;
       });
     });
@@ -988,21 +992,23 @@
         pick = live[(live.indexOf(pick) + 1) % live.length];
       }
       const variant = variants[Math.floor(Math.random() * variants.length)];
-      const duration = 820 + Math.random() * 520;
-      cards.forEach(c => c.classList.remove("is-relay", "is-relay-alt", "is-relay-burst"));
+      const duration = 1250;
+      cards.forEach(c => { c.classList.remove("is-relay", "is-relay-alt", "is-relay-burst"); delete c.dataset.numFx; });
       state.statRelayIndex = cards.indexOf(pick);
+      pick.dataset.numFx = fx();
       pick.classList.add("is-relay", variant);
       clearTimeout(pick._relayOff);
-      pick._relayOff = setTimeout(() => pick.classList.remove("is-relay", "is-relay-alt", "is-relay-burst"), duration);
+      pick._relayOff = setTimeout(() => { pick.classList.remove("is-relay", "is-relay-alt", "is-relay-burst"); delete pick.dataset.numFx; }, duration);
       if (Math.random() < .34 && live.length > 1) {
         const next = live[(live.indexOf(pick) + 1 + Math.floor(Math.random() * (live.length - 1))) % live.length];
         setTimeout(() => {
           if (state.apprOpen || state.sixEggOpen || state.statRelayHover) return;
-          pick.classList.remove("is-relay", "is-relay-alt", "is-relay-burst");
+          pick.classList.remove("is-relay", "is-relay-alt", "is-relay-burst"); delete pick.dataset.numFx;
           state.statRelayIndex = cards.indexOf(next);
+          next.dataset.numFx = fx();
           next.classList.add("is-relay", variants[Math.floor(Math.random() * variants.length)]);
           clearTimeout(next._relayOff);
-          next._relayOff = setTimeout(() => next.classList.remove("is-relay", "is-relay-alt", "is-relay-burst"), duration);
+          next._relayOff = setTimeout(() => { next.classList.remove("is-relay", "is-relay-alt", "is-relay-burst"); delete next.dataset.numFx; }, duration);
         }, 360);
       }
     };
