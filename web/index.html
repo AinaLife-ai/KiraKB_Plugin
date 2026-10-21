@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#08060d">
 <title>KiraKB // 临极档案 · LINJI ARCHIVE</title>
-<link rel="stylesheet" href="cathode.css?v=124">
+<link rel="stylesheet" href="cathode.css?v=139">
 </head>
 <body class="boot-hold booting" data-theme="violet" data-crt="high">
 <svg class="svg-defs" aria-hidden="true" focusable="false">
@@ -84,7 +84,7 @@
           <div class="signal-meter"><i></i><i></i><i></i><i></i><i></i><span>STABLE</span></div>
         </div>
         <div class="rail-foot">
-          <span>KIRAKB / <b id="pluginVersion">1.5.12</b></span>
+          <span>KIRAKB / <b id="pluginVersion">1.5.13</b></span>
           <button id="quickCrt" type="button" aria-pressed="true"><svg><use href="#i-power"></use></svg><span>CRT</span></button>
         </div>
       </aside>
@@ -292,7 +292,7 @@
       </main>
       <aside class="side-console" aria-hidden="true"><div class="console-label">CH</div><div class="console-number" id="consoleNumber">01</div><div class="console-knob"><i></i></div><div class="console-slits"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="console-label bottom">VOL</div><div class="console-knob small"><i></i></div></aside>
     </div>
-    <div class="cabinet-foot"><span>ORIGINAL ARCHIVE TERMINAL // LINJI</span><span class="foot-warn">NO SIGNAL LOST</span><span>BUILD 1.5.12</span></div>
+    <div class="cabinet-foot"><span>ORIGINAL ARCHIVE TERMINAL // LINJI</span><span class="foot-warn">NO SIGNAL LOST</span><span>BUILD 1.5.13</span></div>
   </div>
 </div>
 <section class="appreciate" id="appreciate" aria-hidden="true" aria-label="欣赏模式">
@@ -320,6 +320,20 @@
   <div class="wall-viewer-frame"><img id="wallViewerImg" alt=""></div>
   <div class="wall-viewer-foot"><b id="wallViewerTitle">WALLPAPER</b><span>点击空白处或按 ESC 关闭</span></div>
 </div>
+<section id="sixEgg" class="six-egg" hidden aria-hidden="true" aria-label="06 与 07 异常">
+  <div class="six-egg-veil"></div>
+  <div class="six-egg-shell" role="dialog" aria-modal="true">
+    <div class="six-egg-top"><span>ANOMALY // 06 ↔ 07</span><button type="button" id="sixEggClose" aria-label="关闭">×</button></div>
+    <div class="six-egg-lines" id="sixEggLines"></div>
+    <div class="six-egg-next" id="sixEggNext" hidden><i></i><span>CLICK / ENTER</span></div>
+    <div class="six-egg-choices" id="sixEggChoices" hidden>
+      <button type="button" data-six-choice="yes"><b>是</b><small>修正它</small></button>
+      <button type="button" data-six-choice="no"><b>否</b><small>保持原样</small></button>
+      <button type="button" data-six-choice="ellipsis"><b>……</b><small>交给时间线</small></button>
+    </div>
+    <div class="six-egg-foot"><span>LINJI / CAUSALITY MONITOR</span><span id="sixEggStatus">ANOMALY 06—07</span></div>
+  </div>
+</section>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="modalRoot"></div>
 <script src="linji-data.js?v=2"></script>
@@ -327,6 +341,6 @@
 <script src="linji-meta.js?v=4"></script>
 <script src="linji-final.js?v=5"></script>
 <script src="textfx.js?v=40"></script>
-<script src="cathode.js?v=132"></script>
+<script src="cathode.js?v=144"></script>
 </body>
 </html>
