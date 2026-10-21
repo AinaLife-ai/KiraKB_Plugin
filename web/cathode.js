@@ -469,7 +469,7 @@
     startBrandModes();
     startWallRotation();
     startSignalMeter();
-    if (state.ui.quote_enabled) startQuoteTimer(); else stopQuoteTimer();
+    startQuoteTimer();
   }
   function queueUiSave() {
     clearTimeout(state.uiSaveTimer);
@@ -1581,7 +1581,9 @@
     } finally { state.quoteBusy = false; }
   }
   function startQuoteTimer() {
-    stopQuoteTimer(); if (!state.ui.quote_enabled) return;
+    stopQuoteTimer();
+    // Auto-extraction is independent of the subtitle bar's visibility.
+    // The ticker may be display:none, but the quote card should still update.
     state.quoteTimer = setInterval(() => { if (!document.hidden) broadcastQuote(); }, Math.max(4, state.ui.quote_interval) * 1000);
   }
   function stopQuoteTimer() { if (state.quoteTimer) clearInterval(state.quoteTimer); state.quoteTimer = null; }
@@ -1691,8 +1693,8 @@
         state.ui.quote_enabled = !state.ui.quote_enabled;
         applyQuoteEnabled();
         syncQuoteButton();
-        if (state.ui.quote_enabled) { startQuoteTimer(); broadcastQuote(true); }
-        else stopQuoteTimer();
+        startQuoteTimer();
+        if (state.ui.quote_enabled) broadcastQuote(true);
         syncUiControls(); queueUiSave();
         return;
       }
@@ -1826,7 +1828,7 @@
         startQuoteTimer(); queueUiSave();
       }
     });
-    document.addEventListener("visibilitychange", () => { if (document.hidden) { stopQuoteTimer(); clearTimeout(state.idleTimer); state.idleTimer = null; } else { if (state.ui.quote_enabled) startQuoteTimer(); armIdle(true); } });
+    document.addEventListener("visibilitychange", () => { if (document.hidden) { stopQuoteTimer(); clearTimeout(state.idleTimer); state.idleTimer = null; } else { startQuoteTimer(); armIdle(true); } });
     ["pointerdown","keydown","wheel","touchstart"].forEach(evt => window.addEventListener(evt, (e) => {
       if (state.apprOpen) {
         const inside = e.target && e.target.closest && e.target.closest("#appreciate .appr-tools, #appreciate .appr-bottom");
@@ -1952,7 +1954,8 @@
     } catch (e) { toast("加载失败：" + e.message, "err"); }
     initTextFx();
     startBrandModes();
-    if (state.ui.quote_enabled) { broadcastQuote(true); startQuoteTimer(); }
+    broadcastQuote(true);
+    startQuoteTimer();
     armIdle(true);
     startQuoteFxLoop();
     setInterval(() => { if (!document.hidden) { loadTasks().then(renderTasks).catch(() => {}); } }, 5000);
