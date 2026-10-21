@@ -811,7 +811,8 @@
   }
   function applyBackgrounds() {
     const pageWall = $("#screenWallpaper");
-    if (pageWall) pageWall.style.backgroundImage = state.orgWallpaper ? `url("${state.orgWallpaper}")` : "none";
+    const pageImage = state.backgrounds[state.view] || state.orgWallpaper;
+    if (pageWall) pageWall.style.backgroundImage = pageImage ? `url("${pageImage}")` : "none";
     $$("[data-view]").forEach(view => {
       const art = view.querySelector(".view-art");
       if (art) art.style.backgroundImage = "none";
