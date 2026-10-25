@@ -93,6 +93,7 @@ async def main_async():
     snap = plugin._settings_snapshot()
     check("包含分区", all(k in snap for k in ("search", "entries", "permission", "recall", "storage", "webui")), str(snap.keys()))
     check("默认历史保留 5", snap["entries"]["entry_history_keep"] == 5, str(snap["entries"]))
+    check("默认界面模式 linji", snap["ui"]["ui_mode"] == "linji", str(snap["ui"]))
 
     print("\nS2  应用热设置")
     result = await plugin._apply_settings({
@@ -173,6 +174,10 @@ async def main_async():
     check("GET settings", status == 200 and data["recall"]["mode"] == "hybrid", str(status))
     data, status = await api.update_settings(plugin.kb_manager, {"recall": {"recall_top_k": 6}})
     check("PUT settings", status == 200 and data["settings"]["recall"]["top_k"] == 6, str(status))
+    data, status = api.get_settings(plugin.kb_manager)
+    check("GET 默认界面模式", status == 200 and data["ui"]["ui_mode"] == "linji", str(status))
+    data, status = await api.update_settings(plugin.kb_manager, {"ui": {"ui_mode": "simple"}})
+    check("PUT 界面模式", status == 200 and data["settings"]["ui"]["ui_mode"] == "simple", str(status))
 
     print("\nS7  存储目录与独立 WebUI 热切换")
     old_dir = plugin.kb_base_dir
@@ -228,6 +233,7 @@ async def main_async():
         ("section_basic", "enable_lexical_search"): ("search", "enable_lexical_search"),
         ("section_basic", "ignore_time"): ("search", "ignore_time"),
         ("section_basic", "auto_install_dependencies"): ("search", "auto_install_dependencies"),
+        ("section_ui", "ui_mode"): ("ui", "ui_mode"),
         ("section_ui", "theme"): ("ui", "theme"),
         ("section_ui", "crt"): ("ui", "crt"),
         ("section_ui", "performance"): ("ui", "performance"),
@@ -292,18 +298,25 @@ async def main_async():
 
     print("\nS9  机台皮肤配置往返")
     res = await plugin._apply_settings({"ui": {
-        "theme": "pink", "crt": "high", "performance": False, "splash": True,
+        "ui_mode": "simple", "theme": "pink", "crt": "high", "performance": False, "splash": True,
         "text_fx": "radio", "fx_loop": True, "fx_interval": 7,
         "quote_enabled": True, "quote_interval": 11, "quote_kb_ids": ["test"],
         "quote_custom_lines": ["自定义台词"], "quote_custom_mottos": ["自定义格言"],
     }})
     ui = plugin._settings_snapshot()["ui"]
+    check("UI 界面模式写入", ui["ui_mode"] == "simple", str(ui.get("ui_mode")))
     check("UI 主题写入", ui["theme"] == "pink", str(ui.get("theme")))
     check("UI 字幕参数写入", ui["fx_interval"] == 7 and ui["quote_interval"] == 11,
           str({k: ui.get(k) for k in ("fx_interval", "quote_interval")}))
     check("UI 自定义台词/格言写入",
           ui["quote_kb_ids"] == ["test"] and ui["quote_custom_lines"] == ["自定义台词"]
           and ui["quote_custom_mottos"] == ["自定义格言"], str(ui))
+
+    await plugin._apply_settings({"ui": {"ui_mode": "bogus"}})
+    check("非法界面模式回退 linji", plugin._settings_snapshot()["ui"]["ui_mode"] == "linji")
+    saved2 = json.loads(cfg_path.read_text(encoding="utf-8"))
+    check("界面模式已持久化", saved2["section_ui"]["ui_mode"] == "linji",
+          str(saved2.get("section_ui", {}).get("ui_mode")))
 
     await plugin.terminate()
 

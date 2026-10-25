@@ -4,8 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#08060d">
+<script>
+try {
+  if (localStorage.getItem("kirakb-ui-mode") === "simple") document.documentElement.dataset.uiMode = "simple";
+  if (localStorage.getItem("kirakb-simple-theme") === "dark") document.documentElement.dataset.simpleTheme = "dark";
+} catch (_) {}
+</script>
 <title>KiraKB // 临极档案 · LINJI ARCHIVE</title>
-<link rel="stylesheet" href="cathode.css?v=141">
+<link rel="stylesheet" href="cathode.css?v=153">
 </head>
 <body class="boot-hold booting" data-theme="violet" data-crt="high">
 <svg class="svg-defs" aria-hidden="true" focusable="false">
@@ -84,7 +90,7 @@
           <div class="signal-meter"><i></i><i></i><i></i><i></i><i></i><span>STABLE</span></div>
         </div>
         <div class="rail-foot">
-          <span>KIRAKB / <b id="pluginVersion">1.5.14</b></span>
+          <span>KIRAKB / <b id="pluginVersion">1.6.0</b></span>
           <button id="quickCrt" type="button" aria-pressed="true"><svg><use href="#i-power"></use></svg><span>CRT</span></button>
         </div>
       </aside>
@@ -100,8 +106,11 @@
               <span class="hud-dot"></span>
               <span class="hud-meta" id="activeBadgeText">NO ACTIVE VERSION</span>
             </div>
+            <div class="simple-kb-bar" id="simpleKbBar" hidden></div>
             <div class="hud-right">
               <div class="theme-strip" id="themeStrip" role="group" aria-label="配色主题"></div>
+              <button class="hud-btn hud-simple-only" id="simpleThemeBtn" type="button" hidden><svg><use href="#i-eye"></use></svg><span id="simpleThemeLabel">暗色</span></button>
+              <button class="hud-btn" id="uiModeBtn" type="button" title="切换临极档案 / 简洁侧边栏"><svg><use href="#i-layers"></use></svg><span id="uiModeLabel">简洁</span></button>
               <button class="hud-btn" id="appreciateBtn" type="button" title="欣赏模式（F）"><svg><use href="#i-eye"></use></svg>欣赏</button>
               <button class="hud-btn" id="quoteToggleBtn" type="button" aria-pressed="true">字幕 <i>ON</i></button>
               <button class="hud-btn" id="settingsBtn" type="button"><svg><use href="#i-sliders"></use></svg>设置</button>
@@ -218,6 +227,7 @@
                 <div class="settings-grid">
                   <div class="panel span-2"><div class="panel-head"><div><span class="mini-label">MACHINE SKIN / 机台皮肤</span><h2>显像管与字幕</h2></div><span class="badge">LIVE</span></div><div class="skin-grid">
                     <div class="field span-2"><label>组织徽章 / 快速切换</label><div class="theme-badge-row" id="themeBadgeRow"></div></div>
+                    <div class="field"><label for="setUiMode">界面模式</label><select id="setUiMode"><option value="linji">临极档案 · 完整机台</option><option value="simple">简洁侧边栏 · 轻量</option></select><span class="hint">两种模式共用全部功能与知识库数据。</span></div>
                     <div class="field"><label for="setUiTheme">配色主题</label><select id="setUiTheme"><option value="random">随机色 · RANDOM</option><option value="violet">紫色 · VIOLET</option><option value="pink">粉色 · PINK</option><option value="blue">蓝色 · BLUE</option><option value="amber">黄色 · AMBER</option><option value="sg">时计局 · 世界线观测所</option><option value="green">绿色 · GREEN</option><option value="red">红色 · RED</option><option value="gray">灰色 · GRAY</option></select></div>
                     <div class="field"><label for="setUiCrt">CRT 强度</label><select id="setUiCrt"><option value="high">高</option><option value="medium">中</option><option value="low">低</option><option value="off">关闭</option></select></div>
                     <div class="field"><label for="setUiTextFx">文字特效</label><select id="setUiTextFx"><option value="mix">混合</option><option value="radio">电波干扰</option><option value="pulse">脉冲</option><option value="type">打字机</option><option value="decode">解码</option><option value="scan">扫描</option><option value="glitch">故障</option></select></div>
@@ -292,7 +302,7 @@
       </main>
       <aside class="side-console" aria-hidden="true"><div class="console-label">CH</div><div class="console-number" id="consoleNumber">01</div><div class="console-knob"><i></i></div><div class="console-slits"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="console-label bottom">VOL</div><div class="console-knob small"><i></i></div></aside>
     </div>
-    <div class="cabinet-foot"><span>ORIGINAL ARCHIVE TERMINAL // LINJI</span><span class="foot-warn">NO SIGNAL LOST</span><span>BUILD 1.5.14</span></div>
+    <div class="cabinet-foot"><span>ORIGINAL ARCHIVE TERMINAL // LINJI</span><span class="foot-warn">NO SIGNAL LOST</span><span>BUILD 1.6.0</span></div>
   </div>
 </div>
 <section class="appreciate" id="appreciate" aria-hidden="true" aria-label="欣赏模式">
@@ -341,6 +351,6 @@
 <script src="linji-meta.js?v=4"></script>
 <script src="linji-final.js?v=5"></script>
 <script src="textfx.js?v=40"></script>
-<script src="cathode.js?v=148"></script>
+<script src="cathode.js?v=153"></script>
 </body>
 </html>
