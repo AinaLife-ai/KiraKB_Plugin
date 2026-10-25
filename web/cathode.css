@@ -3915,3 +3915,28 @@ html[data-ui-mode="simple"] .channel .ch-label b {
     font-size: 11px;
   }
 }
+/* kill every inherited clip/mask/compositing remnant on the simple nav row */
+html[data-ui-mode="simple"] .channel,
+html[data-ui-mode="simple"] .channel *,
+html[data-ui-mode="simple"] .channel::before,
+html[data-ui-mode="simple"] .channel::after {
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+  transform: none !important;
+  animation: none !important;
+  transition: none !important;
+  background-clip: border-box !important;
+  -webkit-background-clip: border-box !important;
+}
+html[data-ui-mode="simple"] .channel {
+  overflow: visible;
+}
+/* the responsive rail must beat the desktop clamp */
+@media (max-width: 900px) {
+  html[data-ui-mode="simple"] .rail {
+    width: 100%;
+    flex: 0 0 auto;
+  }
+}
