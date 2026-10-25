@@ -3758,3 +3758,125 @@ html[data-ui-mode="simple"] .channel {
     padding-right: 4px;
   }
 }
+/* 1.6.0 — simple mode keeps a fully labelled sidebar, not icon-only mystery meat */
+html[data-ui-mode="simple"] .rail {
+  width: 190px;
+  flex: 0 0 190px;
+}
+html[data-ui-mode="simple"] .rail-top {
+  padding: 16px 14px;
+  text-align: left;
+}
+html[data-ui-mode="simple"] .rail-title-row {
+  justify-content: flex-start;
+  gap: 8px;
+}
+html[data-ui-mode="simple"] .rail-kb {
+  font-size: 20px;
+}
+html[data-ui-mode="simple"] .rail-title {
+  display: inline;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+html[data-ui-mode="simple"] .channel-nav {
+  align-items: stretch;
+  gap: 3px;
+  padding: 8px;
+}
+html[data-ui-mode="simple"] .channel {
+  width: 100%;
+  height: 40px;
+  margin: 0;
+  padding: 0 12px;
+  justify-content: flex-start;
+  gap: 10px;
+  border-radius: 8px;
+}
+html[data-ui-mode="simple"] .channel svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+html[data-ui-mode="simple"] .channel .ch-label {
+  display: block !important;
+  min-width: 0;
+}
+html[data-ui-mode="simple"] .channel .ch-label b {
+  display: block;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0;
+  color: inherit;
+  white-space: nowrap;
+}
+html[data-ui-mode="simple"] .channel .ch-label small,
+html[data-ui-mode="simple"] .channel .ch-no,
+html[data-ui-mode="simple"] .channel .ch-pip {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  html[data-ui-mode="simple"] .rail {
+    width: 100%;
+    flex: 0 0 auto;
+  }
+  html[data-ui-mode="simple"] .channel-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 4px;
+    padding: 6px 8px;
+    overflow: visible;
+  }
+  html[data-ui-mode="simple"] .channel {
+    width: auto;
+    flex: 1 0 calc(25% - 6px);
+    height: 38px;
+    margin: 0;
+    padding: 0 6px;
+    justify-content: center;
+    gap: 6px;
+  }
+  html[data-ui-mode="simple"] .channel svg {
+    width: 17px;
+    height: 17px;
+    flex-basis: 17px;
+  }
+  html[data-ui-mode="simple"] .channel .ch-label b {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 560px) {
+  html[data-ui-mode="simple"] .channel {
+    flex-basis: calc(25% - 6px);
+    height: 34px;
+    padding: 0 4px;
+    gap: 4px;
+  }
+  html[data-ui-mode="simple"] .channel svg {
+    width: 16px;
+    height: 16px;
+    flex-basis: 16px;
+  }
+  html[data-ui-mode="simple"] .channel .ch-label b {
+    font-size: 11px;
+  }
+}
+html[data-ui-mode="simple"] .rail-kb,
+html[data-ui-mode="simple"] .rail-kb .fx-ch,
+html[data-ui-mode="simple"] .rail-title {
+  animation: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  text-shadow: none !important;
+}
+html[data-ui-mode="simple"] .rail-kb {
+  color: var(--accent) !important;
+}
