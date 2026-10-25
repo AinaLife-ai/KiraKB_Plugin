@@ -123,6 +123,8 @@
     document.body.classList.toggle("ui-simple", simple);
     placeKbArchive(simple);
     if (simple) {
+      clearTimeout(brandTimer);
+      $("#railBrandRow")?.classList.remove(...BRAND_MODES);
       clearTimeout(state.statRelayTimer);
       state.statRelayHover = null;
       $$(".stat-card").forEach(card => {
@@ -1387,13 +1389,14 @@
     const row = $("#railBrandRow");
     if (!row) return;
     row.classList.remove(...BRAND_MODES);
+    if (uiMode() === "simple") return;
     if (state.ui.performance || reduced) return;
     row.classList.add(BRAND_MODES[Math.floor(Math.random() * BRAND_MODES.length)]);
   }
   function scheduleBrandMode() {
     clearTimeout(brandTimer);
     const row = $("#railBrandRow");
-    if (!row || state.ui.performance || reduced) {
+    if (!row || uiMode() === "simple" || state.ui.performance || reduced) {
       row?.classList.remove(...BRAND_MODES);
       return;
     }

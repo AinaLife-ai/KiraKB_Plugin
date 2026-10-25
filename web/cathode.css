@@ -3940,3 +3940,36 @@ html[data-ui-mode="simple"] .channel {
     flex: 0 0 auto;
   }
 }
+/* simple brand area: no brand-mode clip/rings/flicker layers */
+html[data-ui-mode="simple"] .rail-top,
+html[data-ui-mode="simple"] #railBrandRow,
+html[data-ui-mode="simple"] #railKb,
+html[data-ui-mode="simple"] #railTitle {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  text-shadow: none !important;
+}
+html[data-ui-mode="simple"] #railBrandRow::before,
+html[data-ui-mode="simple"] #railBrandRow::after,
+html[data-ui-mode="simple"] #railKb::before,
+html[data-ui-mode="simple"] #railKb::after,
+html[data-ui-mode="simple"] #railTitle::before,
+html[data-ui-mode="simple"] #railTitle::after {
+  display: none !important;
+}
+html[data-ui-mode="simple"] #railBadge {
+  display: none !important;
+}
+/* Keep the simple rail on a stable compositor layer; without this WebKit can
+   retain a stale clip/offset from the LINJI rail while the mode is switching. */
+html[data-ui-mode="simple"] .rail {
+  transform: translateZ(0);
+  will-change: transform;
+}
