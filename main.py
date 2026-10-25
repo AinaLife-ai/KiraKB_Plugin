@@ -93,6 +93,9 @@ class KiraKBPlugin(BasePlugin):
         self.auto_install_dependencies = bool(sec_basic.get("auto_install_dependencies", True))
         self.lexical_min_score = max(0, min(20, int(sec_recall.get("lexical_min_score", 2))))
 
+        self.ui_mode = str(sec_ui.get("ui_mode", "linji") or "linji")
+        if self.ui_mode not in ("linji", "simple"):
+            self.ui_mode = "linji"
         self.ui_theme = str(sec_ui.get("theme", "random") or "random")
         self.ui_crt = str(sec_ui.get("crt", "high") or "high")
         self.ui_performance = bool(sec_ui.get("performance", False))
@@ -442,6 +445,7 @@ class KiraKBPlugin(BasePlugin):
             },
             "recall": dict(self.recall_config),
             "ui": {
+                "ui_mode": self.ui_mode,
                 "theme": self.ui_theme,
                 "crt": self.ui_crt,
                 "performance": self.ui_performance,
@@ -646,6 +650,9 @@ class KiraKBPlugin(BasePlugin):
         ui = payload.get("ui") or {}
         if isinstance(ui, dict):
             themes = ("random", "violet", "pink", "blue", "amber", "sg", "green", "red", "gray")
+            if "ui_mode" in ui:
+                value = str(ui.get("ui_mode") or "linji")
+                self.ui_mode = value if value in ("linji", "simple") else "linji"
             if "theme" in ui:
                 self.ui_theme = str(ui.get("theme") or "random")
                 if self.ui_theme not in themes:
@@ -798,6 +805,7 @@ class KiraKBPlugin(BasePlugin):
             })
             ui_cfg = cfg.setdefault("section_ui", {})
             ui_cfg.update({
+                "ui_mode": self.ui_mode,
                 "theme": self.ui_theme,
                 "crt": self.ui_crt,
                 "performance": self.ui_performance,

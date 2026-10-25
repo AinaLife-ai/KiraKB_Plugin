@@ -35,6 +35,7 @@
     wiki: ["08", "WIKI"]
   };
   const UI_DEFAULT = {
+    ui_mode: "linji",
     theme: "random", crt: "high", performance: false, splash: true, quote_fx: true,
     text_fx: "mix", fx_loop: true, fx_interval: 6,
     quote_enabled: true, quote_interval: 9, quote_kb_ids: [],
@@ -65,6 +66,97 @@
   };
 
   const SIX_SWAP_KEY = "kirakb-six-seven-swapped";
+  const UI_MODE_KEY = "kirakb-ui-mode";
+  const SIMPLE_THEME_KEY = "kirakb-simple-theme";
+  function normalizeUiMode(mode) {
+    return mode === "simple" ? "simple" : "linji";
+  }
+
+  function uiMode() {
+    return normalizeUiMode(document.documentElement.dataset.uiMode);
+  }
+
+  function simpleTheme() {
+    return document.documentElement.dataset.simpleTheme === "dark" ? "dark" : "light";
+  }
+
+  function syncUiModeControls() {
+    const simple = uiMode() === "simple";
+    const label = $("#uiModeLabel"); if (label) label.textContent = simple ? "档案" : "简洁";
+    const modeBtn = $("#uiModeBtn");
+    if (modeBtn) {
+      modeBtn.title = simple ? "切换到临极档案模式" : "切换到简洁侧边栏模式";
+      modeBtn.setAttribute("aria-label", modeBtn.title);
+    }
+    const sel = $("#setUiMode"); if (sel) sel.value = simple ? "simple" : "linji";
+    const themeBtn = $("#simpleThemeBtn");
+    if (themeBtn) {
+      themeBtn.hidden = !simple;
+      themeBtn.title = simpleTheme() === "dark" ? "切换亮色简洁界面" : "切换暗色简洁界面";
+      const t = $("#simpleThemeLabel"); if (t) t.textContent = simpleTheme() === "dark" ? "亮色" : "暗色";
+    }
+  }
+
+  function applySimpleTheme(theme, persist = true) {
+    const dark = theme === "dark";
+    if (dark) document.documentElement.dataset.simpleTheme = "dark";
+    else delete document.documentElement.dataset.simpleTheme;
+    if (persist) { try { localStorage.setItem(SIMPLE_THEME_KEY, dark ? "dark" : "light"); } catch (_) {} }
+    syncUiModeControls();
+  }
+
+  function placeKbArchive(simple) {
+    const archive = $(".rail-archive"), bar = $("#simpleKbBar"), rail = $(".rail"), foot = $(".rail-foot");
+    if (!archive || !bar || !rail) return;
+    if (simple) {
+      if (archive.parentElement !== bar) bar.appendChild(archive);
+      bar.hidden = false;
+    } else {
+      if (archive.parentElement !== rail) rail.insertBefore(archive, foot || null);
+      bar.hidden = true;
+    }
+  }
+
+  function applyUiMode(mode) {
+    const simple = normalizeUiMode(mode) === "simple";
+    document.documentElement.dataset.uiMode = simple ? "simple" : "linji";
+    document.body.classList.toggle("ui-simple", simple);
+    placeKbArchive(simple);
+    if (simple) {
+      clearTimeout(brandTimer);
+      $("#railBrandRow")?.classList.remove(...BRAND_MODES);
+      clearTimeout(state.statRelayTimer);
+      state.statRelayHover = null;
+      $$(".stat-card").forEach(card => {
+        card.classList.remove("is-relay", "is-relay-alt", "is-relay-burst", "is-hover");
+        delete card.dataset.numFx;
+      });
+      const boot = $("#boot");
+      if (boot) { boot.classList.add("is-off"); boot.style.display = "none"; }
+      document.body.classList.remove("boot-hold", "booting");
+      if (state.apprOpen) closeAppreciate();
+    }
+    document.title = simple ? "KiraKB — 简洁管理" : "KiraKB // 临极档案 · LINJI ARCHIVE";
+    syncUiModeControls();
+  }
+
+  function setUiMode(mode, persist = true) {
+    const normalized = normalizeUiMode(mode);
+    state.ui.ui_mode = normalized;
+    try { localStorage.setItem(UI_MODE_KEY, normalized); } catch (_) {}
+    applyUiMode(normalized);
+    applyUi();
+    if (persist) queueUiSave();
+  }
+
+  function labelChannels() {
+    $$(".channel").forEach(btn => {
+      const text = (btn.querySelector(".ch-label b")?.textContent || "").trim() || "页面";
+      btn.title = text;
+      btn.setAttribute("aria-label", text);
+    });
+  }
+
   function applySixSevenSwap(swapped, persist = false) {
     if (!!state.sixSevenSwapped === !!swapped) return;
     const gi = THEMES.indexOf("green"), ri = THEMES.indexOf("red");
@@ -273,6 +365,7 @@
     state.sixEggBusy = false;
   }
   function openSixEgg() {
+    if (uiMode() === "simple") return;
     if (state.sixEggOpen) return;
     state.sixEggOpen = true;
     state.sixEggScript = state.sixSevenSwapped ? SIX_SECOND : SIX_FIRST;
@@ -694,19 +787,21 @@
     if (window.KBTextFX) window.KBTextFX.setConfig({ enabled: !state.ui.performance && !reduced, level: state.ui.performance ? 0 : 2 });
   }
   function applyUi() {
+    const simple = uiMode() === "simple";
     setTheme(state.ui.theme, false);
     applyCrt(state.ui.crt);
     applyQuoteEnabled();
     applyPerformance();
     if (window.KBTextFX) {
       window.KBTextFX.setConfig({
-        mode: state.ui.text_fx, idle: true, enabled: !state.ui.performance && !reduced,
-        level: state.ui.performance ? 0 : 2, loop: state.ui.fx_loop, loopInterval: state.ui.fx_interval
+        mode: state.ui.text_fx, idle: !simple, enabled: !simple && !state.ui.performance && !reduced,
+        level: simple || state.ui.performance ? 0 : 2, loop: !simple && state.ui.fx_loop, loopInterval: state.ui.fx_interval
       });
-      if (!state.ui.performance && !reduced && state.ui.fx_loop) window.KBTextFX.startLoop(state.ui.fx_interval);
+      if (!simple && !state.ui.performance && !reduced && state.ui.fx_loop) window.KBTextFX.startLoop(state.ui.fx_interval);
       else window.KBTextFX.stopLoop();
     }
     syncUiControls();
+    applyUiMode(state.ui.ui_mode);
     startBrandModes();
     startWallRotation();
     startSignalMeter();
@@ -725,6 +820,7 @@
   }
   function collectUi() {
     return {
+      ui_mode: state.ui.ui_mode,
       theme: state.ui.theme, crt: state.ui.crt, performance: !!state.ui.performance,
       splash: !!state.ui.splash, text_fx: $("#setUiTextFx")?.value || state.ui.text_fx,
       fx_loop: !!$("#setUiFxLoop")?.checked, fx_interval: Number($("#setUiFxInterval")?.value) || state.ui.fx_interval,
@@ -758,7 +854,7 @@
   function syncUiControls() {
     const set = (id, v) => { const el = $("#" + id); if (el) el.value = v; };
     const chk = (id, v) => { const el = $("#" + id); if (el) el.checked = !!v; };
-    set("setUiTheme", state.themeChoice === "random" ? "random" : state.ui.theme); set("setUiCrt", state.ui.crt);
+    set("setUiMode", state.ui.ui_mode); set("setUiTheme", state.themeChoice === "random" ? "random" : state.ui.theme); set("setUiCrt", state.ui.crt);
     chk("setUiPerf", state.ui.performance); chk("setUiSplash", state.ui.splash);
     set("setUiTextFx", state.ui.text_fx); chk("setUiFxLoop", state.ui.fx_loop);
     set("setUiFxInterval", state.ui.fx_interval); chk("setUiQuoteEnabled", state.ui.quote_enabled);
@@ -866,6 +962,7 @@
   }
   function startWallRotation() {
     clearInterval(state.wallTimer);
+    if (uiMode() === "simple") return;
     const secs = Math.max(5, Number(state.ui.wall_interval) || 18);
     if (!state.ui.wall_rotate || state.ui.performance) return;
     state.wallTimer = setInterval(() => {
@@ -960,6 +1057,7 @@
     scheduleApprCollapse(state.apprControlsDelay);
   }
   function initStatRelay() {
+    if (uiMode() === "simple") return;
     const row = document.querySelector(".stat-row");
     if (!row || row._relayBound) return;
     row._relayBound = true;
@@ -1183,6 +1281,7 @@
     state.apprTimer = setInterval(() => { if (!document.hidden && state.apprOpen) apprRandomNext(); }, secs * 1000);
   }
   function openAppreciate(url, auto = false) {
+    if (uiMode() === "simple") return;
     const all = apprAll();
     if (!all.length) { toast("还没有启用的壁纸。", "err"); return; }
     clearTimeout(state.idleTimer);
@@ -1241,6 +1340,7 @@
     armIdle(true);
   }
   function armIdle(force = false) {
+    if (uiMode() === "simple") { clearTimeout(state.idleTimer); state.idleTimer = null; return; }
     const ae = document.activeElement;
     const blocked = state.sixEggOpen || document.querySelector(".modal-root") || document.body.classList.contains("boot-hold") ||
       (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName));
@@ -1289,13 +1389,14 @@
     const row = $("#railBrandRow");
     if (!row) return;
     row.classList.remove(...BRAND_MODES);
+    if (uiMode() === "simple") return;
     if (state.ui.performance || reduced) return;
     row.classList.add(BRAND_MODES[Math.floor(Math.random() * BRAND_MODES.length)]);
   }
   function scheduleBrandMode() {
     clearTimeout(brandTimer);
     const row = $("#railBrandRow");
-    if (!row || state.ui.performance || reduced) {
+    if (!row || uiMode() === "simple" || state.ui.performance || reduced) {
       row?.classList.remove(...BRAND_MODES);
       return;
     }
@@ -1344,7 +1445,7 @@
     const boot = $("#boot");
     if (!boot) return;
     const skip = $("#bootSkip");
-    if (!state.ui.splash || state.ui.performance || new URLSearchParams(location.search).has("skipboot")) {
+    if (uiMode() === "simple" || !state.ui.splash || state.ui.performance || new URLSearchParams(location.search).has("skipboot")) {
       boot.classList.add("is-off"); document.body.classList.remove("boot-hold", "booting"); return;
     }
     document.body.classList.add("boot-hold");
@@ -1963,6 +2064,8 @@
       if (e.target.closest("#wallViewerClose") || e.target.id === "wallViewer" || e.target.classList.contains("wall-viewer-frame") || e.target.classList.contains("wall-viewer-foot")) { closeWallViewer(); return; }
       const wikiWall = e.target.closest("[data-wiki-wall]");
       if (wikiWall) { openWallViewer(wikiWall.dataset.wikiWall, wikiWall.dataset.wallTitle || "WALLPAPER"); return; }
+      if (e.target.closest("#uiModeBtn")) { setUiMode(uiMode() === "simple" ? "linji" : "simple"); return; }
+      if (e.target.closest("#simpleThemeBtn")) { applySimpleTheme(simpleTheme() === "dark" ? "light" : "dark"); return; }
       const nav = e.target.closest(".channel[data-view]"); if (nav) return switchView(nav.dataset.view);
       const theme = e.target.closest("[data-theme-set]"); if (theme) return setTheme(theme.dataset.themeSet);
       if (e.target.closest("#appreciateBtn")) return openAppreciate();
@@ -2058,6 +2161,7 @@
     $("#searchInput")?.addEventListener("keydown", e => { if (e.key === "Enter") runSearch(); });
     $("#selectAllDocs")?.addEventListener("change", e => { const list = filteredDocs(); if (e.target.checked) list.forEach(d => state.selected.add(d.doc_id)); else state.selected.clear(); renderDocList(); });
     document.addEventListener("change", async (e) => {
+      if (e.target.id === "setUiMode") { setUiMode(e.target.value); return; }
       if (e.target.id === "zeroEnabled") { saveZero({ enabled: e.target.checked }, true); toast(e.target.checked ? "第零章已启用。" : "第零章已关闭。"); return; }
       const zt = e.target.closest("[data-zero-target]");
       if (zt) {
@@ -2209,7 +2313,7 @@
     });
   }
   function openWallViewer(url, title = "WALLPAPER") {
-    if (!url) return;
+    if (!url || uiMode() === "simple") return;
     const box = $("#wallViewer"), img = $("#wallViewerImg"), label = $("#wallViewerTitle");
     if (!box || !img) return;
     img.src = url; img.alt = title;
@@ -2262,8 +2366,17 @@
   /* ---------- init ---------- */
   async function init() {
     try { if (localStorage.getItem(SIX_SWAP_KEY) === "1") applySixSevenSwap(true, false); } catch (_) {}
+    try {
+      const cachedMode = localStorage.getItem(UI_MODE_KEY);
+      if (cachedMode === "simple") state.ui.ui_mode = "simple";
+      const cachedTheme = localStorage.getItem(SIMPLE_THEME_KEY);
+      if (cachedTheme === "dark") document.documentElement.dataset.simpleTheme = "dark";
+    } catch (_) {}
     reorderThemeOptions();
     bind();
+    labelChannels();
+    applyUiMode(state.ui.ui_mode);
+    applySimpleTheme(simpleTheme(), false);
     initApprControlHover();
     initStatRelay();
     renderThemeStrip();

@@ -103,18 +103,43 @@
         "name": "机台皮肤",
         "collapsed": false,
         "fields": {
+            "ui_mode": {
+                "name": "界面模式",
+                "type": "string",
+                "default": "linji",
+                "options": [
+                    "linji",
+                    "simple"
+                ],
+                "hint": "临极档案：完整机台皮肤；简洁模式：轻量管理界面。两种模式共用全部功能与数据。"
+            },
             "theme": {
                 "name": "配色主题",
                 "type": "string",
                 "default": "random",
-                "options": ["random", "violet", "pink", "blue", "amber", "sg", "green", "red", "gray"],
+                "options": [
+                    "random",
+                    "violet",
+                    "pink",
+                    "blue",
+                    "amber",
+                    "sg",
+                    "green",
+                    "red",
+                    "gray"
+                ],
                 "hint": "前端显像管配色。默认随机；可选任意组织或随机。"
             },
             "crt": {
                 "name": "CRT 强度",
                 "type": "string",
                 "default": "high",
-                "options": ["off", "low", "medium", "high"],
+                "options": [
+                    "off",
+                    "low",
+                    "medium",
+                    "high"
+                ],
                 "hint": "扫描线、噪点与玻璃反光的强度。默认高。"
             },
             "performance": {
@@ -133,7 +158,15 @@
                 "name": "文字特效",
                 "type": "string",
                 "default": "mix",
-                "options": ["mix", "radio", "pulse", "type", "decode", "scan", "glitch"],
+                "options": [
+                    "mix",
+                    "radio",
+                    "pulse",
+                    "type",
+                    "decode",
+                    "scan",
+                    "glitch"
+                ],
                 "hint": "标题与字幕的入场/常态效果；混合会按页面和字幕轮换。"
             },
             "quote_fx": {
@@ -258,21 +291,36 @@
                 "name": "默认新增策略",
                 "type": "string",
                 "default": "open",
-                "options": ["open", "whitelist", "admin", "off"],
+                "options": [
+                    "open",
+                    "whitelist",
+                    "admin",
+                    "off"
+                ],
                 "hint": "open=任何人；whitelist=仅名单用户；admin=仅人工（WebUI）；off=冻结。知识库或条目单独设置后以其为准。默认 open 与旧版本行为一致。"
             },
             "default_edit_policy": {
                 "name": "默认编辑策略",
                 "type": "string",
                 "default": "open",
-                "options": ["open", "whitelist", "admin", "off"],
+                "options": [
+                    "open",
+                    "whitelist",
+                    "admin",
+                    "off"
+                ],
                 "hint": "编辑已有条目的默认策略。含义同上。默认 open 与旧版本行为一致。"
             },
             "default_delete_policy": {
                 "name": "默认删除策略",
                 "type": "string",
                 "default": "whitelist",
-                "options": ["open", "whitelist", "admin", "off"],
+                "options": [
+                    "open",
+                    "whitelist",
+                    "admin",
+                    "off"
+                ],
                 "hint": "删除条目的默认策略。含义同上。默认 whitelist 与旧版本行为一致（名单为空时不限制）。"
             }
         }
@@ -292,7 +340,11 @@
                 "name": "触发模式",
                 "type": "string",
                 "default": "hybrid",
-                "options": ["hybrid", "mention", "semantic"],
+                "options": [
+                    "hybrid",
+                    "mention",
+                    "semantic"
+                ],
                 "hint": "hybrid=条目名或关键词命中时优先检索该条目，否则对较长消息做语义检索；mention=仅有词面命中时检索；semantic=每轮都做语义检索。"
             },
             "recall_top_k": {
