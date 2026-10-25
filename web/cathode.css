@@ -3880,3 +3880,38 @@ html[data-ui-mode="simple"] .rail-title {
 html[data-ui-mode="simple"] .rail-kb {
   color: var(--accent) !important;
 }
+/* keep the labelled simple rail close to LINJI's proportions, not a giant slab */
+html[data-ui-mode="simple"] .rail {
+  width: clamp(166px, 17vw, 184px);
+  flex: 0 0 clamp(166px, 17vw, 184px);
+}
+html[data-ui-mode="simple"] .rail-top {
+  padding: 14px 12px;
+}
+html[data-ui-mode="simple"] .channel {
+  height: 40px;
+  padding: 0 10px;
+  gap: 8px;
+}
+html[data-ui-mode="simple"] .channel .ch-label b {
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  html[data-ui-mode="simple"] .channel {
+    height: 36px;
+    padding: 0 5px;
+    gap: 5px;
+  }
+}
+
+@media (max-width: 560px) {
+  html[data-ui-mode="simple"] .channel {
+    height: 32px;
+    padding: 0 4px;
+    gap: 4px;
+  }
+  html[data-ui-mode="simple"] .channel .ch-label b {
+    font-size: 11px;
+  }
+}
