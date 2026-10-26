@@ -11,7 +11,7 @@ try {
 } catch (_) {}
 </script>
 <title>KiraKB // 临极档案 · LINJI ARCHIVE</title>
-<link rel="stylesheet" href="cathode.css?v=160">
+<link rel="stylesheet" href="cathode.css?v=161">
 </head>
 <body class="boot-hold booting" data-theme="violet" data-crt="high">
 <svg class="svg-defs" aria-hidden="true" focusable="false">
@@ -90,7 +90,7 @@ try {
           <div class="signal-meter"><i></i><i></i><i></i><i></i><i></i><span>STABLE</span></div>
         </div>
         <div class="rail-foot">
-          <span>KIRAKB / <b id="pluginVersion">1.6.0</b></span>
+          <span>KIRAKB / <b id="pluginVersion">1.6.1</b></span>
           <button id="quickCrt" type="button" aria-pressed="true"><svg><use href="#i-power"></use></svg><span>CRT</span></button>
         </div>
       </aside>
@@ -223,11 +223,11 @@ try {
               <div class="view-art" data-art="settings"></div>
               <div class="view-inner">
                 <div class="chapter-row"><span class="chapter-no">06</span><span class="chapter-rule"></span><span class="chapter-label">MACHINE SETTINGS / 机台设置</span><span class="chapter-stamp">USER SKIN</span></div>
-                <div class="page-title"><div><div class="eyebrow">A MACHINE YOU CAN CALL YOURS</div><h1 data-fx="pulse">调到你喜欢的<em>那一道噪点</em></h1><p>主题、显像管、字幕与所有检索参数；大部分即时生效。</p></div><div style="display:flex;gap:6px;align-items:center"><button class="btn ghost" id="replayBootBtn" type="button">重播开屏</button><button class="btn primary" id="saveSettingsBtn" type="button"><svg><use href="#i-check"></use></svg>应用设置</button></div></div>
+                <div class="page-title"><div><div class="eyebrow" id="settingsEyebrow">A MACHINE YOU CAN CALL YOURS</div><h1 id="settingsTitle" data-fx="pulse">调到你喜欢的<em>那一道噪点</em></h1><p id="settingsDesc">主题、显像管、字幕与所有检索参数；大部分即时生效。</p></div><div style="display:flex;gap:6px;align-items:center"><button class="btn ghost" id="replayBootBtn" type="button">重播开屏</button><button class="btn primary" id="saveSettingsBtn" type="button"><svg><use href="#i-check"></use></svg>应用设置</button></div></div>
                 <div class="settings-grid">
-                  <div class="panel span-2"><div class="panel-head"><div><span class="mini-label">MACHINE SKIN / 机台皮肤</span><h2>显像管与字幕</h2></div><span class="badge">LIVE</span></div><div class="skin-grid">
+                  <div class="panel span-2" id="settingsSkinPanel"><div class="panel-head"><div><span class="mini-label" id="settingsSkinKicker">MACHINE SKIN / 机台皮肤</span><h2 id="settingsSkinTitle">显像管与字幕</h2></div><span class="badge" id="settingsSkinBadge">LIVE</span></div><div class="skin-grid">
                     <div class="field span-2"><label>组织徽章 / 快速切换</label><div class="theme-badge-row" id="themeBadgeRow"></div></div>
-                    <div class="field"><label for="setUiMode">界面模式</label><select id="setUiMode"><option value="linji">临极档案 · 完整机台</option><option value="simple">简洁模式</option></select><span class="hint">两种模式共用全部功能与知识库数据。</span></div>
+                    <div class="field ui-mode-field"><label for="setUiMode">界面模式</label><select id="setUiMode"><option value="linji">临极档案 · 完整机台</option><option value="simple">简洁模式</option></select><span class="hint">两种模式共用全部功能与知识库数据。</span></div>
                     <div class="field"><label for="setUiTheme">配色主题</label><select id="setUiTheme"><option value="random">随机色 · RANDOM</option><option value="violet">紫色 · VIOLET</option><option value="pink">粉色 · PINK</option><option value="blue">蓝色 · BLUE</option><option value="amber">黄色 · AMBER</option><option value="sg">时计局 · 世界线观测所</option><option value="green">绿色 · GREEN</option><option value="red">红色 · RED</option><option value="gray">灰色 · GRAY</option></select></div>
                     <div class="field"><label for="setUiCrt">CRT 强度</label><select id="setUiCrt"><option value="high">高</option><option value="medium">中</option><option value="low">低</option><option value="off">关闭</option></select></div>
                     <div class="field"><label for="setUiTextFx">文字特效</label><select id="setUiTextFx"><option value="mix">混合</option><option value="radio">电波干扰</option><option value="pulse">脉冲</option><option value="type">打字机</option><option value="decode">解码</option><option value="scan">扫描</option><option value="glitch">故障</option></select></div>
@@ -302,7 +302,7 @@ try {
       </main>
       <aside class="side-console" aria-hidden="true"><div class="console-label">CH</div><div class="console-number" id="consoleNumber">01</div><div class="console-knob"><i></i></div><div class="console-slits"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="console-label bottom">VOL</div><div class="console-knob small"><i></i></div></aside>
     </div>
-    <div class="cabinet-foot"><span>ORIGINAL ARCHIVE TERMINAL // LINJI</span><span class="foot-warn">NO SIGNAL LOST</span><span>BUILD 1.6.0</span></div>
+    <div class="cabinet-foot"><span>ORIGINAL ARCHIVE TERMINAL // LINJI</span><span class="foot-warn">NO SIGNAL LOST</span><span>BUILD 1.6.1</span></div>
   </div>
 </div>
 <section class="appreciate" id="appreciate" aria-hidden="true" aria-label="欣赏模式">
@@ -351,6 +351,6 @@ try {
 <script src="linji-meta.js?v=4"></script>
 <script src="linji-final.js?v=5"></script>
 <script src="textfx.js?v=40"></script>
-<script src="cathode.js?v=154"></script>
+<script src="cathode.js?v=155"></script>
 </body>
 </html>

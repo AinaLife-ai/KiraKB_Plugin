@@ -117,6 +117,19 @@
     }
   }
 
+  function syncSettingsModeCopy(simple) {
+    const eyebrow = $("#settingsEyebrow"), title = $("#settingsTitle"), desc = $("#settingsDesc");
+    const kicker = $("#settingsSkinKicker"), skinTitle = $("#settingsSkinTitle"), badge = $("#settingsSkinBadge");
+    if (eyebrow) eyebrow.textContent = simple ? "SETTINGS / 管理" : "A MACHINE YOU CAN CALL YOURS";
+    if (title) title.innerHTML = simple ? "管理设置" : "调到你喜欢的<em>那一道噪点</em>";
+    if (desc) desc.textContent = simple
+      ? "检索、条目、召回、权限、存储与界面；修改后即时生效。"
+      : "主题、显像管、字幕与所有检索参数；大部分即时生效。";
+    if (kicker) kicker.textContent = simple ? "INTERFACE / 界面" : "MACHINE SKIN / 机台皮肤";
+    if (skinTitle) skinTitle.textContent = simple ? "界面设置" : "显像管与字幕";
+    if (badge) badge.textContent = simple ? "BASIC" : "LIVE";
+  }
+
   function applyUiMode(mode) {
     const simple = normalizeUiMode(mode) === "simple";
     document.documentElement.dataset.uiMode = simple ? "simple" : "linji";
@@ -137,6 +150,7 @@
       if (state.apprOpen) closeAppreciate();
     }
     document.title = simple ? "KiraKB — 简洁管理" : "KiraKB // 临极档案 · LINJI ARCHIVE";
+    syncSettingsModeCopy(simple);
     syncUiModeControls();
   }
 
