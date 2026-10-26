@@ -1335,12 +1335,22 @@ class KnowledgeBaseManager:
                  chunk_size: int = 500, chunk_overlap: int = 50,
                  client_resolver: Callable = None, model_lister: Callable = None,
                  enable_hybrid: bool = False, history_keep: int = 5,
-                 auto_sync_versions: bool = False):
+                 auto_sync_versions: bool = False,
+                 default_embedding_model_uuid: Optional[str] = None,
+                 default_rerank_model_uuid: Optional[str] = None,
+                 default_embedding_uuid: Optional[str] = None,
+                 default_rerank_uuid: Optional[str] = None,
+                 rerank_model_lister: Callable = None):
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self.embedding_client_getter = embedding_client_getter
         self.client_resolver = client_resolver
         self.model_lister = model_lister
+        self.rerank_model_lister = rerank_model_lister
+        self.default_embedding_model_uuid = default_embedding_model_uuid
+        self.default_rerank_model_uuid = default_rerank_model_uuid
+        self.default_embedding_uuid = default_embedding_uuid
+        self.default_rerank_uuid = default_rerank_uuid
         self.stopwords_path = stopwords_path
         self.default_stopwords_path = default_stopwords_path
         self.vlm_client = vlm_client

@@ -94,6 +94,7 @@ async def main_async():
     check("包含分区", all(k in snap for k in ("search", "entries", "permission", "recall", "storage", "webui")), str(snap.keys()))
     check("默认历史保留 5", snap["entries"]["entry_history_keep"] == 5, str(snap["entries"]))
     check("默认界面模式 linji", snap["ui"]["ui_mode"] == "linji", str(snap["ui"]))
+    check("默认向量/重排模型 auto", snap["search"]["embedding_model"] == "" and snap["search"]["rerank_model"] == "", str(snap["search"]))
 
     print("\nS2  应用热设置")
     result = await plugin._apply_settings({
@@ -226,6 +227,8 @@ async def main_async():
         ("section_basic", "enable_hybrid_search"): ("search", "enable_hybrid_search"),
         ("section_basic", "enable_stopwords"): ("search", "enable_stopwords"),
         ("section_basic", "enable_rerank"): ("search", "enable_rerank"),
+        ("section_basic", "embedding_model"): ("search", "embedding_model"),
+        ("section_basic", "rerank_model"): ("search", "rerank_model"),
         ("section_basic", "entry_title_max_chars"): ("entries", "entry_title_max_chars"),
         ("section_basic", "extra_tools_enabled"): ("entries", "extra_tools_enabled"),
         ("section_basic", "auto_sync_versions"): ("entries", "auto_sync_versions"),
@@ -308,6 +311,10 @@ async def main_async():
     check("UI 主题写入", ui["theme"] == "pink", str(ui.get("theme")))
     check("UI 字幕参数写入", ui["fx_interval"] == 7 and ui["quote_interval"] == 11,
           str({k: ui.get(k) for k in ("fx_interval", "quote_interval")}))
+    await plugin._apply_settings({"search": {"embedding_model": "fake:m1", "rerank_model": "fake:r1"}})
+    snap2 = plugin._settings_snapshot()
+    check("向量/重排模型写入", snap2["search"]["embedding_model"] == "fake:m1" and snap2["search"]["rerank_model"] == "fake:r1", str(snap2["search"]))
+
     check("UI 自定义台词/格言写入",
           ui["quote_kb_ids"] == ["test"] and ui["quote_custom_lines"] == ["自定义台词"]
           and ui["quote_custom_mottos"] == ["自定义格言"], str(ui))
