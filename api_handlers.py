@@ -930,7 +930,7 @@ async def import_url(mgr, kb_id: str, body: dict):
         kb.write_doc_meta(doc_id, meta)
     except Exception as exc:
         logger.warning(f"[kiraKB] URL snapshot save failed: {exc}")
-    active = kb.active_version
+    active = await kb.get_active_version()
     if active:
         await kb._vectorize_document(active, doc_id, text)
     return {"ok": True, "doc_id": doc_id, "title": title, "chars": len(text)}, 200

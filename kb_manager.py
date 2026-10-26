@@ -344,10 +344,14 @@ class KnowledgeBaseVersion:
         await self.ensure_chunk_lexical()
         chunk_ids = await self.vector_store.add_chunks(chunks, embeddings, flush=flush)
         if chunk_ids:
-            await self.chunk_lexical.upsert([
-                {"chunk_id": chunk_id, **chunk}
-                for chunk_id, chunk in zip(chunk_ids, chunks)
-            ])
+            try:
+                await self.chunk_lexical.upsert([
+                    {"chunk_id": chunk_id, **chunk}
+                    for chunk_id, chunk in zip(chunk_ids, chunks)
+                ])
+            except Exception as exc:
+                logger.warning(f"Chunk lexical upsert failed for {self.version_id}: {exc}")
+                self._chunk_lexical_ready = False
         mapping[doc_id] = chunk_ids
         if mapping_sink is not None:
             mapping_sink[doc_id] = chunk_ids
@@ -418,7 +422,11 @@ class KnowledgeBaseVersion:
             return 0
         await self.vector_store.delete_by_chunk_ids(chunk_ids)
         if self._chunk_lexical_ready:
-            await self.chunk_lexical.delete_by_doc(doc_id)
+            try:
+                await self.chunk_lexical.delete_by_doc(doc_id)
+            except Exception as exc:
+                logger.warning(f"Chunk lexical delete failed for {self.version_id}: {exc}")
+                self._chunk_lexical_ready = False
         self.save_mapping(mapping)
         return len(chunk_ids)
 
