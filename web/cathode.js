@@ -46,6 +46,7 @@
   const state = {
     kbs: [], current: null, docs: [], versions: [], tasks: [], deleted: [],
     models: [], globalRecall: {}, settings: null,
+    modelOptions: { embedding: null, rerank: null },
     view: "catalog", themeChoice: "random", selectedDoc: null, selected: new Set(),
     docFilter: "", docFilterKind: "all",
     ui: { ...UI_DEFAULT },
@@ -117,6 +118,19 @@
     }
   }
 
+  function syncSettingsModeCopy(simple) {
+    const eyebrow = $("#settingsEyebrow"), title = $("#settingsTitle"), desc = $("#settingsDesc");
+    const kicker = $("#settingsSkinKicker"), skinTitle = $("#settingsSkinTitle"), badge = $("#settingsSkinBadge");
+    if (eyebrow) eyebrow.textContent = simple ? "SETTINGS / 管理" : "A MACHINE YOU CAN CALL YOURS";
+    if (title) title.innerHTML = simple ? "管理设置" : "调到你喜欢的<em>那一道噪点</em>";
+    if (desc) desc.textContent = simple
+      ? "检索、条目、召回、权限、存储与界面；修改后即时生效。"
+      : "主题、显像管、字幕与所有检索参数；大部分即时生效。";
+    if (kicker) kicker.textContent = simple ? "INTERFACE / 界面" : "MACHINE SKIN / 机台皮肤";
+    if (skinTitle) skinTitle.textContent = simple ? "界面设置" : "显像管与字幕";
+    if (badge) badge.textContent = simple ? "BASIC" : "LIVE";
+  }
+
   function applyUiMode(mode) {
     const simple = normalizeUiMode(mode) === "simple";
     document.documentElement.dataset.uiMode = simple ? "simple" : "linji";
@@ -137,6 +151,7 @@
       if (state.apprOpen) closeAppreciate();
     }
     document.title = simple ? "KiraKB — 简洁管理" : "KiraKB // 临极档案 · LINJI ARCHIVE";
+    syncSettingsModeCopy(simple);
     syncUiModeControls();
   }
 
@@ -1493,6 +1508,51 @@
     try { state.globalRecall = await api("/recall/global") || {}; }
     catch (_) { state.globalRecall = {}; }
   }
+  async function loadModelOptions() {
+    const get = async (path) => {
+      try { return await api(path); }
+      catch (_) { return { models: [] }; }
+    };
+    const [embedding, rerank] = await Promise.all([
+      get("/embedding-models"), get("/rerank-models")
+    ]);
+    state.modelOptions.embedding = embedding || { models: [] };
+    state.modelOptions.rerank = rerank || { models: [] };
+    populateModelSelects();
+    if (state.settings) renderSettings();
+  }
+
+  function modelOptionLabel(m) {
+    return m.label || `${m.provider_name || m.provider_id || "未知提供商"} / ${m.model_name || m.model_id || "未命名模型"}`;
+  }
+
+  function populateModelSelects() {
+    const fill = (id, key, settingKey) => {
+      const el = $("#" + id);
+      if (!el) return;
+      const data = state.modelOptions[key] || {};
+      const models = Array.isArray(data.models) ? data.models : [];
+      const current = (state.settings?.search?.[settingKey] || "").trim();
+      const defaultUuid = String(data.default_uuid || "").trim();
+      const defaultLabel = models.find(m => m.uuid === defaultUuid)?.label;
+      const parts = [`<option value="">跟随 KiraAI 默认${defaultLabel ? " · " + esc(defaultLabel) : ""}</option>`];
+      const seen = new Set();
+      for (const m of models) {
+        if (!m || !m.uuid || seen.has(m.uuid)) continue;
+        seen.add(m.uuid);
+        parts.push(`<option value="${esc(m.uuid)}">${esc(modelOptionLabel(m))}</option>`);
+      }
+      if (current && !seen.has(current)) {
+        parts.push(`<option value="${esc(current)}">当前设置 · 模型列表中未找到，请重新选择</option>`);
+      }
+      el.innerHTML = parts.join("");
+      if (current) el.value = current;
+      else el.value = "";
+    };
+    fill("setEmbeddingModel", "embedding", "embedding_model");
+    fill("setRerankModel", "rerank", "rerank_model");
+  }
+
   async function loadSettings() {
     try { state.settings = await api("/settings"); }
     catch (_) { state.settings = null; }
@@ -1726,7 +1786,8 @@
     const val = (id, v) => { const el = $("#" + id); if (el && v != null) el.value = v; };
     const chk = (id, v) => { const el = $("#" + id); if (el) el.checked = !!v; };
     const s = cfg.search || {}; const e = cfg.entries || {}; const p = cfg.permission || {}; const r = cfg.recall || {}; const st = cfg.storage || {}; const w = cfg.webui || {};
-    val("setTopK", s.default_top_k); val("setChunkSize", s.chunk_size); val("setChunkOverlap", s.chunk_overlap);
+    val("setTopK", s.default_top_k); val("setEmbeddingModel", s.embedding_model || ""); val("setRerankModel", s.rerank_model || "");
+    val("setChunkSize", s.chunk_size); val("setChunkOverlap", s.chunk_overlap);
     chk("setHybrid", s.enable_hybrid_search); chk("setStopwords", s.enable_stopwords); chk("setRerank", s.enable_rerank); chk("setLexical", s.enable_lexical_search); chk("setIgnoreTime", s.ignore_time); chk("setAutoInstallDeps", s.auto_install_dependencies); val("setLexicalMin", s.lexical_min_score);
     val("setTitleMax", e.entry_title_max_chars); val("setHistoryKeep", e.entry_history_keep); chk("setExtraTools", e.extra_tools_enabled); chk("setAutoSync", e.auto_sync_versions);
     const fill = (id, v) => { const el = $("#" + id); if (!el) return; el.innerHTML = ["open", "whitelist", "admin", "off"].map(x => `<option value="${x}" ${x === v ? "selected" : ""}>${{ open: "开放", whitelist: "名单", admin: "仅人工", off: "冻结" }[x]}</option>`).join(""); };
@@ -1740,7 +1801,9 @@
     return {
       search: {
         enable_hybrid_search: $("#setHybrid").checked, default_top_k: num("setTopK"), chunk_size: num("setChunkSize"), chunk_overlap: num("setChunkOverlap"),
-        enable_stopwords: $("#setStopwords").checked, enable_rerank: $("#setRerank").checked, enable_lexical_search: $("#setLexical").checked,
+        enable_stopwords: $("#setStopwords").checked, enable_rerank: $("#setRerank").checked,
+        embedding_model: $("#setEmbeddingModel")?.value || "", rerank_model: $("#setRerankModel")?.value || "",
+        enable_lexical_search: $("#setLexical").checked,
         ignore_time: $("#setIgnoreTime").checked, auto_install_dependencies: $("#setAutoInstallDeps").checked, lexical_min_score: num("setLexicalMin")
       },
       entries: { entry_title_max_chars: num("setTitleMax"), entry_history_keep: num("setHistoryKeep"), extra_tools_enabled: $("#setExtraTools").checked, auto_sync_versions: $("#setAutoSync").checked },
@@ -1906,10 +1969,12 @@
     catch (e) { return toast("加载模型失败：" + e.message, "err"); }
     const models = data.models || [];
     openModal({
-      title: "新建版本", subtitle: "选择嵌入模型，探测维度后创建。", body: `<div class="field"><label for="versionModel">嵌入模型</label><select id="versionModel"><option value="">KiraAI 默认嵌入模型</option>${models.map(m => `<option value="${esc(m.uuid)}">${esc(m.label)}</option>`).join("")}</select><span class="hint">留空使用默认模型。</span></div><div class="field"><label for="versionName">版本标签</label><input id="versionName" placeholder="例如 bge-m3"></div><div class="field"><label for="versionDim">维度</label><input id="versionDim" type="number" min="1"><div class="display-actions"><button class="btn small ghost" type="button" id="probeBtn">探测</button><span class="hint" id="probeHint"></span></div></div><div class="field"><label>文档（留空 = 全部）</label><div class="check-list" id="versionDocs">${state.docs.map(d => `<label><input type="checkbox" value="${esc(d.doc_id)}"> ${esc(d.name)}</label>`).join("")}</div></div>`,
+      title: "新建版本", subtitle: "选择嵌入模型，探测维度后创建。", body: `<div class="field"><label for="versionModel">嵌入模型</label><select id="versionModel"><option value="">KiraAI 默认嵌入模型</option>${models.map(m => `<option value="${esc(m.uuid)}">${esc(modelOptionLabel(m))}</option>`).join("")}</select><span class="hint">留空使用 KiraAI 默认；默认选中 KiraKB 配置的向量模型。</span></div><div class="field"><label for="versionName">版本标签</label><input id="versionName" placeholder="例如 bge-m3"></div><div class="field"><label for="versionDim">维度</label><input id="versionDim" type="number" min="1"><div class="display-actions"><button class="btn small ghost" type="button" id="probeBtn">探测</button><span class="hint" id="probeHint"></span></div></div><div class="field"><label>文档（留空 = 全部）</label><div class="check-list" id="versionDocs">${state.docs.map(d => `<label><input type="checkbox" value="${esc(d.doc_id)}"> ${esc(d.name)}</label>`).join("")}</div></div>`,
       footer: `<button class="btn ghost" type="button" data-cancel>取消</button><button class="btn primary" type="button" data-ok>创建版本</button>`,
       onMount(root, close) {
         $("[data-cancel]", root).onclick = close;
+        const preferred = data.plugin_default_uuid || "";
+        if (preferred && models.some(m => m.uuid === preferred)) $("#versionModel").value = preferred;
         $("#probeBtn", root).onclick = async () => {
           const uuid = $("#versionModel").value;
           $("#probeHint").textContent = "探测中……";
@@ -1920,8 +1985,8 @@
           const name = $("#versionName").value.trim(); const dim = Number($("#versionDim").value);
           if (!name) return toast("请填写版本标签", "err");
           if (!dim) return toast("请先探测维度", "err");
-          const payload = { model_name: name, dimension: dim };
-          const uuid = $("#versionModel").value; if (uuid) payload.model_uuid = uuid;
+          const uuid = $("#versionModel").value;
+          const payload = { model_name: name, dimension: dim, model_uuid: uuid || null };
           const ids = $$("#versionDocs input:checked", root).map(x => x.value); if (ids.length) payload.doc_ids = ids;
           try { const res = await api(`/kbs/${encodeURIComponent(state.current)}/versions`, { method: "POST", body: JSON.stringify(payload) }); close(); if (res.task_id) { toast("版本构建已排队。"); await loadTasks(); renderTasks(); switchView("tasks"); } else { await refreshAll(); toast("版本已创建。"); } }
           catch (e) { toast("创建失败：" + e.message, "err"); }
@@ -2385,7 +2450,7 @@
     document.body.dataset.crt = "high";
     applyBackgrounds();
     initParallax();
-    await loadSettings();
+    await Promise.all([loadSettings(), loadModelOptions()]);
     if (state.settings?.ui) state.ui = { ...state.ui, ...state.settings.ui };
     try {
       if (!localStorage.getItem("linji-effects-forced-v151")) {

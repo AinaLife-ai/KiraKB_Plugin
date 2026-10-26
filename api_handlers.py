@@ -312,7 +312,12 @@ async def create_version(mgr, kb_id: str, body: dict):
     model_name = body.get("model_name")
     dimension = body.get("dimension")
     doc_ids = body.get("doc_ids")
-    model_uuid = body.get("model_uuid") or None
+    if "model_uuid" in body:
+        # An explicitly supplied null means "follow KiraAI default".
+        model_uuid = body.get("model_uuid") or None
+    else:
+        # Direct API callers inherit KiraKB's configured vector model.
+        model_uuid = getattr(mgr, "default_embedding_model_uuid", None) or None
     if not model_name:
         return {"error": "model_name required"}, 400
     try:
@@ -681,17 +686,34 @@ def embedding_models(mgr, default_uuid: Optional[str] = None) -> dict:
             models = lister() or []
         except Exception as e:
             logger.warning(f"Failed to list embedding models: {e}")
+    plugin_default_uuid = getattr(mgr, "default_embedding_model_uuid", None) or None
     default_available = False
     resolver = getattr(mgr, "client_resolver", None)
     if resolver:
         try:
-            default_available = resolver(None) is not None
+            default_available = resolver(plugin_default_uuid) is not None
         except Exception:
             default_available = False
     return {
         "models": models,
         "default_uuid": default_uuid,
+        "plugin_default_uuid": plugin_default_uuid,
         "default_available": default_available,
+    }
+
+def rerank_models(mgr, default_uuid: Optional[str] = None) -> dict:
+    lister = getattr(mgr, "rerank_model_lister", None)
+    models = []
+    if lister:
+        try:
+            models = lister() or []
+        except Exception as e:
+            logger.warning(f"Failed to list rerank models: {e}")
+    return {
+        "models": models,
+        "default_uuid": default_uuid,
+        "plugin_default_uuid": getattr(mgr, "default_rerank_model_uuid", None) or None,
+        "default_available": bool(default_uuid or getattr(mgr, "default_rerank_model_uuid", None)),
     }
 
 

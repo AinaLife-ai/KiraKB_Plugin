@@ -84,6 +84,8 @@ class KiraKBPlugin(BasePlugin):
         self.enable_hybrid = bool(sec_basic.get("enable_hybrid_search", False))
         self.enable_stopwords = bool(sec_basic.get("enable_stopwords", False))
         self.enable_rerank = bool(sec_basic.get("enable_rerank", False))
+        self.embedding_model_uuid = str(sec_basic.get("embedding_model", "") or "").strip()
+        self.rerank_model_uuid = str(sec_basic.get("rerank_model", "") or "").strip()
         self.entry_title_max_chars = max(4, min(60, int(sec_basic.get("entry_title_max_chars", 20))))
         self.extra_tools_enabled = bool(sec_basic.get("extra_tools_enabled", True))
         self.auto_sync_versions = bool(sec_basic.get("auto_sync_versions", False))
@@ -227,6 +229,16 @@ class KiraKBPlugin(BasePlugin):
         except Exception:
             return default
 
+    def _configure_manager_models(self) -> None:
+        mgr = self.kb_manager
+        if mgr is None:
+            return
+        mgr.default_embedding_model_uuid = self.embedding_model_uuid or None
+        mgr.default_rerank_model_uuid = self.rerank_model_uuid or None
+        mgr.default_embedding_uuid = self._default_embedding_uuid
+        mgr.default_rerank_uuid = self._default_rerank_uuid
+        mgr.rerank_model_lister = self._rerank_model_lister
+
     def _create_manager(self, base_dir: Optional[str] = None) -> KnowledgeBaseManager:
         stopwords_path = self.data_dir / "stopwords.txt"
         self.data_dir.mkdir(parents=True, exist_ok=True)
@@ -273,19 +285,32 @@ class KiraKBPlugin(BasePlugin):
         except Exception as e:
             logger.warning(f"[kiraKB] No VLM model available for OCR: {e}")
 
-        rerank_client = None
-        if self.enable_rerank:
-            try:
-                rerank_client = self.ctx.provider_mgr.get_default_rerank()
-                if rerank_client:
-                    logger.info("[kiraKB] Using default rerank model")
-            except Exception as e:
-                logger.warning(f"[kiraKB] No rerank model available: {e}")
+        default_rerank_client = None
+        try:
+            default_rerank_client = self.ctx.provider_mgr.get_default_rerank()
+        except Exception as e:
+            logger.warning(f"[kiraKB] No default rerank model available: {e}")
+
+        def resolve_rerank_client(model_uuid: Optional[str]):
+            if model_uuid:
+                try:
+                    provider_id, model_id = model_uuid.split(":", 1)
+                    client = self.ctx.provider_mgr.get_model_client(provider_id, model_id, "rerank")
+                    if client is not None:
+                        return client
+                    logger.warning(f"[kiraKB] Rerank model '{model_uuid}' was not found")
+                except Exception as e:
+                    logger.warning(f"[kiraKB] Failed to resolve rerank model '{model_uuid}': {e}")
+            return default_rerank_client
+
+        rerank_client = resolve_rerank_client(self.rerank_model_uuid) if self.enable_rerank else None
+        if rerank_client:
+            logger.info(f"[kiraKB] Using rerank model: {self.rerank_model_uuid or 'KiraAI default'}")
 
         async def get_embedding_client():
             return embedding_client
 
-        def list_embedding_models() -> List[dict]:
+        def list_models(kind: str) -> List[dict]:
             models = []
             try:
                 for provider_id, provider in self.ctx.provider_mgr.get_all_providers().items():
@@ -294,19 +319,25 @@ class KiraKBPlugin(BasePlugin):
                     except Exception:
                         continue
                     for info in infos:
-                        if getattr(info.model_type, "value", None) != "embedding":
+                        if getattr(info.model_type, "value", None) != kind:
                             continue
                         models.append({
                             "uuid": f"{provider_id}:{info.model_id}",
                             "model_id": info.model_id,
                             "provider_id": provider_id,
                             "provider_name": info.provider_name,
-                            "label": f"{info.provider_name} / {getattr(info, 'model_name', None) or info.model_id}",
+                            "label": f"{getattr(info, 'provider_name', None) or provider_id} / {getattr(info, 'model_name', None) or info.model_id}",
                         })
             except Exception as e:
-                logger.warning(f"[kiraKB] Failed to list embedding models: {e}")
+                logger.warning(f"[kiraKB] Failed to list {kind} models: {e}")
             models.sort(key=lambda m: m["label"].lower())
             return models
+
+        def list_embedding_models() -> List[dict]:
+            return list_models("embedding")
+
+        def list_rerank_models() -> List[dict]:
+            return list_models("rerank")
 
         def resolve_embedding_client(model_uuid: Optional[str]):
             if model_uuid:
@@ -326,9 +357,14 @@ class KiraKBPlugin(BasePlugin):
         self._rerank_client = rerank_client
         self._embedding_client_getter = get_embedding_client
         self._model_lister = list_embedding_models
+        self._rerank_model_lister = list_rerank_models
         self._resolve_embedding_client = resolve_embedding_client
+        self._resolve_rerank_client = resolve_rerank_client
+        self._default_embedding_uuid = self._config_value("models.default_embedding") or ""
+        self._default_rerank_uuid = self._config_value("models.default_rerank") or ""
 
         self.kb_manager = self._create_manager()
+        self._configure_manager_models()
 
         await self.kb_manager.load_existing_kbs()
 
@@ -426,6 +462,8 @@ class KiraKBPlugin(BasePlugin):
                 "chunk_overlap": self.chunk_overlap,
                 "enable_stopwords": self.enable_stopwords,
                 "enable_rerank": self.enable_rerank,
+                "embedding_model": self.embedding_model_uuid,
+                "rerank_model": self.rerank_model_uuid,
                 "enable_lexical_search": self.enable_lexical_search,
                 "lexical_min_score": self.lexical_min_score,
                 "ignore_time": self.ignore_time,
@@ -544,17 +582,43 @@ class KiraKBPlugin(BasePlugin):
                         str(sw_path) if desired and sw_path.exists() else None,
                         str(dsw_path) if desired and dsw_path.exists() else None,
                     )
+        if "embedding_model" in search:
+            value = str(search.get("embedding_model") or "").strip()
+            if value:
+                try:
+                    client = self.ctx.get_embedding_client(value)
+                except Exception as e:
+                    client = None
+                    logger.warning(f"[kiraKB] Failed to validate embedding model '{value}': {e}")
+                if client is None:
+                    warnings.append(f"向量模型不可用：{value}；已保持原设置。")
+                else:
+                    self.embedding_model_uuid = value
+            else:
+                self.embedding_model_uuid = ""
+            if self.kb_manager:
+                self.kb_manager.default_embedding_model_uuid = self.embedding_model_uuid or None
+
+        if "rerank_model" in search:
+            value = str(search.get("rerank_model") or "").strip()
+            self.rerank_model_uuid = value
+            if self.kb_manager:
+                self.kb_manager.default_rerank_model_uuid = value or None
+            if self.enable_rerank:
+                client = self._resolve_rerank_client(value)
+                if client is None:
+                    warnings.append(f"重排序模型不可用：{value or 'KiraAI 默认'}；已回退到默认模型。")
+                else:
+                    self._rerank_client = client
+                    if self.kb_manager:
+                        self.kb_manager.set_rerank(client, True)
+
         if "enable_rerank" in search:
             desired = bool(search.get("enable_rerank"))
             if desired != self.enable_rerank:
-                client = None
-                if desired:
-                    try:
-                        client = self.ctx.provider_mgr.get_default_rerank()
-                    except Exception:
-                        client = None
+                client = self._resolve_rerank_client(self.rerank_model_uuid) if desired else None
                 if desired and client is None:
-                    warnings.append("未配置重排序模型，未能启用重排序。")
+                    warnings.append("未配置可用的重排序模型，未能启用重排序。")
                 else:
                     self.enable_rerank = desired
                     self._rerank_client = client
@@ -754,6 +818,7 @@ class KiraKBPlugin(BasePlugin):
         return ""
 
     def _attach_manager(self, manager) -> None:
+        self._configure_manager_models()
         manager.recall_global = dict(self.recall_config)
         manager.default_policies = dict(self.default_policies)
         manager.lexical_enabled = self.enable_lexical_search
@@ -781,6 +846,8 @@ class KiraKBPlugin(BasePlugin):
                 "chunk_overlap": self.chunk_overlap,
                 "enable_stopwords": self.enable_stopwords,
                 "enable_rerank": self.enable_rerank,
+                "embedding_model": self.embedding_model_uuid,
+                "rerank_model": self.rerank_model_uuid,
                 "enable_lexical_search": self.enable_lexical_search,
                 "ignore_time": self.ignore_time,
                 "auto_install_dependencies": self.auto_install_dependencies,
@@ -1408,6 +1475,11 @@ class KiraKBPlugin(BasePlugin):
     async def api_embedding_models(self):
         default_uuid = self._config_value("models.default_embedding")
         return api.embedding_models(self.kb_manager, default_uuid)
+
+    @register.api(method="GET", path="/rerank-models", auth=True, summary="List rerank models")
+    async def api_rerank_models(self):
+        default_uuid = self._config_value("models.default_rerank")
+        return api.rerank_models(self.kb_manager, default_uuid)
 
     @register.api(method="POST", path="/embedding-models/probe", auth=True, summary="Probe embedding dimension")
     async def api_probe_embedding(self, request: Request):

@@ -3973,3 +3973,30 @@ html[data-ui-mode="simple"] .rail {
   transform: translateZ(0);
   will-change: transform;
 }
+/* 1.6.1 — simple mode: readable native option popups */
+html[data-ui-mode="simple"] select option,
+html[data-ui-mode="simple"] select optgroup {
+  background-color: var(--panel) !important;
+  color: var(--ink) !important;
+}
+html[data-ui-mode="simple"] textarea,
+html[data-ui-mode="simple"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]) {
+  background-color: var(--panel-2) !important;
+  color: var(--ink) !important;
+  caret-color: var(--accent);
+}
+
+/* simple mode: keep functional settings, hide LINJI-only skin/backdrop/wallpaper blocks */
+html[data-ui-mode="simple"] #settingsSkinPanel .skin-grid > .field:not(.ui-mode-field),
+html[data-ui-mode="simple"] #settingsSkinPanel .theme-badge-row,
+html[data-ui-mode="simple"] #settingsSkinPanel .sub-head,
+html[data-ui-mode="simple"] #settingsSkinPanel .bg-grid,
+html[data-ui-mode="simple"] .wall-vault-panel {
+  display: none !important;
+}
+html[data-ui-mode="simple"] #settingsSkinPanel .skin-grid {
+  display: block;
+}
+html[data-ui-mode="simple"] #settingsSkinPanel .ui-mode-field {
+  max-width: 420px;
+}

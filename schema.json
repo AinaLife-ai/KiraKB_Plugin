@@ -50,6 +50,18 @@
                 "default": false,
                 "hint": "是否对检索结果进行重排序。重排序模型将使用 KiraAI 默认配置。"
             },
+            "embedding_model": {
+                "name": "向量模型",
+                "type": "string",
+                "default": "",
+                "hint": "用于新建版本的默认嵌入模型；留空跟随 KiraAI WebUI 的默认 embedding。已有版本保留各自模型，改变后请新建/重建版本。"
+            },
+            "rerank_model": {
+                "name": "重排序模型",
+                "type": "string",
+                "default": "",
+                "hint": "KiraKB 使用的重排序模型；留空跟随 KiraAI WebUI 默认 rerank。仅在启用重排序时生效。"
+            },
             "entry_title_max_chars": {
                 "name": "条目标题最大长度",
                 "type": "integer",
