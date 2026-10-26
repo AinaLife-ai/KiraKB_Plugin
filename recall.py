@@ -357,6 +357,10 @@ class RecallEngine:
             query,
             top_k=max(item["top_k"] * 4, 12),
             allowed_doc_ids=item["allow_doc_ids"],
+            # Passive recall must never pay for a large first-time index build.
+            # New versions have the index ready; older versions use the legacy
+            # entry path until an active search/index build populates it.
+            allow_build=False,
         )
         if not rows:
             return []

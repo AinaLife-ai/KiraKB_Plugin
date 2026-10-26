@@ -390,9 +390,13 @@ class KnowledgeBaseVersion:
         return self._chunk_lexical_ready
 
     async def chunk_lexical_search(self, query: str, *, top_k: int = 20,
-                                   allowed_doc_ids: Optional[set] = None) -> List[Dict]:
-        if not await self.ensure_chunk_lexical():
-            return []
+                                   allowed_doc_ids: Optional[set] = None,
+                                   allow_build: bool = True) -> List[Dict]:
+        if not self._chunk_lexical_ready:
+            if not allow_build:
+                return []
+            if not await self.ensure_chunk_lexical():
+                return []
         hits = await self.chunk_lexical.search(
             query, allowed_doc_ids=allowed_doc_ids,
             limit=max(1, int(top_k)),
