@@ -314,6 +314,10 @@ async def main_async():
     await plugin._apply_settings({"search": {"embedding_model": "fake:m1", "rerank_model": "fake:r1"}})
     snap2 = plugin._settings_snapshot()
     check("向量/重排模型写入", snap2["search"]["embedding_model"] == "fake:m1" and snap2["search"]["rerank_model"] == "fake:r1", str(snap2["search"]))
+    emb_list = api.embedding_models(plugin.kb_manager, "default:emb")
+    check("模型列表返回 KiraKB 向量默认", emb_list["plugin_default_uuid"] == "fake:m1", str(emb_list))
+    rerank_list = api.rerank_models(plugin.kb_manager, "default:rerank")
+    check("重排模型列表可用", rerank_list["plugin_default_uuid"] == "fake:r1", str(rerank_list))
 
     check("UI 自定义台词/格言写入",
           ui["quote_kb_ids"] == ["test"] and ui["quote_custom_lines"] == ["自定义台词"]
