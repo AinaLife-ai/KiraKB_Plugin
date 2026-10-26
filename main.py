@@ -326,7 +326,7 @@ class KiraKBPlugin(BasePlugin):
                             "model_id": info.model_id,
                             "provider_id": provider_id,
                             "provider_name": info.provider_name,
-                            "label": f"{info.provider_name} / {getattr(info, 'model_name', None) or info.model_id}",
+                            "label": f"{getattr(info, 'provider_name', None) or provider_id} / {getattr(info, 'model_name', None) or info.model_id}",
                         })
             except Exception as e:
                 logger.warning(f"[kiraKB] Failed to list {kind} models: {e}")

@@ -1523,7 +1523,7 @@
   }
 
   function modelOptionLabel(m) {
-    return m.label || `${m.provider_name || m.provider_id || "Provider"} / ${m.model_name || m.model_id || m.uuid}`;
+    return m.label || `${m.provider_name || m.provider_id || "未知提供商"} / ${m.model_name || m.model_id || "未命名模型"}`;
   }
 
   function populateModelSelects() {
@@ -1543,7 +1543,7 @@
         parts.push(`<option value="${esc(m.uuid)}">${esc(modelOptionLabel(m))}</option>`);
       }
       if (current && !seen.has(current)) {
-        parts.push(`<option value="${esc(current)}">当前设置 · ${esc(current)}（模型列表中未找到）</option>`);
+        parts.push(`<option value="${esc(current)}">当前设置 · 模型列表中未找到，请重新选择</option>`);
       }
       el.innerHTML = parts.join("");
       if (current) el.value = current;
@@ -1969,7 +1969,7 @@
     catch (e) { return toast("加载模型失败：" + e.message, "err"); }
     const models = data.models || [];
     openModal({
-      title: "新建版本", subtitle: "选择嵌入模型，探测维度后创建。", body: `<div class="field"><label for="versionModel">嵌入模型</label><select id="versionModel"><option value="">KiraAI 默认嵌入模型</option>${models.map(m => `<option value="${esc(m.uuid)}">${esc(m.label)}</option>`).join("")}</select><span class="hint">留空使用 KiraAI 默认；默认选中 KiraKB 配置的向量模型。</span></div><div class="field"><label for="versionName">版本标签</label><input id="versionName" placeholder="例如 bge-m3"></div><div class="field"><label for="versionDim">维度</label><input id="versionDim" type="number" min="1"><div class="display-actions"><button class="btn small ghost" type="button" id="probeBtn">探测</button><span class="hint" id="probeHint"></span></div></div><div class="field"><label>文档（留空 = 全部）</label><div class="check-list" id="versionDocs">${state.docs.map(d => `<label><input type="checkbox" value="${esc(d.doc_id)}"> ${esc(d.name)}</label>`).join("")}</div></div>`,
+      title: "新建版本", subtitle: "选择嵌入模型，探测维度后创建。", body: `<div class="field"><label for="versionModel">嵌入模型</label><select id="versionModel"><option value="">KiraAI 默认嵌入模型</option>${models.map(m => `<option value="${esc(m.uuid)}">${esc(modelOptionLabel(m))}</option>`).join("")}</select><span class="hint">留空使用 KiraAI 默认；默认选中 KiraKB 配置的向量模型。</span></div><div class="field"><label for="versionName">版本标签</label><input id="versionName" placeholder="例如 bge-m3"></div><div class="field"><label for="versionDim">维度</label><input id="versionDim" type="number" min="1"><div class="display-actions"><button class="btn small ghost" type="button" id="probeBtn">探测</button><span class="hint" id="probeHint"></span></div></div><div class="field"><label>文档（留空 = 全部）</label><div class="check-list" id="versionDocs">${state.docs.map(d => `<label><input type="checkbox" value="${esc(d.doc_id)}"> ${esc(d.name)}</label>`).join("")}</div></div>`,
       footer: `<button class="btn ghost" type="button" data-cancel>取消</button><button class="btn primary" type="button" data-ok>创建版本</button>`,
       onMount(root, close) {
         $("[data-cancel]", root).onclick = close;
